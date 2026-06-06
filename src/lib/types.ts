@@ -1,6 +1,7 @@
 export type Deck = {
   id: string;
   name: string;
+  cardCount?: number;
   coverImage?: string;
   isShared: boolean;
   createdAt: string;

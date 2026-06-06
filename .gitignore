@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/.venv
 /.pnp
 .pnp.*
 .yarn/*
@@ -23,6 +24,8 @@
 # misc
 .DS_Store
 *.pem
+*:Zone.Identifier
+__pycache__/
 
 # debug
 npm-debug.log*
@@ -39,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated snapshots
+tools/output/

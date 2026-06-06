@@ -5,6 +5,7 @@
 {
   "id": "lev",
   "name": "LEV",
+  "cardCount": 14,
   "coverImage": "",
   "isShared": false,
   "createdAt": "2026-06-06"
