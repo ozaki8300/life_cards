@@ -28,19 +28,19 @@ export default async function DeckCardsPage({ params }: Props) {
   const deckCards = cards.filter((card) => card.deckId === deck.id);
 
   return (
-    <main className="min-h-screen bg-black px-5 py-8 text-white sm:px-8 lg:px-12">
+    <main className="min-h-screen bg-[#f7f3ea] px-5 py-8 text-[#2f2a23] sm:px-8 lg:px-12">
       <section className="mx-auto max-w-6xl">
         <header className="mb-7">
           <Link
             href="/cards"
-            className="text-sm font-medium text-white/50 transition hover:text-white"
+            className="text-sm font-medium text-[#8d7f6e] transition hover:text-[#2f2a23]"
           >
             Back to decks
           </Link>
           <h1 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
             {deck.name}
           </h1>
-          <p className="mt-2 text-sm font-medium uppercase tracking-[0.24em] text-white/45">
+          <p className="mt-2 text-sm font-medium uppercase tracking-[0.24em] text-[#8d7f6e]">
             {deckCards.length} cards
           </p>
         </header>
