@@ -8,133 +8,206 @@ type Props = {
   cards: Card[];
 };
 
-const accents = [
-  "from-sky-300/70 via-teal-500/35 to-zinc-950",
-  "from-rose-300/75 via-fuchsia-600/35 to-zinc-950",
-  "from-amber-200/75 via-orange-700/35 to-zinc-950",
+const gradients = [
+  "radial-gradient(circle at 22% 18%, rgba(125, 211, 252, 0.9), transparent 34%), linear-gradient(145deg, #052e16, #111827 72%)",
+  "radial-gradient(circle at 28% 20%, rgba(244, 114, 182, 0.9), transparent 34%), linear-gradient(145deg, #312e81, #18181b 78%)",
+  "radial-gradient(circle at 24% 18%, rgba(253, 186, 116, 0.88), transparent 34%), linear-gradient(145deg, #7c2d12, #18181b 72%)",
 ];
 
-function TradingCard({
+function gradientFor(index: number) {
+  return gradients[index % gradients.length];
+}
+
+function CardTile({
   card,
   index,
-  isLarge = false,
-  isBack = false,
+  onOpen,
 }: {
   card: Card;
   index: number;
-  isLarge?: boolean;
-  isBack?: boolean;
+  onOpen: () => void;
 }) {
-  const accent = accents[index % accents.length];
-  const title = isBack ? card.backText || "No back text" : card.frontText || "Untitled";
-  const caption = isBack ? card.frontText : card.backText;
   const hasImage = Boolean(card.imagePath);
+  const heightClass = hasImage
+    ? index % 2 === 0
+      ? "min-h-[280px] sm:min-h-[340px]"
+      : "min-h-[240px] sm:min-h-[300px]"
+    : index % 3 === 0
+      ? "min-h-[220px]"
+      : "min-h-[180px]";
 
   return (
-    <article className="group relative aspect-[3/4] rounded-lg">
-      <div className="absolute inset-x-2 top-2 h-full rounded-lg border border-white/10 bg-zinc-800/80 shadow-xl shadow-black/40 transition group-hover:translate-y-1" />
-      <div className="absolute inset-x-1 top-1 h-full rounded-lg border border-white/10 bg-zinc-700/80 shadow-xl shadow-black/40 transition group-hover:translate-y-0.5" />
-
-      <div
-        className={`relative flex h-full flex-col justify-between overflow-hidden rounded-lg border border-white/15 bg-gradient-to-br ${accent} p-3 shadow-2xl shadow-black/50 transition duration-200 group-hover:-translate-y-1 group-hover:border-white/30 sm:p-4 ${isLarge ? "p-5 sm:p-6" : ""}`}
+    <button
+      type="button"
+      onClick={onOpen}
+      className="mb-4 block w-full break-inside-avoid text-left focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+    >
+      <article
+        className={`${heightClass} group relative flex overflow-hidden rounded-lg border border-white/12 bg-zinc-900 shadow-xl shadow-black/40 transition duration-200 hover:-translate-y-1 hover:border-white/28 hover:shadow-2xl`}
+        style={!hasImage ? { background: gradientFor(index) } : undefined}
       >
         {hasImage ? (
           <div
-            className={`absolute inset-0 bg-cover bg-center ${isBack ? "opacity-18 blur-[1px]" : "opacity-100"}`}
+            className="absolute inset-0 bg-cover bg-center transition duration-300 group-hover:scale-[1.03]"
             style={{ backgroundImage: `url(${card.imagePath})` }}
           />
         ) : null}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_16%,rgba(255,255,255,0.24),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.82),rgba(0,0,0,0.08))]" />
-        {isBack ? (
-          <div className="absolute inset-0 bg-black/54" />
-        ) : null}
-        <div className="absolute inset-x-4 top-4 h-px bg-white/30" />
-        <div className="absolute inset-y-4 right-4 w-px bg-white/20" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.86),rgba(0,0,0,0.18)_52%,rgba(0,0,0,0.04))]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_26%_18%,rgba(255,255,255,0.18),transparent_28%)]" />
 
-        <div className="relative flex items-start justify-between">
-          {hasImage && !isBack ? (
-            <div className={`${isLarge ? "h-24 w-24" : "h-16 w-16"} rounded-md border border-white/20 bg-white/14 bg-cover bg-center shadow-lg shadow-black/30 backdrop-blur`}
-              style={{ backgroundImage: `url(${card.imagePath})` }}
-            />
-          ) : (
-            <div className={`${isLarge ? "h-16 w-16" : "h-12 w-12"} rounded-md border border-white/20 bg-white/12 backdrop-blur`} />
-          )}
-          <span className="rounded-full border border-white/20 bg-black/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/65">
-            {isBack ? "back" : "front"}
-          </span>
-        </div>
-
-        <div className={`relative ${hasImage && !isBack ? "rounded-md bg-black/34 p-3 backdrop-blur-sm" : ""}`}>
-          <h2 className={`${isLarge ? "text-2xl sm:text-3xl" : "text-base sm:text-lg"} font-semibold leading-tight text-white`}>
-            {title}
+        <div className="relative mt-auto w-full p-4">
+          <h2 className="text-lg font-semibold leading-tight text-white">
+            {card.frontText || "Untitled"}
           </h2>
-          {caption ? (
-            <p className={`${isLarge ? "mt-4" : "mt-2"} text-xs font-medium uppercase tracking-[0.18em] text-white/55`}>
-              {caption}
+          {card.backText ? (
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+              {card.backText}
             </p>
           ) : null}
         </div>
+      </article>
+    </button>
+  );
+}
+
+function ModalCard({
+  card,
+  index,
+}: {
+  card: Card;
+  index: number;
+}) {
+  const hasImage = Boolean(card.imagePath);
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-white/12 bg-zinc-950 shadow-2xl shadow-black">
+      <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(280px,0.95fr)]">
+        <div
+          className="relative min-h-[320px] bg-cover bg-center md:min-h-[560px]"
+          style={{
+            background: hasImage ? undefined : gradientFor(index),
+            backgroundImage: hasImage ? `url(${card.imagePath})` : undefined,
+          }}
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.42),rgba(0,0,0,0.04))]" />
+          {!hasImage ? (
+            <div className="absolute bottom-6 left-6 right-6">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-white/45">
+                Life Cards
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold leading-tight text-white">
+                {card.frontText || "Untitled"}
+              </h2>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-5 p-5 sm:p-6">
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/38">
+              Front
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight text-white">
+              {card.frontText || "Untitled"}
+            </h2>
+          </section>
+
+          <section className="rounded-lg border border-white/10 bg-white/6 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/38">
+              Back
+            </p>
+            <p className="mt-3 text-base leading-7 text-white/78">
+              {card.backText || "No back text"}
+            </p>
+          </section>
+        </div>
       </div>
-    </article>
+    </div>
   );
 }
 
 export default function TradingCardGrid({ cards }: Props) {
-  const [selected, setSelected] = useState<{ card: Card; index: number } | null>(null);
-  const [isBack, setIsBack] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const selectedCard = selectedIndex === null ? null : cards[selectedIndex];
+  const hasMultipleCards = cards.length > 1;
 
-  function openCard(card: Card, index: number) {
-    setSelected({ card, index });
-    setIsBack(false);
+  function showCard(nextIndex: number) {
+    const boundedIndex = (nextIndex + cards.length) % cards.length;
+    setSelectedIndex(boundedIndex);
   }
 
-  function closeCard() {
-    setSelected(null);
-    setIsBack(false);
+  function showPrevious() {
+    if (hasMultipleCards && selectedIndex !== null) {
+      showCard(selectedIndex - 1);
+    }
+  }
+
+  function showNext() {
+    if (hasMultipleCards && selectedIndex !== null) {
+      showCard(selectedIndex + 1);
+    }
+  }
+
+  if (cards.length === 0) {
+    return (
+      <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-sm text-white/55">
+        No cards yet.
+      </div>
+    );
   }
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
+      <div className="columns-2 gap-4 sm:columns-3 lg:columns-4">
         {cards.map((card, index) => (
-          <button
+          <CardTile
             key={card.id}
-            type="button"
-            onClick={() => openCard(card, index)}
-            className="block text-left focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-          >
-            <TradingCard card={card} index={index} />
-          </button>
+            card={card}
+            index={index}
+            onOpen={() => setSelectedIndex(index)}
+          />
         ))}
       </div>
 
-      {selected ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/82 px-5 py-8 backdrop-blur-md">
+      {selectedCard && selectedIndex !== null ? (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/84 px-4 py-6 backdrop-blur-md sm:px-6">
           <button
             type="button"
             aria-label="Close card preview"
-            className="absolute inset-0 cursor-default"
-            onClick={closeCard}
+            className="fixed inset-0 cursor-default"
+            onClick={() => setSelectedIndex(null)}
           />
-          <div className="relative w-full max-w-[360px]">
+
+          <div className="relative mx-auto flex min-h-full max-w-5xl items-center">
             <button
               type="button"
-              onClick={() => setIsBack((current) => !current)}
-              className="block w-full text-left focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+              onClick={showPrevious}
+              disabled={!hasMultipleCards}
+              aria-label="Previous card"
+              className="fixed left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/55 text-2xl font-light text-white/75 transition hover:bg-white/12 hover:text-white disabled:opacity-25 sm:left-6"
             >
-              <TradingCard
-                card={selected.card}
-                index={selected.index}
-                isLarge
-                isBack={isBack}
-              />
+              ‹
             </button>
+
+            <div className="relative w-full">
+              <ModalCard card={selectedCard} index={selectedIndex} />
+              <button
+                type="button"
+                onClick={() => setSelectedIndex(null)}
+                className="mx-auto mt-5 block rounded-full border border-white/15 bg-white/8 px-5 py-2 text-sm font-semibold text-white/75 transition hover:bg-white/12 hover:text-white"
+              >
+                Close
+              </button>
+            </div>
+
             <button
               type="button"
-              onClick={closeCard}
-              className="mt-5 w-full rounded-full border border-white/15 bg-white/8 px-4 py-3 text-sm font-semibold text-white/75 transition hover:bg-white/12 hover:text-white"
+              onClick={showNext}
+              disabled={!hasMultipleCards}
+              aria-label="Next card"
+              className="fixed right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/55 text-2xl font-light text-white/75 transition hover:bg-white/12 hover:text-white disabled:opacity-25 sm:right-6"
             >
-              Close
+              ›
             </button>
           </div>
         </div>
