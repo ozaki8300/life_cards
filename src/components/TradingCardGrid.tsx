@@ -21,52 +21,63 @@ function gradientFor(index: number) {
 function CardTile({
   card,
   index,
+  isBack,
+  onFlip,
   onOpen,
 }: {
   card: Card;
   index: number;
+  isBack: boolean;
+  onFlip: () => void;
   onOpen: () => void;
 }) {
   const hasImage = Boolean(card.imagePath);
-  const heightClass = hasImage
-    ? index % 2 === 0
-      ? "min-h-[280px] sm:min-h-[340px]"
-      : "min-h-[240px] sm:min-h-[300px]"
-    : index % 3 === 0
-      ? "min-h-[220px]"
-      : "min-h-[180px]";
+  const title = isBack ? card.backText || "No back text" : card.frontText || "Untitled";
+  const caption = isBack ? card.frontText : card.backText;
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="mb-4 block w-full break-inside-avoid text-left focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+    <article
+      onClick={onFlip}
+      className="group relative aspect-[3/4] cursor-pointer overflow-hidden rounded-lg border border-white/12 bg-zinc-900 shadow-xl shadow-black/40 transition duration-200 hover:-translate-y-1 hover:border-white/28 hover:shadow-2xl focus-within:ring-2 focus-within:ring-white focus-within:ring-offset-2 focus-within:ring-offset-black"
+      style={!hasImage ? { background: gradientFor(index) } : undefined}
     >
-      <article
-        className={`${heightClass} group relative flex overflow-hidden rounded-lg border border-white/12 bg-zinc-900 shadow-xl shadow-black/40 transition duration-200 hover:-translate-y-1 hover:border-white/28 hover:shadow-2xl`}
-        style={!hasImage ? { background: gradientFor(index) } : undefined}
-      >
-        {hasImage ? (
-          <div
-            className="absolute inset-0 bg-cover bg-center transition duration-300 group-hover:scale-[1.03]"
-            style={{ backgroundImage: `url(${card.imagePath})` }}
-          />
-        ) : null}
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.86),rgba(0,0,0,0.18)_52%,rgba(0,0,0,0.04))]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_26%_18%,rgba(255,255,255,0.18),transparent_28%)]" />
+      {hasImage ? (
+        <div
+          className={`absolute inset-0 bg-cover bg-center transition duration-300 group-hover:scale-[1.03] ${isBack ? "opacity-18 blur-[1px]" : "opacity-100"}`}
+          style={{ backgroundImage: `url(${card.imagePath})` }}
+        />
+      ) : null}
+      <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(0,0,0,0.86),rgba(0,0,0,0.18)_52%,rgba(0,0,0,0.04))]" />
+      {isBack ? <div className="absolute inset-0 bg-black/54" /> : null}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_26%_18%,rgba(255,255,255,0.18),transparent_28%)]" />
 
-        <div className="relative mt-auto w-full p-4">
-          <h2 className="text-lg font-semibold leading-tight text-white">
-            {card.frontText || "Untitled"}
-          </h2>
-          {card.backText ? (
-            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
-              {card.backText}
-            </p>
-          ) : null}
-        </div>
-      </article>
-    </button>
+      <button
+        type="button"
+        aria-label="Open card detail"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen();
+        }}
+        className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/18 bg-black/35 text-lg font-semibold leading-none text-white/75 backdrop-blur transition hover:bg-black/55 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        ...
+      </button>
+
+      <span className="absolute left-3 top-3 z-10 rounded-full border border-white/18 bg-black/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/58 backdrop-blur">
+        {isBack ? "back" : "front"}
+      </span>
+
+      <div className="relative flex h-full flex-col justify-end p-4">
+        <h2 className="text-lg font-semibold leading-tight text-white">
+          {title}
+        </h2>
+        {caption ? (
+          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/55">
+            {caption}
+          </p>
+        ) : null}
+      </div>
+    </article>
   );
 }
 
@@ -128,6 +139,7 @@ function ModalCard({
 
 export default function TradingCardGrid({ cards }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const selectedCard = selectedIndex === null ? null : cards[selectedIndex];
   const hasMultipleCards = cards.length > 1;
 
@@ -148,6 +160,20 @@ export default function TradingCardGrid({ cards }: Props) {
     }
   }
 
+  function toggleCard(cardId: string) {
+    setFlippedIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(cardId)) {
+        next.delete(cardId);
+      } else {
+        next.add(cardId);
+      }
+
+      return next;
+    });
+  }
+
   if (cards.length === 0) {
     return (
       <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-sm text-white/55">
@@ -158,12 +184,14 @@ export default function TradingCardGrid({ cards }: Props) {
 
   return (
     <>
-      <div className="columns-2 gap-4 sm:columns-3 lg:columns-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
         {cards.map((card, index) => (
           <CardTile
             key={card.id}
             card={card}
             index={index}
+            isBack={flippedIds.has(card.id)}
+            onFlip={() => toggleCard(card.id)}
             onOpen={() => setSelectedIndex(index)}
           />
         ))}
