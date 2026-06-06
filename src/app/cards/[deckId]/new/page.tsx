@@ -23,5 +23,12 @@ export default async function NewDeckCardPage({ params }: Props) {
     notFound();
   }
 
-  return <NewCardForm deckId={deck.id} deckName={deck.name} />;
+  return (
+    <NewCardForm
+      backHref={`/cards/${deck.id}`}
+      deckId={deck.id}
+      deckName={deck.name}
+      deckOptions={decks}
+    />
+  );
 }

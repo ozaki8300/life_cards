@@ -14,6 +14,8 @@ export type Card = {
 
   imagePath?: string;
 
+  isFavorite?: boolean;
+
   frontText?: string;
 
   backText?: string;
