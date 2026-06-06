@@ -27,7 +27,8 @@ function TradingCard({
 }) {
   const accent = accents[index % accents.length];
   const title = isBack ? card.backText || "No back text" : card.frontText || "Untitled";
-  const caption = isBack ? "back" : card.backText;
+  const caption = isBack ? card.frontText : card.backText;
+  const hasImage = Boolean(card.imagePath);
 
   return (
     <article className="group relative aspect-[3/4] rounded-lg">
@@ -37,18 +38,33 @@ function TradingCard({
       <div
         className={`relative flex h-full flex-col justify-between overflow-hidden rounded-lg border border-white/15 bg-gradient-to-br ${accent} p-3 shadow-2xl shadow-black/50 transition duration-200 group-hover:-translate-y-1 group-hover:border-white/30 sm:p-4 ${isLarge ? "p-5 sm:p-6" : ""}`}
       >
+        {hasImage ? (
+          <div
+            className={`absolute inset-0 bg-cover bg-center ${isBack ? "opacity-18 blur-[1px]" : "opacity-100"}`}
+            style={{ backgroundImage: `url(${card.imagePath})` }}
+          />
+        ) : null}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_16%,rgba(255,255,255,0.24),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.82),rgba(0,0,0,0.08))]" />
+        {isBack ? (
+          <div className="absolute inset-0 bg-black/54" />
+        ) : null}
         <div className="absolute inset-x-4 top-4 h-px bg-white/30" />
         <div className="absolute inset-y-4 right-4 w-px bg-white/20" />
 
         <div className="relative flex items-start justify-between">
-          <div className={`${isLarge ? "h-16 w-16" : "h-12 w-12"} rounded-md border border-white/20 bg-white/12 backdrop-blur`} />
+          {hasImage && !isBack ? (
+            <div className={`${isLarge ? "h-24 w-24" : "h-16 w-16"} rounded-md border border-white/20 bg-white/14 bg-cover bg-center shadow-lg shadow-black/30 backdrop-blur`}
+              style={{ backgroundImage: `url(${card.imagePath})` }}
+            />
+          ) : (
+            <div className={`${isLarge ? "h-16 w-16" : "h-12 w-12"} rounded-md border border-white/20 bg-white/12 backdrop-blur`} />
+          )}
           <span className="rounded-full border border-white/20 bg-black/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/65">
             {isBack ? "back" : "front"}
           </span>
         </div>
 
-        <div className="relative">
+        <div className={`relative ${hasImage && !isBack ? "rounded-md bg-black/34 p-3 backdrop-blur-sm" : ""}`}>
           <h2 className={`${isLarge ? "text-2xl sm:text-3xl" : "text-base sm:text-lg"} font-semibold leading-tight text-white`}>
             {title}
           </h2>

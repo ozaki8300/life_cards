@@ -28,6 +28,7 @@ export const cards: Card[] = [
   {
     id: "lev-mountain",
     deckId: "lev",
+    imagePath: "/card-images/lev.svg",
     frontText: "山の登り方が違うだけ",
     backText: "LEV",
     createdAt: "2026-06-06",
@@ -44,6 +45,7 @@ export const cards: Card[] = [
   {
     id: "finance-portfolio-theory",
     deckId: "finance",
+    imagePath: "/card-images/finance.svg",
     frontText: "ポートフォリオ理論",
     backText: "Finance",
     createdAt: "2026-06-06",
@@ -52,6 +54,7 @@ export const cards: Card[] = [
   {
     id: "chatgpt-cheki",
     deckId: "chatgpt",
+    imagePath: "/card-images/chatgpt.svg",
     frontText: "チェキは人生の写真カード集め",
     backText: "ChatGPT",
     createdAt: "2026-06-06",

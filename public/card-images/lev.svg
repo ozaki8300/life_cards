@@ -1,0 +1,17 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="1000" fill="#111827"/>
+  <rect width="800" height="1000" fill="url(#sky)"/>
+  <path d="M0 710L214 428L352 612L472 456L800 828V1000H0V710Z" fill="#0f172a"/>
+  <path d="M88 742L298 510L424 684L534 540L800 838V1000H88V742Z" fill="#164e63" opacity="0.9"/>
+  <circle cx="618" cy="202" r="92" fill="#fbbf24" opacity="0.9"/>
+  <path d="M206 428L352 612L472 456L800 828" stroke="white" stroke-opacity="0.2" stroke-width="8"/>
+  <text x="64" y="100" fill="white" fill-opacity="0.86" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="700">LEV</text>
+  <text x="64" y="156" fill="white" fill-opacity="0.58" font-family="Arial, Helvetica, sans-serif" font-size="24" letter-spacing="8">CLIMBING FRAME</text>
+  <defs>
+    <linearGradient id="sky" x1="96" y1="0" x2="704" y2="1000" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38bdf8"/>
+      <stop offset="0.42" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+</svg>

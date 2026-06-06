@@ -1,0 +1,22 @@
+<svg width="800" height="1000" viewBox="0 0 800 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="1000" fill="#0a0a0a"/>
+  <rect width="800" height="1000" fill="url(#market)"/>
+  <path d="M74 732L208 604L330 654L468 438L594 508L726 274" stroke="#d9f99d" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M74 732L208 604L330 654L468 438L594 508L726 274" stroke="#052e16" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <g opacity="0.38">
+    <rect x="94" y="202" width="72" height="640" rx="12" fill="white"/>
+    <rect x="218" y="302" width="72" height="540" rx="12" fill="white"/>
+    <rect x="342" y="390" width="72" height="452" rx="12" fill="white"/>
+    <rect x="466" y="252" width="72" height="590" rx="12" fill="white"/>
+    <rect x="590" y="150" width="72" height="692" rx="12" fill="white"/>
+  </g>
+  <text x="64" y="100" fill="white" fill-opacity="0.88" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="700">Finance</text>
+  <text x="64" y="156" fill="white" fill-opacity="0.58" font-family="Arial, Helvetica, sans-serif" font-size="24" letter-spacing="8">VALUATION MAP</text>
+  <defs>
+    <linearGradient id="market" x1="0" y1="0" x2="800" y2="1000" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#052e16"/>
+      <stop offset="0.5" stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#18181b"/>
+    </linearGradient>
+  </defs>
+</svg>
