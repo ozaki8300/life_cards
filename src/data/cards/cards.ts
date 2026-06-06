@@ -1,0 +1,60 @@
+import { Card } from "@/lib/types";
+
+export const cards: Card[] = [
+  {
+    id: "lev-day1",
+    deckId: "lev",
+    frontText: "Day1",
+    backText: "LEV",
+    createdAt: "2026-06-06",
+    updatedAt: "2026-06-06",
+  },
+  {
+    id: "lev-day2",
+    deckId: "lev",
+    frontText: "Day2",
+    backText: "LEV",
+    createdAt: "2026-06-06",
+    updatedAt: "2026-06-06",
+  },
+  {
+    id: "lev-jitsugaku",
+    deckId: "lev",
+    frontText: "実学",
+    backText: "LEV",
+    createdAt: "2026-06-06",
+    updatedAt: "2026-06-06",
+  },
+  {
+    id: "lev-mountain",
+    deckId: "lev",
+    frontText: "山の登り方が違うだけ",
+    backText: "LEV",
+    createdAt: "2026-06-06",
+    updatedAt: "2026-06-06",
+  },
+  {
+    id: "finance-dcf",
+    deckId: "finance",
+    frontText: "DCF",
+    backText: "Finance",
+    createdAt: "2026-06-06",
+    updatedAt: "2026-06-06",
+  },
+  {
+    id: "finance-portfolio-theory",
+    deckId: "finance",
+    frontText: "ポートフォリオ理論",
+    backText: "Finance",
+    createdAt: "2026-06-06",
+    updatedAt: "2026-06-06",
+  },
+  {
+    id: "chatgpt-cheki",
+    deckId: "chatgpt",
+    frontText: "チェキは人生の写真カード集め",
+    backText: "ChatGPT",
+    createdAt: "2026-06-06",
+    updatedAt: "2026-06-06",
+  },
+];

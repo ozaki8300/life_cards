@@ -1,5 +1,10 @@
 import DeckCard from "@/components/DeckCard";
+import { cards } from "@/data/cards/cards";
 import { decks } from "@/data/decks/decks";
+
+function cardCountForDeck(deckId: string) {
+  return cards.filter((card) => card.deckId === deckId).length;
+}
 
 export default function CardsPage() {
   return (
@@ -19,9 +24,10 @@ export default function CardsPage() {
             <DeckCard
               key={deck.id}
               name={deck.name}
-              cardCount={deck.cardCount}
+              cardCount={cardCountForDeck(deck.id)}
               isShared={deck.isShared}
               coverImage={deck.coverImage}
+              href={`/cards/${deck.id}`}
             />
           ))}
         </div>

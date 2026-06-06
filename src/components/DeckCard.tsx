@@ -1,8 +1,11 @@
+import Link from "next/link";
+
 type Props = {
   name: string;
   cardCount?: number;
   isShared: boolean;
   coverImage?: string;
+  href?: string;
 };
 
 const gradients = [
@@ -17,12 +20,12 @@ function gradientForName(name: string) {
   return gradients[index % gradients.length];
 }
 
-export default function DeckCard({ name, cardCount = 0, isShared, coverImage }: Props) {
+export default function DeckCard({ name, cardCount = 0, isShared, coverImage, href }: Props) {
   const coverStyle = {
     backgroundImage: coverImage ? `url(${coverImage})` : gradientForName(name),
   };
 
-  return (
+  const card = (
     <article className="group relative aspect-[3/4] rounded-lg">
       <div className="absolute inset-x-2 top-2 h-full rounded-lg border border-white/10 bg-zinc-800/80 shadow-xl shadow-black/40 transition group-hover:translate-y-1" />
       <div className="absolute inset-x-1 top-1 h-full rounded-lg border border-white/10 bg-zinc-700/80 shadow-xl shadow-black/40 transition group-hover:translate-y-0.5" />
@@ -51,5 +54,18 @@ export default function DeckCard({ name, cardCount = 0, isShared, coverImage }: 
         </div>
       </div>
     </article>
+  );
+
+  if (!href) {
+    return card;
+  }
+
+  return (
+    <Link
+      href={href}
+      className="block focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+    >
+      {card}
+    </Link>
   );
 }
