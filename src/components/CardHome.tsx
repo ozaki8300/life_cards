@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import type { EncounterMetadata } from "@/domain/reencounter/types";
 import type { Card, Deck } from "@/lib/types";
 import { CardRepository } from "@/lib/cardRepository";
 import { DeckRepository } from "@/lib/deckRepository";
+import { EncounterRepository } from "@/lib/encounterRepository";
+import { ReencounterEngine } from "@/domain/reencounter/engine";
 
 import CardFirstNav from "./CardFirstNav";
 import ReencounterSection from "./cards/ReencounterSection";
@@ -12,7 +15,6 @@ import TradingCardGrid from "./cards/TradingCardGrid";
 import {
   cardSearchText,
   keywordsFor,
-  pickReencounterCards,
   sortCardsByNewest,
 } from "./cards/cardHomeUtils";
 
@@ -27,6 +29,9 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
   const [allDecks, setAllDecks] = useState(decks);
   const [activeTab, setActiveTab] = useState("すべて");
   const [searchQuery, setSearchQuery] = useState("");
+  const [encounterMetadataByCardId, setEncounterMetadataByCardId] = useState<
+    Record<string, EncounterMetadata>
+  >({});
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -51,9 +56,11 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
 
       const repositoryCards = CardRepository.getCards(cards);
       const repositoryDecks = DeckRepository.getDecks(decks);
+      const repositoryEncounterMetadata = EncounterRepository.getMetadataMap();
 
       setAllCards(repositoryCards);
       setAllDecks(repositoryDecks);
+      setEncounterMetadataByCardId(repositoryEncounterMetadata);
       setFavoriteIds(
         new Set(
           repositoryCards
@@ -112,7 +119,16 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     });
   }
 
+  const recordCardView = useCallback((cardId: string) => {
+    EncounterRepository.recordView(cardId, new Date().toISOString());
+  }, []);
+
+  const recordCardReencounter = useCallback((cardId: string) => {
+    EncounterRepository.recordReencounter(cardId, new Date().toISOString());
+  }, []);
+
   const activeFavoriteIds = Array.from(favoriteIds);
+  const today = new Date().toISOString().slice(0, 10);
   const todayCards = useMemo(() => {
     const seedFavoriteIds = new Set(
       scopedCards
@@ -120,8 +136,13 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         .map((card) => card.id),
     );
 
-    return pickReencounterCards(scopedCards, seedFavoriteIds);
-  }, [scopedCards]);
+    return ReencounterEngine.pick({
+      cards: scopedCards,
+      favoriteIds: seedFavoriteIds,
+      metadataByCardId: encounterMetadataByCardId,
+      today,
+    });
+  }, [encounterMetadataByCardId, scopedCards, today]);
 
   return (
     <div className="space-y-6">
@@ -131,6 +152,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         cards={todayCards}
         decks={allDecks}
         favoriteIds={activeFavoriteIds}
+        onCardViewed={recordCardReencounter}
         onToggleFavorite={toggleFavorite}
       />
 
@@ -150,6 +172,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
             cards={visibleCards}
             decks={allDecks}
             favoriteIds={activeFavoriteIds}
+            onCardViewed={recordCardView}
             onToggleFavorite={toggleFavorite}
           />
         </section>

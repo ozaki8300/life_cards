@@ -1,4 +1,5 @@
 import type { Card, Deck } from "@/lib/types";
+import { ReencounterEngine } from "@/domain/reencounter/engine";
 
 export function keywordsFor(query: string) {
   return query
@@ -36,27 +37,5 @@ export function sortCardsByNewest(cards: Card[]) {
 }
 
 export function pickReencounterCards(cards: Card[], favoriteIds: Set<string>) {
-  const picked: Card[] = [];
-  const pickedIds = new Set<string>();
-
-  // MVP: favorite cards first. Later this becomes lastViewedAt/reencounterScore/randomSeed.
-  for (const card of cards) {
-    if (favoriteIds.has(card.id) && picked.length < 5) {
-      picked.push(card);
-      pickedIds.add(card.id);
-    }
-  }
-
-  for (const card of cards) {
-    if (picked.length >= 5) {
-      break;
-    }
-
-    if (!pickedIds.has(card.id)) {
-      picked.push(card);
-      pickedIds.add(card.id);
-    }
-  }
-
-  return picked;
+  return ReencounterEngine.pick({ cards, favoriteIds });
 }

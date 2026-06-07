@@ -10,6 +10,7 @@ type Props = {
   cards: Card[];
   decks: Deck[];
   favoriteIds: string[];
+  onCardViewed?: (cardId: string) => void;
   onToggleFavorite: (cardId: string) => void;
 };
 
@@ -19,6 +20,7 @@ export default function ReencounterSection({
   cards,
   decks,
   favoriteIds,
+  onCardViewed,
   onToggleFavorite,
 }: Props) {
   if (cards.length === 0) {
@@ -40,6 +42,7 @@ export default function ReencounterSection({
         decks={decks}
         favoriteIds={favoriteIds}
         layout="rail"
+        onCardViewed={onCardViewed}
         onToggleFavorite={onToggleFavorite}
       />
     </section>

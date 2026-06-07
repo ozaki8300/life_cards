@@ -14,6 +14,7 @@ type Props = {
   decks?: Deck[];
   favoriteIds?: string[];
   layout?: "grid" | "rail";
+  onCardViewed?: (cardId: string) => void;
   onToggleFavorite?: (cardId: string) => void;
 };
 
@@ -30,6 +31,7 @@ export default function TradingCardGrid({
   decks = [],
   favoriteIds,
   layout = "grid",
+  onCardViewed,
   onToggleFavorite,
 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -55,8 +57,9 @@ export default function TradingCardGrid({
       setSelectedIndex(boundedIndex);
       setIsEditing(false);
       setIsSharing(false);
+      onCardViewed?.(cards[boundedIndex].id);
     },
-    [cards.length],
+    [cards, onCardViewed],
   );
 
   const showPrevious = useCallback(() => {
@@ -136,6 +139,11 @@ export default function TradingCardGrid({
     });
   }
 
+  function openCard(index: number) {
+    setSelectedIndex(index);
+    onCardViewed?.(cards[index].id);
+  }
+
   function deleteCard(card: Card) {
     if (window.confirm("このカードを削除しますか？")) {
       console.log("Life Cards delete draft", card.id);
@@ -184,7 +192,7 @@ export default function TradingCardGrid({
         isFavorite={activeFavoriteIds.has(card.id)}
         layout={layout}
         onFlip={() => toggleCard(card.id)}
-        onOpen={() => setSelectedIndex(index)}
+        onOpen={() => openCard(index)}
         onToggleFavorite={() => toggleFavorite(card.id)}
       />
     </div>
