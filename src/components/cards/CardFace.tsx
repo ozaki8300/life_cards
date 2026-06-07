@@ -165,7 +165,7 @@ export default function CardFace({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(event) => event.stopPropagation()}
-              className="mt-3 block shrink-0 truncate rounded-full border border-[#d8c8aa] bg-white/64 px-3 py-2 text-xs font-semibold text-[#6f6253] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+              className="mt-2.5 block shrink-0 truncate rounded-full border border-[#d8c8aa]/45 bg-white/28 px-2.5 py-1.5 text-xs font-semibold text-[#8a6410] transition hover:border-[#d8c8aa]/70 hover:bg-white/44 focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
             >
               Open link ↗
             </a>
