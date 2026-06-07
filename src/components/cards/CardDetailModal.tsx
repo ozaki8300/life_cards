@@ -1,11 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type {
-  MouseEvent,
-  PointerEvent,
-  TouchEvent,
-} from "react";
+import type { MouseEvent, TouchEvent } from "react";
 
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -14,21 +10,9 @@ import CardFace from "./CardFace";
 import CardDetailActionBar from "./CardDetailActionBar";
 import CardDetailPhotoFace from "./CardDetailPhotoFace";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
+import usePhotoPanZoom from "./usePhotoPanZoom";
 
-const photoZoomLevels = [1, 1.5, 2, 3] as const;
 const viewModes = ["front", "back", "photo"] as const;
-
-type PhotoOffset = {
-  x: number;
-  y: number;
-};
-
-type PhotoDragStart = {
-  offsetX: number;
-  offsetY: number;
-  x: number;
-  y: number;
-};
 
 export default function CardDetailModal({
   card,
@@ -55,18 +39,26 @@ export default function CardDetailModal({
   onToggleFavorite: () => void;
 }) {
   const [rotationStep, setRotationStep] = useState(0);
-  const [photoZoom, setPhotoZoom] = useState(1);
-  const [photoOffset, setPhotoOffset] = useState<PhotoOffset>({ x: 0, y: 0 });
-  const [photoDragStart, setPhotoDragStart] = useState<PhotoDragStart | null>(
-    null,
-  );
   const touchStartX = useRef<number | null>(null);
   const shouldSkipNextClick = useRef(false);
   const backgroundImage = card.imagePath || defaultImageForCard(card.id);
   const date = formatDate(card.createdAt);
-  const zoomLabel =
-    Number.isInteger(photoZoom) ? `${photoZoom}x` : `${photoZoom.toFixed(1)}x`;
   const viewMode = viewModes[rotationStep % viewModes.length];
+  const {
+    photoZoom,
+    photoOffset,
+    isPhotoDragging,
+    zoomLabel,
+    resetPhotoZoom,
+    increasePhotoZoom,
+    decreasePhotoZoom,
+    handlePhotoPointerDown,
+    handlePhotoPointerMove,
+    handlePhotoPointerEnd,
+  } = usePhotoPanZoom({
+    isPhotoMode: viewMode === "photo",
+    shouldSkipNextClickRef: shouldSkipNextClick,
+  });
   const rotationAngle = rotationStep * 180;
   const currentViewIndex = rotationStep % viewModes.length;
 
@@ -79,7 +71,6 @@ export default function CardDetailModal({
   const frontFaceStep = faceStepFor(0);
   const backFaceStep = faceStepFor(1);
   const photoFaceStep = faceStepFor(2);
-  const isPhotoDragging = Boolean(photoDragStart);
 
   function showFront() {
     resetPhotoZoom();
@@ -103,13 +94,6 @@ export default function CardDetailModal({
     setRotationStep((current) => current + 1);
   }
 
-  function resetPhotoZoom() {
-    setPhotoZoom(1);
-    setPhotoOffset({ x: 0, y: 0 });
-    setPhotoDragStart(null);
-    shouldSkipNextClick.current = false;
-  }
-
   useEscapeKey(() => {
     if (viewMode === "photo") {
       showFront();
@@ -119,31 +103,6 @@ export default function CardDetailModal({
     onClose();
   });
 
-  function increasePhotoZoom() {
-    const nextZoom = photoZoomLevels.find((zoom) => zoom > photoZoom);
-
-    if (nextZoom) {
-      setPhotoZoom(nextZoom);
-    }
-  }
-
-  function decreasePhotoZoom() {
-    const nextZoom = [...photoZoomLevels]
-      .reverse()
-      .find((zoom) => zoom < photoZoom);
-
-    if (!nextZoom) {
-      return;
-    }
-
-    if (nextZoom === 1) {
-      resetPhotoZoom();
-      return;
-    }
-
-    setPhotoZoom(nextZoom);
-  }
-
   function showPreviousPhoto() {
     resetPhotoZoom();
     onPrevious();
@@ -152,65 +111,6 @@ export default function CardDetailModal({
   function showNextPhoto() {
     resetPhotoZoom();
     onNext();
-  }
-
-  function clampPhotoOffset(
-    offset: PhotoOffset,
-    element: HTMLElement,
-  ): PhotoOffset {
-    const maxX = (element.clientWidth * (photoZoom - 1)) / 2;
-    const maxY = (element.clientHeight * (photoZoom - 1)) / 2;
-
-    return {
-      x: Math.max(-maxX, Math.min(maxX, offset.x)),
-      y: Math.max(-maxY, Math.min(maxY, offset.y)),
-    };
-  }
-
-  function handlePhotoPointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (viewMode !== "photo" || photoZoom <= 1) {
-      return;
-    }
-
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setPhotoDragStart({
-      offsetX: photoOffset.x,
-      offsetY: photoOffset.y,
-      x: event.clientX,
-      y: event.clientY,
-    });
-  }
-
-  function handlePhotoPointerMove(event: PointerEvent<HTMLDivElement>) {
-    if (!photoDragStart) {
-      return;
-    }
-
-    const deltaX = event.clientX - photoDragStart.x;
-    const deltaY = event.clientY - photoDragStart.y;
-
-    if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-      shouldSkipNextClick.current = true;
-    }
-
-    setPhotoOffset(
-      clampPhotoOffset(
-        {
-          x: photoDragStart.offsetX + deltaX,
-          y: photoDragStart.offsetY + deltaY,
-        },
-        event.currentTarget,
-      ),
-    );
-  }
-
-  function handlePhotoPointerEnd(event: PointerEvent<HTMLDivElement>) {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
-    setPhotoDragStart(null);
   }
 
   function handleCardTouchStart(event: TouchEvent<HTMLElement>) {
