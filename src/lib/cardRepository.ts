@@ -1,4 +1,5 @@
 import { cards as seedCards } from "@/data/cards/cards";
+import { CardSupabaseRepository } from "@/lib/supabase/cardSupabaseRepository";
 import type { Card } from "@/lib/types";
 
 import { STORAGE_KEYS } from "./storageKeys";
@@ -45,8 +46,21 @@ export const CardRepository = {
     return readStoredCards() ?? seed;
   },
 
-  saveCard(card: Card) {
-    const cards = CardRepository.getCards();
+  async getCardsForCurrentUser(seed: Card[] = seedCards) {
+    try {
+      return (
+        (await CardSupabaseRepository.seedCardsIfEmpty(
+          CardRepository.getCards(seed),
+        )) ?? CardRepository.getCards(seed)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase cards fetch failed", error);
+      return CardRepository.getCards(seed);
+    }
+  },
+
+  saveCard(card: Card, seed: Card[] = seedCards) {
+    const cards = CardRepository.getCards(seed);
     const nextCards = cards.some((item) => item.id === card.id)
       ? cards.map((item) => (item.id === card.id ? card : item))
       : [...cards, card];
@@ -55,24 +69,70 @@ export const CardRepository = {
     return nextCards;
   },
 
-  updateCard(card: Card) {
-    const cards = CardRepository.getCards();
+  async saveCardForCurrentUser(card: Card, seed: Card[] = seedCards) {
+    try {
+      return (
+        (await CardSupabaseRepository.saveCard(
+          card,
+          CardRepository.getCards(seed),
+        )) ?? CardRepository.saveCard(card, seed)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase card save failed", error);
+      return CardRepository.saveCard(card, seed);
+    }
+  },
+
+  updateCard(card: Card, seed: Card[] = seedCards) {
+    const cards = CardRepository.getCards(seed);
     const nextCards = cards.map((item) => (item.id === card.id ? card : item));
 
     writeStoredCards(nextCards);
     return nextCards;
   },
 
-  deleteCard(cardId: string) {
-    const cards = CardRepository.getCards();
+  async updateCardForCurrentUser(card: Card, seed: Card[] = seedCards) {
+    try {
+      return (
+        (await CardSupabaseRepository.updateCard(
+          card,
+          CardRepository.getCards(seed),
+        )) ?? CardRepository.updateCard(card, seed)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase card update failed", error);
+      return CardRepository.updateCard(card, seed);
+    }
+  },
+
+  deleteCard(cardId: string, seed: Card[] = seedCards) {
+    const cards = CardRepository.getCards(seed);
     const nextCards = cards.filter((card) => card.id !== cardId);
 
     writeStoredCards(nextCards);
     return nextCards;
   },
 
-  moveCardsToDeck(fromDeckId: string, toDeckId: string) {
-    const cards = CardRepository.getCards();
+  async deleteCardForCurrentUser(cardId: string, seed: Card[] = seedCards) {
+    try {
+      return (
+        (await CardSupabaseRepository.deleteCard(
+          cardId,
+          CardRepository.getCards(seed),
+        )) ?? CardRepository.deleteCard(cardId, seed)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase card delete failed", error);
+      return CardRepository.deleteCard(cardId, seed);
+    }
+  },
+
+  moveCardsToDeck(
+    fromDeckId: string,
+    toDeckId: string,
+    seed: Card[] = seedCards,
+  ) {
+    const cards = CardRepository.getCards(seed);
     const today = todayInputValue();
     const nextCards = cards.map((card) =>
       card.deckId === fromDeckId
@@ -86,5 +146,24 @@ export const CardRepository = {
 
     writeStoredCards(nextCards);
     return nextCards;
+  },
+
+  async moveCardsToDeckForCurrentUser(
+    fromDeckId: string,
+    toDeckId: string,
+    seed: Card[] = seedCards,
+  ) {
+    try {
+      return (
+        (await CardSupabaseRepository.moveCardsToDeck(
+          fromDeckId,
+          toDeckId,
+          CardRepository.getCards(seed),
+        )) ?? CardRepository.moveCardsToDeck(fromDeckId, toDeckId, seed)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase card move failed", error);
+      return CardRepository.moveCardsToDeck(fromDeckId, toDeckId, seed);
+    }
   },
 };

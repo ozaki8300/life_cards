@@ -54,8 +54,9 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         return;
       }
 
-      const repositoryCards = CardRepository.getCards(cards);
       const repositoryDecks = await DeckRepository.getDecksForCurrentUser(decks);
+      const repositoryCards =
+        await CardRepository.getCardsForCurrentUser(cards);
       const repositoryEncounterMetadata = EncounterRepository.getMetadataMap();
 
       if (!isActive) {
@@ -98,7 +99,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     return sortCardsByNewest(filteredCards);
   }, [activeTab, allDecks, favoriteIds, scopedCards, searchQuery]);
 
-  function toggleFavorite(cardId: string) {
+  async function toggleFavorite(cardId: string) {
     const card = allCards.find((item) => item.id === cardId);
 
     if (card) {
@@ -107,7 +108,12 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         isFavorite: !favoriteIds.has(cardId),
       };
 
-      CardRepository.updateCard(updatedCard);
+      const nextCards = await CardRepository.updateCardForCurrentUser(
+        updatedCard,
+        allCards,
+      );
+
+      setAllCards(nextCards);
     }
 
     setFavoriteIds((current) => {
@@ -131,8 +137,11 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     EncounterRepository.recordReencounter(cardId, new Date().toISOString());
   }, []);
 
-  const handleDeleteCard = useCallback((cardId: string) => {
-    const nextCards = CardRepository.deleteCard(cardId);
+  const handleDeleteCard = useCallback(async (cardId: string) => {
+    const nextCards = await CardRepository.deleteCardForCurrentUser(
+      cardId,
+      allCards,
+    );
     const nextEncounterMetadata = EncounterRepository.deleteMetadata(cardId);
 
     setAllCards(nextCards);
@@ -146,7 +155,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
       next.delete(cardId);
       return next;
     });
-  }, []);
+  }, [allCards]);
 
   const activeFavoriteIds = Array.from(favoriteIds);
   const today = new Date().toISOString().slice(0, 10);

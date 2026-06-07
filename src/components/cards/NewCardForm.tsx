@@ -24,7 +24,7 @@ export default function NewCardForm({
   const router = useRouter();
   const initialDeckId = deckId ?? deckOptions[0]?.id ?? "";
 
-  function handleSubmit(values: CardFormValues) {
+  async function handleSubmit(values: CardFormValues) {
     const nextCard: Card = {
       id: `card_${Date.now()}`,
       deckId: values.deckId,
@@ -37,7 +37,7 @@ export default function NewCardForm({
       isFavorite: false,
     };
 
-    CardRepository.saveCard(nextCard);
+    await CardRepository.saveCardForCurrentUser(nextCard);
     console.log("Life Cards saved", nextCard);
     router.push(backHref);
   }

@@ -18,7 +18,7 @@ export default function CardEditDialog({
 }) {
   useEscapeKey(onClose);
 
-  function handleSubmit(values: CardFormValues) {
+  async function handleSubmit(values: CardFormValues) {
     const nextCard: Card = {
       ...card,
       deckId: values.deckId,
@@ -30,7 +30,7 @@ export default function CardEditDialog({
       updatedAt: todayInputValue(),
     };
 
-    CardRepository.updateCard(nextCard);
+    await CardRepository.updateCardForCurrentUser(nextCard, [card]);
     console.log("Life Cards edit saved", nextCard);
     alert("編集内容を保存しました。");
     onClose();

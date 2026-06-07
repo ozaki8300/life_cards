@@ -31,7 +31,7 @@ type Props = {
   initialValues: CardFormValues;
   mode: "new" | "edit";
   onCancel?: () => void;
-  onSubmit: (values: CardFormValues) => void;
+  onSubmit: (values: CardFormValues) => Promise<void> | void;
   saveLabel?: string;
 };
 
@@ -194,10 +194,10 @@ export default function CardForm({
     console.log("draft action", action.draftLabel);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    onSubmit({
+    await onSubmit({
       backText,
       cardDate,
       deckId: selectedDeckId,

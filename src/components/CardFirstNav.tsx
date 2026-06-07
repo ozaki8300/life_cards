@@ -165,7 +165,11 @@ export default function CardFirstNav({
       deck.id,
       decks,
     );
-    const nextCards = CardRepository.moveCardsToDeck(deck.id, "uncategorized");
+    const nextCards = await CardRepository.moveCardsToDeckForCurrentUser(
+      deck.id,
+      "uncategorized",
+      cards,
+    );
 
     onDecksChange?.(nextDecks);
     onCardsChange?.(nextCards);
