@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
 const aboutParagraphs = [
@@ -59,6 +61,22 @@ export default function AboutLifeCardsModal({ onClose }: Props) {
           {aboutParagraphs.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
+        </div>
+
+        <div className="mt-7 border-t border-[#eadfce] pt-5 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
+            Life Cards QR
+          </p>
+          <Image
+            src="/life-cards-qr.png"
+            alt="Life Cards QR"
+            width={320}
+            height={320}
+            className="mx-auto mt-3 h-32 w-32 rounded-[12px] border border-[#e8ddcb] bg-white p-2 shadow-sm"
+          />
+          <p className="mt-2 break-all text-xs leading-5 text-[#8d7f6e]">
+            https://life-cards-three.vercel.app/
+          </p>
         </div>
       </section>
     </div>
