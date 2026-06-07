@@ -73,14 +73,14 @@ export default function CardShareDialog({
 
   return (
     <div
-      className="fixed inset-0 z-20 flex items-center justify-center bg-[#3b3126]/30 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-20 overflow-y-auto bg-[#3b3126]/30 px-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-sm [-webkit-overflow-scrolling:touch] sm:flex sm:items-center sm:justify-center sm:py-6"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-xl rounded-[20px] border border-[#e8ddcb] bg-[#fffaf0] p-5 shadow-[0_28px_80px_rgba(87,72,52,0.3)] sm:p-6"
+        className="relative mx-auto max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-2rem)] w-full max-w-xl overflow-y-auto rounded-[20px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_28px_80px_rgba(87,72,52,0.3)] [-webkit-overflow-scrolling:touch] sm:p-6"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="sticky top-0 z-10 -mx-4 -mt-4 flex items-start justify-between gap-4 border-b border-[#eadfce] bg-[#fffaf0]/96 px-4 pb-3 pt-4 backdrop-blur sm:static sm:m-0 sm:border-b-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-0">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a19380]">
               Share
@@ -92,13 +92,13 @@ export default function CardShareDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-1 text-sm font-semibold text-[#7d705f] transition hover:bg-white"
+            className="shrink-0 rounded-full border border-[#e0d3c0] bg-white px-4 py-2 text-sm font-semibold text-[#7d705f] shadow-sm transition hover:bg-white"
           >
             閉じる
           </button>
         </div>
 
-        <div className="mt-5 grid gap-5 sm:grid-cols-[minmax(0,1fr)_180px]">
+        <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px] sm:gap-5">
           <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] p-3">
             <div
               className="overflow-hidden rounded-[14px] border border-[#e0d3c0] bg-[#fffaf0] p-3 shadow-sm"
@@ -135,7 +135,7 @@ export default function CardShareDialog({
             ) : null}
           </section>
 
-          <section className="rounded-[16px] border border-[#e8ddcb] bg-white/70 p-4">
+          <section className="mx-auto w-full max-w-[220px] rounded-[16px] border border-[#e8ddcb] bg-white/70 p-3 sm:max-w-none sm:p-4">
             <div className="grid aspect-square grid-cols-9 gap-1 rounded-[14px] border border-[#e0d3c0] bg-[#fffaf0] p-3">
               {qrCells.map((isFilled, cellIndex) => (
                 <span

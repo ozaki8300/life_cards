@@ -10,6 +10,7 @@ type Props = {
   face: "front" | "back";
   frontComment?: string;
   frontText?: string;
+  preserve3d?: boolean;
   size: CardFaceSize;
 };
 
@@ -57,17 +58,23 @@ export default function CardFace({
   face,
   frontComment = "",
   frontText = "",
+  preserve3d = true,
   size,
 }: Props) {
   const styles = faceSize[size];
   const backgroundStyle = { backgroundImage: `url(${backgroundImage})` };
   const isBack = face === "back";
+  const faceTransform = isBack
+    ? preserve3d
+      ? "[transform:rotateY(180deg)_translateZ(0)]"
+      : "[transform:translateZ(0)]"
+    : "[transform:translateZ(0)]";
 
   return (
     <section
-      className={`absolute inset-0 overflow-hidden border border-white/25 bg-cover bg-center [backface-visibility:hidden] ${
+      className={`absolute inset-0 overflow-hidden border border-white/25 bg-cover bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
         styles.rounded
-      } ${isBack ? "[transform:rotateY(180deg)]" : ""}`}
+      } ${faceTransform}`}
       style={backgroundStyle}
     >
       {isBack ? <div className="absolute inset-0 backdrop-blur-[1.5px]" /> : null}

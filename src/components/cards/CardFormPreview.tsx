@@ -31,12 +31,12 @@ export default function CardFormPreview({
       <button
         type="button"
         onClick={() => setIsBack((current) => !current)}
-        className="group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-[22px] text-left shadow-[0_20px_54px_rgba(87,72,52,0.24)] [perspective:1000px] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+        className="group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-[22px] text-left shadow-[0_20px_54px_rgba(87,72,52,0.24)] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
         aria-label={isBack ? "表面プレビューを表示" : "裏面プレビューを表示"}
       >
         <div
-          className={`absolute inset-0 rounded-[22px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none ${
-            isBack ? "[transform:rotateY(180deg)]" : ""
+          className={`absolute inset-0 transition-opacity duration-150 ${
+            isBack ? "invisible opacity-0" : "visible opacity-100"
           }`}
         >
           <CardFace
@@ -47,8 +47,15 @@ export default function CardFormPreview({
             face="front"
             frontComment={frontComment}
             frontText={frontText}
+            preserve3d={false}
             size="preview"
           />
+        </div>
+        <div
+          className={`absolute inset-0 transition-opacity duration-150 ${
+            isBack ? "visible opacity-100" : "invisible opacity-0"
+          }`}
+        >
           <CardFace
             backgroundImage={previewBackground}
             backText={backText}
@@ -57,6 +64,7 @@ export default function CardFormPreview({
             face="back"
             frontComment={frontComment}
             frontText={frontText}
+            preserve3d={false}
             size="preview"
           />
         </div>
