@@ -5,6 +5,7 @@ import type { ChangeEvent, FormEvent } from "react";
 
 import { DeckRepository } from "@/lib/deckRepository";
 import { compressImage } from "@/lib/imageCompression";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Deck } from "@/lib/types";
 
 import BackMemoEditor from "./BackMemoEditor";
@@ -15,6 +16,9 @@ import {
   imageActions,
   todayInputValue,
 } from "./cardFormUtils";
+
+const imageLoginMessage =
+  "写真カードはログイン後に利用できます。ログインすると画像をクラウド保存し、PC/スマホで同期できます。";
 
 export type CardFormValues = {
   backText: string;
@@ -55,6 +59,7 @@ export default function CardForm({
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
   const [availableDecks, setAvailableDecks] = useState(deckOptions);
   const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const selectedDeckName =
@@ -76,6 +81,11 @@ export default function CardForm({
 
   const applyImageFile = useCallback(
     async (file: File, label: string) => {
+      if (!isSignedIn) {
+        alert(imageLoginMessage);
+        return;
+      }
+
       try {
         const result = await compressImage(file);
 
@@ -86,8 +96,43 @@ export default function CardForm({
         applyImageFileFallback(file, label);
       }
     },
-    [applyImageFileFallback],
+    [applyImageFileFallback, isSignedIn],
   );
+
+  useEffect(() => {
+    let isActive = true;
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+
+      supabase.auth.getSession().then(({ data }) => {
+        if (isActive) {
+          setIsSignedIn(Boolean(data.session?.user));
+        }
+      });
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsSignedIn(Boolean(session?.user));
+      });
+
+      return () => {
+        isActive = false;
+        subscription.unsubscribe();
+      };
+    } catch {
+      queueMicrotask(() => {
+        if (isActive) {
+          setIsSignedIn(false);
+        }
+      });
+    }
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -115,6 +160,11 @@ export default function CardForm({
 
       if (file) {
         event.preventDefault();
+        if (!isSignedIn) {
+          alert(imageLoginMessage);
+          return;
+        }
+
         applyImageFile(file, "貼り付け画像");
       }
     }
@@ -122,7 +172,7 @@ export default function CardForm({
     window.addEventListener("paste", handlePaste);
 
     return () => window.removeEventListener("paste", handlePaste);
-  }, [applyImageFile]);
+  }, [applyImageFile, isSignedIn]);
 
   function handleFileChange(
     event: ChangeEvent<HTMLInputElement>,
@@ -131,6 +181,12 @@ export default function CardForm({
     const file = event.target.files?.[0];
 
     if (file) {
+      if (!isSignedIn) {
+        alert(imageLoginMessage);
+        event.target.value = "";
+        return;
+      }
+
       applyImageFile(file, label);
     }
 
@@ -166,6 +222,11 @@ export default function CardForm({
   }
 
   function handleImageAction(action: (typeof imageActions)[number]) {
+    if (!isSignedIn) {
+      alert(imageLoginMessage);
+      return;
+    }
+
     if (action.id === "photo") {
       photoInputRef.current?.click();
       return;
@@ -228,11 +289,20 @@ export default function CardForm({
 
         <section className="grid gap-4 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5">
           <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
-            <div>
+            <div className="grid gap-2">
+              <p className="text-xs font-semibold text-[#8d7f6e]">
+                {isSignedIn ? "クラウド同期中" : "この端末にテキスト保存中"}
+              </p>
+              {!isSignedIn ? (
+                <p className="text-xs leading-5 text-[#7d705f]">
+                  {imageLoginMessage}
+                </p>
+              ) : null}
               <input
                 ref={photoInputRef}
                 type="file"
                 accept="image/*"
+                disabled={!isSignedIn}
                 className="hidden"
                 onChange={(event) => handleFileChange(event, "写真")}
               />
@@ -241,6 +311,7 @@ export default function CardForm({
                 type="file"
                 accept="image/*"
                 capture="environment"
+                disabled={!isSignedIn}
                 className="hidden"
                 onChange={(event) => handleFileChange(event, "カメラ")}
               />
@@ -250,8 +321,9 @@ export default function CardForm({
                   <button
                     key={action.id}
                     type="button"
+                    disabled={!isSignedIn}
                     onClick={() => handleImageAction(action)}
-                    className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                    className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
                       imageLabel === action.label
                         ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
                         : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
