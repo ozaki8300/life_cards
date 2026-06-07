@@ -22,4 +22,11 @@ export const decks: Deck[] = [
     isShared: false,
     createdAt: "2026-06-06",
   },
+  {
+    id: "uncategorized",
+    name: "未分類",
+    cardCount: 0,
+    isShared: false,
+    createdAt: "2026-06-06",
+  },
 ];
