@@ -127,6 +127,23 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     EncounterRepository.recordReencounter(cardId, new Date().toISOString());
   }, []);
 
+  const handleDeleteCard = useCallback((cardId: string) => {
+    const nextCards = CardRepository.deleteCard(cardId);
+    const nextEncounterMetadata = EncounterRepository.deleteMetadata(cardId);
+
+    setAllCards(nextCards);
+    setEncounterMetadataByCardId(nextEncounterMetadata);
+    setFavoriteIds((current) => {
+      if (!current.has(cardId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.delete(cardId);
+      return next;
+    });
+  }, []);
+
   const activeFavoriteIds = Array.from(favoriteIds);
   const today = new Date().toISOString().slice(0, 10);
   const todayCards = useMemo(() => {
@@ -153,6 +170,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         decks={allDecks}
         favoriteIds={activeFavoriteIds}
         onCardViewed={recordCardReencounter}
+        onDeleteCard={handleDeleteCard}
         onToggleFavorite={toggleFavorite}
       />
 
@@ -173,6 +191,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
             decks={allDecks}
             favoriteIds={activeFavoriteIds}
             onCardViewed={recordCardView}
+            onDeleteCard={handleDeleteCard}
             onToggleFavorite={toggleFavorite}
           />
         </section>

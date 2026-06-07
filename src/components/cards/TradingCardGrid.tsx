@@ -15,6 +15,7 @@ type Props = {
   favoriteIds?: string[];
   layout?: "grid" | "rail";
   onCardViewed?: (cardId: string) => void;
+  onDeleteCard?: (cardId: string) => void;
   onToggleFavorite?: (cardId: string) => void;
 };
 
@@ -32,6 +33,7 @@ export default function TradingCardGrid({
   favoriteIds,
   layout = "grid",
   onCardViewed,
+  onDeleteCard,
   onToggleFavorite,
 }: Props) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -146,8 +148,8 @@ export default function TradingCardGrid({
 
   function deleteCard(card: Card) {
     if (window.confirm("このカードを削除しますか？")) {
-      console.log("Life Cards delete draft", card.id);
-      alert("削除はまだ仮実装です。");
+      onDeleteCard?.(card.id);
+      closePreview();
     }
   }
 

@@ -130,4 +130,18 @@ export const EncounterRepository = {
 
     return nextMetadata;
   },
+
+  deleteMetadata(cardId: string) {
+    const currentMap = readStoredMetadataMap();
+
+    if (!(cardId in currentMap)) {
+      return currentMap;
+    }
+
+    const { [cardId]: _deletedMetadata, ...nextMap } = currentMap;
+    void _deletedMetadata;
+
+    writeStoredMetadataMap(nextMap);
+    return nextMap;
+  },
 };
