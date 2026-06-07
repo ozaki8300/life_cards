@@ -19,13 +19,14 @@ type Props = {
   onToggleFavorite?: (cardId: string) => void;
 };
 
-const GRID_CLASS = "grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4";
+const GRID_CLASS =
+  "grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-3 sm:justify-items-stretch lg:grid-cols-4";
 const RAIL_OUTER_CLASS =
   "w-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-3 [contain:paint]";
 const RAIL_INNER_CLASS =
   "flex min-w-full snap-x snap-mandatory flex-nowrap gap-4 sm:gap-5";
 const RAIL_ITEM_CLASS =
-  "w-[calc((100%-1rem)/2)] max-w-[11rem] shrink-0 snap-start overflow-hidden rounded-[18px] [contain:paint] sm:w-[calc((100%-2.5rem)/3)] sm:max-w-none lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
+  "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-hidden rounded-[18px] [contain:paint] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
 
 export default function TradingCardGrid({
   cards,
@@ -185,7 +186,9 @@ export default function TradingCardGrid({
   const cardTiles = cards.map((card, index) => (
     <div
       key={card.id}
-      className={`card-enter ${layout === "rail" ? RAIL_ITEM_CLASS : ""}`}
+      className={`card-enter ${
+        layout === "rail" ? RAIL_ITEM_CLASS : "w-full max-w-[22rem] sm:max-w-none"
+      }`}
       style={{ animationDelay: `${Math.min(index * 45, 360)}ms` }}
     >
       <CardTile
@@ -212,7 +215,7 @@ export default function TradingCardGrid({
 
       {selectedCard && selectedIndex !== null ? (
         <div
-          className="fixed inset-0 z-50 overflow-y-auto bg-[#3b3126]/45 px-4 py-6 backdrop-blur-md sm:px-6"
+          className="fixed inset-0 z-50 overflow-y-auto bg-[#3b3126]/45 px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-5 backdrop-blur-md sm:px-6 sm:py-6"
           onTouchStart={(event) => setTouchStartX(event.changedTouches[0].clientX)}
           onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0].clientX)}
         >

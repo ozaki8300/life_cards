@@ -1,13 +1,13 @@
 const actionButtonBaseClass =
-  "flex h-12 w-12 items-center justify-center rounded-full border text-lg font-semibold shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:w-14";
+  "flex h-11 w-11 items-center justify-center rounded-full border text-base font-semibold shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:w-14 sm:text-lg";
 const actionButtonClass =
   `${actionButtonBaseClass} border-[#e0d3c0] bg-white/70 text-[#6f6253] hover:bg-white`;
 const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
 const actionBarClass =
-  "flex w-full max-w-[430px] flex-wrap items-center justify-center gap-2 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:max-w-[460px]";
+  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-2rem))] flex-wrap items-center justify-center gap-1.5 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:max-w-[460px] sm:gap-2";
 const photoActionBarClass =
-  "flex w-full max-w-[520px] flex-wrap items-center justify-center gap-2 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md";
+  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(520px,calc(100vw-2rem))] flex-wrap items-center justify-center gap-1.5 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:gap-2";
 
 type Props = {
   hasMultipleCards: boolean;

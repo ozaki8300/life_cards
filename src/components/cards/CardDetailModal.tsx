@@ -118,7 +118,7 @@ export default function CardDetailModal({
 
   return (
     <div
-      className={`mx-auto flex w-full flex-col items-center gap-4 ${
+      className={`mx-auto flex w-full flex-col items-center gap-3 sm:gap-4 ${
         viewMode === "photo" ? "max-w-4xl" : "max-w-3xl"
       }`}
     >
@@ -142,8 +142,8 @@ export default function CardDetailModal({
         }}
         className={`relative w-full overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.3)] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] ${
           viewMode === "photo"
-            ? "aspect-[4/3] max-h-[70vh] max-w-4xl"
-            : "aspect-[3/4] max-w-[430px] sm:max-w-[460px]"
+            ? "aspect-[4/3] max-h-[62dvh] max-w-4xl sm:max-h-[70vh]"
+            : "aspect-[3/4] max-w-[min(390px,calc((100dvh-11rem)*0.75),calc(100vw-2rem))] sm:max-w-[460px]"
         } ${
           viewMode === "photo" && photoZoom > 1 ? "cursor-default" : "cursor-pointer"
         }`}
