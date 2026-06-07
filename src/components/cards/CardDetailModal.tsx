@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import type { MouseEvent, TouchEvent } from "react";
 
 import type { Card } from "@/lib/types";
@@ -10,9 +10,8 @@ import CardFace from "./CardFace";
 import CardDetailActionBar from "./CardDetailActionBar";
 import CardDetailPhotoFace from "./CardDetailPhotoFace";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
+import useCardDetailViewCycle from "./useCardDetailViewCycle";
 import usePhotoPanZoom from "./usePhotoPanZoom";
-
-const viewModes = ["front", "back", "photo"] as const;
 
 export default function CardDetailModal({
   card,
@@ -38,12 +37,21 @@ export default function CardDetailModal({
   onShare: () => void;
   onToggleFavorite: () => void;
 }) {
-  const [rotationStep, setRotationStep] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const shouldSkipNextClick = useRef(false);
   const backgroundImage = card.imagePath || defaultImageForCard(card.id);
   const date = formatDate(card.createdAt);
-  const viewMode = viewModes[rotationStep % viewModes.length];
+  const {
+    viewMode,
+    rotationAngle,
+    frontFaceStep,
+    backFaceStep,
+    photoFaceStep,
+    showFront,
+    cycleViewMode,
+  } = useCardDetailViewCycle({
+    resetPhotoZoom: () => resetPhotoZoom(),
+  });
   const {
     photoZoom,
     photoOffset,
@@ -59,40 +67,6 @@ export default function CardDetailModal({
     isPhotoMode: viewMode === "photo",
     shouldSkipNextClickRef: shouldSkipNextClick,
   });
-  const rotationAngle = rotationStep * 180;
-  const currentViewIndex = rotationStep % viewModes.length;
-
-  function faceStepFor(viewIndex: number) {
-    const delta = (viewIndex - currentViewIndex + viewModes.length) % viewModes.length;
-
-    return rotationStep + delta;
-  }
-
-  const frontFaceStep = faceStepFor(0);
-  const backFaceStep = faceStepFor(1);
-  const photoFaceStep = faceStepFor(2);
-
-  function showFront() {
-    resetPhotoZoom();
-    setRotationStep((current) => {
-      const currentIndex = current % viewModes.length;
-      const delta = (0 - currentIndex + viewModes.length) % viewModes.length;
-
-      return current + (delta || viewModes.length);
-    });
-  }
-
-  function cycleViewMode() {
-    if (viewMode === "photo" && photoZoom > 1) {
-      return;
-    }
-
-    if (viewMode === "back" || viewMode === "photo") {
-      resetPhotoZoom();
-    }
-
-    setRotationStep((current) => current + 1);
-  }
 
   useEscapeKey(() => {
     if (viewMode === "photo") {
@@ -139,7 +113,7 @@ export default function CardDetailModal({
       return;
     }
 
-    cycleViewMode();
+    cycleViewMode(photoZoom);
   }
 
   return (
