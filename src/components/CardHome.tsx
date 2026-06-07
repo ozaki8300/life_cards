@@ -171,6 +171,12 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     });
   }, [allCards]);
 
+  const handleUpdateCard = useCallback((card: Card) => {
+    setAllCards((currentCards) =>
+      currentCards.map((item) => (item.id === card.id ? card : item)),
+    );
+  }, []);
+
   const activeFavoriteIds = Array.from(favoriteIds);
   const today = new Date().toISOString().slice(0, 10);
   const todayCards = useMemo(() => {
@@ -195,9 +201,11 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         subtitle="久しぶりに見たいカード"
         cards={todayCards}
         decks={allDecks}
+        editSeedCards={allCards}
         favoriteIds={activeFavoriteIds}
         onCardViewed={recordCardReencounter}
         onDeleteCard={handleDeleteCard}
+        onUpdateCard={handleUpdateCard}
         onToggleFavorite={toggleFavorite}
       />
 
@@ -216,9 +224,11 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
           <TradingCardGrid
             cards={visibleCards}
             decks={allDecks}
+            editSeedCards={allCards}
             favoriteIds={activeFavoriteIds}
             onCardViewed={recordCardView}
             onDeleteCard={handleDeleteCard}
+            onUpdateCard={handleUpdateCard}
             onToggleFavorite={toggleFavorite}
           />
         </section>

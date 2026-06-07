@@ -9,12 +9,16 @@ import { todayInputValue } from "./cardFormUtils";
 
 export default function CardEditDialog({
   card,
+  currentCards,
   decks,
   onClose,
+  onSaved,
 }: {
   card: Card;
+  currentCards: Card[];
   decks: Deck[];
   onClose: () => void;
+  onSaved?: (card: Card) => void;
 }) {
   useEscapeKey(onClose);
 
@@ -31,7 +35,11 @@ export default function CardEditDialog({
       updatedAt: todayInputValue(),
     };
 
-    await CardRepository.updateCardForCurrentUser(nextCard, [card]);
+    const nextCards = await CardRepository.updateCardForCurrentUser(
+      nextCard,
+      currentCards,
+    );
+    onSaved?.(nextCards.find((item) => item.id === nextCard.id) ?? nextCard);
     console.log("Life Cards edit saved", nextCard);
     alert("編集内容を保存しました。");
     onClose();

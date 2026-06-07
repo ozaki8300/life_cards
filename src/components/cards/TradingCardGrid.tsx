@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { Card, Deck } from "@/lib/types";
 
@@ -12,10 +12,12 @@ import CardTile from "./CardTile";
 type Props = {
   cards: Card[];
   decks?: Deck[];
+  editSeedCards?: Card[];
   favoriteIds?: string[];
   layout?: "grid" | "rail";
   onCardViewed?: (cardId: string) => void;
   onDeleteCard?: (cardId: string) => void;
+  onUpdateCard?: (card: Card) => void;
   onToggleFavorite?: (cardId: string) => void;
   showCarouselIndicator?: boolean;
 };
@@ -32,10 +34,12 @@ const RAIL_ITEM_CLASS =
 export default function TradingCardGrid({
   cards,
   decks = [],
+  editSeedCards,
   favoriteIds,
   layout = "grid",
   onCardViewed,
   onDeleteCard,
+  onUpdateCard,
   onToggleFavorite,
   showCarouselIndicator = false,
 }: Props) {
@@ -45,6 +49,9 @@ export default function TradingCardGrid({
   const [isEditing, setIsEditing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [activeRailIndex, setActiveRailIndex] = useState(0);
+  const [updatedCardsById, setUpdatedCardsById] = useState<Map<string, Card>>(
+    new Map(),
+  );
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [localFavoriteIds, setLocalFavoriteIds] = useState<Set<string>>(
     () =>
@@ -55,7 +62,19 @@ export default function TradingCardGrid({
   const activeFavoriteIds = favoriteIds
     ? new Set(favoriteIds)
     : localFavoriteIds;
-  const selectedCard = selectedIndex === null ? null : cards[selectedIndex];
+  const displayCards = useMemo(
+    () => cards.map((card) => updatedCardsById.get(card.id) ?? card),
+    [cards, updatedCardsById],
+  );
+  const currentCardsForEdit = useMemo(
+    () =>
+      (editSeedCards ?? cards).map(
+        (card) => updatedCardsById.get(card.id) ?? card,
+      ),
+    [cards, editSeedCards, updatedCardsById],
+  );
+  const selectedCard =
+    selectedIndex === null ? null : displayCards[selectedIndex];
   const hasMultipleCards = cards.length > 1;
   const shouldShowCarouselIndicator =
     layout === "rail" && showCarouselIndicator && hasMultipleCards;
@@ -66,13 +85,14 @@ export default function TradingCardGrid({
 
   const showCard = useCallback(
     (nextIndex: number) => {
-      const boundedIndex = (nextIndex + cards.length) % cards.length;
+      const boundedIndex =
+        (nextIndex + displayCards.length) % displayCards.length;
       setSelectedIndex(boundedIndex);
       setIsEditing(false);
       setIsSharing(false);
-      onCardViewed?.(cards[boundedIndex].id);
+      onCardViewed?.(displayCards[boundedIndex].id);
     },
-    [cards, onCardViewed],
+    [displayCards, onCardViewed],
   );
 
   const showPrevious = useCallback(() => {
@@ -213,7 +233,16 @@ export default function TradingCardGrid({
 
   function openCard(index: number) {
     setSelectedIndex(index);
-    onCardViewed?.(cards[index].id);
+    onCardViewed?.(displayCards[index].id);
+  }
+
+  function handleCardSaved(card: Card) {
+    setUpdatedCardsById((current) => {
+      const next = new Map(current);
+      next.set(card.id, card);
+      return next;
+    });
+    onUpdateCard?.(card);
   }
 
   function deleteCard(card: Card) {
@@ -252,7 +281,7 @@ export default function TradingCardGrid({
     );
   }
 
-  const cardTiles = cards.map((card, index) => (
+  const cardTiles = displayCards.map((card, index) => (
     <div
       key={card.id}
       className={`card-enter ${
@@ -349,8 +378,10 @@ export default function TradingCardGrid({
               {isEditing ? (
                 <CardEditDialog
                   card={selectedCard}
+                  currentCards={currentCardsForEdit}
                   decks={decks}
                   onClose={() => setIsEditing(false)}
+                  onSaved={handleCardSaved}
                 />
               ) : (
                 <CardDetailModal

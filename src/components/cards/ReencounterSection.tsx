@@ -9,9 +9,11 @@ type Props = {
   subtitle: string;
   cards: Card[];
   decks: Deck[];
+  editSeedCards?: Card[];
   favoriteIds: string[];
   onCardViewed?: (cardId: string) => void;
   onDeleteCard?: (cardId: string) => void;
+  onUpdateCard?: (card: Card) => void;
   onToggleFavorite: (cardId: string) => void;
 };
 
@@ -20,9 +22,11 @@ export default function ReencounterSection({
   subtitle,
   cards,
   decks,
+  editSeedCards,
   favoriteIds,
   onCardViewed,
   onDeleteCard,
+  onUpdateCard,
   onToggleFavorite,
 }: Props) {
   if (cards.length === 0) {
@@ -42,10 +46,12 @@ export default function ReencounterSection({
       <TradingCardGrid
         cards={cards}
         decks={decks}
+        editSeedCards={editSeedCards}
         favoriteIds={favoriteIds}
         layout="rail"
         onCardViewed={onCardViewed}
         onDeleteCard={onDeleteCard}
+        onUpdateCard={onUpdateCard}
         onToggleFavorite={onToggleFavorite}
         showCarouselIndicator
       />
