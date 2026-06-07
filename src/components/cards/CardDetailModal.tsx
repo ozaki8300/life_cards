@@ -13,6 +13,9 @@ import { defaultImageForCard, formatDate } from "./cardUiUtils";
 import useCardDetailViewCycle from "./useCardDetailViewCycle";
 import usePhotoPanZoom from "./usePhotoPanZoom";
 
+const sideNavButtonClass =
+  "pointer-events-auto absolute top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/80 bg-[#fffaf0]/86 text-3xl font-semibold leading-none text-[#5f513f] shadow-[0_8px_24px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:h-12 sm:w-12 sm:text-4xl";
+
 export default function CardDetailModal({
   card,
   deckLabel,
@@ -117,13 +120,28 @@ export default function CardDetailModal({
     cycleViewMode(photoZoom);
   }
 
+  const previousNavPositionClass =
+    viewMode === "photo"
+      ? "left-2 sm:left-4"
+      : "left-[-1.25rem] sm:left-[-3.5rem]";
+  const nextNavPositionClass =
+    viewMode === "photo"
+      ? "right-2 sm:right-4"
+      : "right-[-1.25rem] sm:right-[-3.5rem]";
+
   return (
     <div
       className={`pointer-events-none mx-auto flex w-full flex-col items-center gap-4 sm:gap-4 ${
         viewMode === "photo" ? "max-w-4xl" : "max-w-3xl"
       }`}
     >
-      <div className="pointer-events-none w-full">
+      <div
+        className={`pointer-events-none relative mx-auto w-full ${
+          viewMode === "photo"
+            ? "max-w-[min(38rem,calc(100vw-2rem))] sm:max-w-4xl"
+            : "max-w-[min(330px,calc((100dvh-13.5rem)*0.75),calc(100vw-3rem))] sm:max-w-[460px]"
+        }`}
+      >
         <article
           onClick={handleCardClick}
           onTouchStart={(event) => {
@@ -223,11 +241,47 @@ export default function CardDetailModal({
             </button>
           ) : null}
         </article>
+
+        {hasMultipleCards ? (
+          <>
+            <button
+              type="button"
+              aria-label="前へ"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (viewMode === "photo") {
+                  showPreviousPhoto();
+                  return;
+                }
+
+                onPrevious();
+              }}
+              className={`${sideNavButtonClass} ${previousNavPositionClass}`}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              aria-label="次へ"
+              onClick={(event) => {
+                event.stopPropagation();
+                if (viewMode === "photo") {
+                  showNextPhoto();
+                  return;
+                }
+
+                onNext();
+              }}
+              className={`${sideNavButtonClass} ${nextNavPositionClass}`}
+            >
+              ›
+            </button>
+          </>
+        ) : null}
       </div>
 
       <div className="pointer-events-auto">
         <CardDetailActionBar
-          hasMultipleCards={hasMultipleCards}
           isPhotoMode={viewMode === "photo"}
           photoZoom={photoZoom}
           zoomLabel={zoomLabel}
@@ -236,8 +290,6 @@ export default function CardDetailModal({
           onDelete={onDelete}
           onEdit={onEdit}
           onIncreasePhotoZoom={increasePhotoZoom}
-          onNext={viewMode === "photo" ? showNextPhoto : onNext}
-          onPrevious={viewMode === "photo" ? showPreviousPhoto : onPrevious}
           onResetPhotoZoom={resetPhotoZoom}
           onShare={onShare}
         />

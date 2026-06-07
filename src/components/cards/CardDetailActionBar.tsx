@@ -13,40 +13,6 @@ type IconProps = {
   className?: string;
 };
 
-function ChevronLeftIcon({ className = "h-5 w-5" }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon({ className = "h-5 w-5" }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
-  );
-}
-
 function XIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg
@@ -128,7 +94,6 @@ function TrashIcon({ className = "h-5 w-5" }: IconProps) {
 }
 
 type Props = {
-  hasMultipleCards: boolean;
   isPhotoMode: boolean;
   photoZoom: number;
   zoomLabel: string;
@@ -137,14 +102,11 @@ type Props = {
   onDelete: () => void;
   onEdit: () => void;
   onIncreasePhotoZoom: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
   onResetPhotoZoom: () => void;
   onShare: () => void;
 };
 
 export default function CardDetailActionBar({
-  hasMultipleCards,
   isPhotoMode,
   photoZoom,
   zoomLabel,
@@ -153,8 +115,6 @@ export default function CardDetailActionBar({
   onDelete,
   onEdit,
   onIncreasePhotoZoom,
-  onNext,
-  onPrevious,
   onResetPhotoZoom,
   onShare,
 }: Props) {
@@ -162,15 +122,6 @@ export default function CardDetailActionBar({
     <section className={isPhotoMode ? photoActionBarClass : actionBarClass}>
       {isPhotoMode ? (
         <>
-          <button
-            type="button"
-            aria-label="前へ"
-            onClick={onPrevious}
-            disabled={!hasMultipleCards}
-            className={actionButtonClass}
-          >
-            <ChevronLeftIcon />
-          </button>
           <button
             type="button"
             aria-label="縮小"
@@ -199,15 +150,6 @@ export default function CardDetailActionBar({
           </button>
           <button
             type="button"
-            aria-label="次へ"
-            onClick={onNext}
-            disabled={!hasMultipleCards}
-            className={actionButtonClass}
-          >
-            <ChevronRightIcon />
-          </button>
-          <button
-            type="button"
             aria-label="閉じる"
             onClick={onClose}
             className={actionButtonClass}
@@ -217,15 +159,6 @@ export default function CardDetailActionBar({
         </>
       ) : (
         <>
-          <button
-            type="button"
-            aria-label="前へ"
-            onClick={onPrevious}
-            disabled={!hasMultipleCards}
-            className={actionButtonClass}
-          >
-            <ChevronLeftIcon />
-          </button>
           <button
             type="button"
             aria-label="QR共有"
@@ -249,15 +182,6 @@ export default function CardDetailActionBar({
             className={deleteActionButtonClass}
           >
             <TrashIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="次へ"
-            onClick={onNext}
-            disabled={!hasMultipleCards}
-            className={actionButtonClass}
-          >
-            <ChevronRightIcon />
           </button>
           <button
             type="button"
