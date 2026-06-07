@@ -7,6 +7,7 @@ import type { FormEvent } from "react";
 
 import { CardRepository } from "@/lib/cardRepository";
 import { DeckRepository } from "@/lib/deckRepository";
+import { EncounterRepository } from "@/lib/encounterRepository";
 import type { Card, Deck } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
@@ -47,14 +48,20 @@ export default function CardFirstNav({
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isDeckCreateOpen, setIsDeckCreateOpen] = useState(false);
   const [isDeckPanelOpen, setIsDeckPanelOpen] = useState(false);
+  const [deckDeleteTarget, setDeckDeleteTarget] = useState<Deck | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const uncategorizedDeck = decks.find((deck) => deck.id === "uncategorized");
-  const displayDecks = uncategorizedDeck
+  const shouldShowUncategorizedDeck = Boolean(
+    uncategorizedDeck &&
+      (activeDeckId === "uncategorized" ||
+        cards.some((card) => card.deckId === "uncategorized")),
+  );
+  const displayDecks = shouldShowUncategorizedDeck && uncategorizedDeck
     ? [
         ...decks.filter((deck) => deck.id !== "uncategorized"),
         uncategorizedDeck,
       ]
-    : decks;
+    : decks.filter((deck) => deck.id !== "uncategorized");
   const filteredDecks = displayDecks.filter((deck) =>
     deck.name.toLowerCase().includes(deckSearchQuery.trim().toLowerCase()),
   );
@@ -147,33 +154,47 @@ export default function CardFirstNav({
     );
   }
 
-  async function handleDeleteDeck(deck: Deck) {
-    if (deck.id === "uncategorized") {
-      return;
-    }
-
-    const shouldDelete = window.confirm(
-      "このDeckを削除しますか？カードは削除されず、未分類に移動します。",
-    );
-
-    if (!shouldDelete) {
-      return;
-    }
-
-    await ensureUncategorizedDeck(decks);
-    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(
-      deck.id,
-      decks,
-    );
+  async function deleteDeckMovingCards(deck: Deck) {
+    const decksWithUncategorized = await ensureUncategorizedDeck(decks);
     const nextCards = await CardRepository.moveCardsToDeckForCurrentUser(
       deck.id,
       "uncategorized",
       cards,
     );
+    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(
+      deck.id,
+      decksWithUncategorized,
+    );
 
     onDecksChange?.(nextDecks);
     onCardsChange?.(nextCards);
+    finishDeckDeletion(deck);
+  }
 
+  async function deleteDeckWithCards(deck: Deck) {
+    const targetCards = cards.filter((card) => card.deckId === deck.id);
+    let nextCards = cards;
+
+    for (const card of targetCards) {
+      nextCards = await CardRepository.deleteCardForCurrentUser(
+        card.id,
+        nextCards,
+      );
+      await EncounterRepository.deleteMetadataForCurrentUser(card.id);
+    }
+
+    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(
+      deck.id,
+      decks,
+    );
+
+    onDecksChange?.(nextDecks);
+    onCardsChange?.(nextCards);
+    finishDeckDeletion(deck);
+  }
+
+  function finishDeckDeletion(deck: Deck) {
+    setDeckDeleteTarget(null);
     if (activeDeckId === deck.id) {
       setIsDeckPanelOpen(false);
       router.push("/cards");
@@ -201,6 +222,10 @@ export default function CardFirstNav({
 
   useEscapeKey(() => setIsDeckPanelOpen(false), {
     enabled: isDeckPanelOpen,
+    ignoreEditable: false,
+  });
+  useEscapeKey(() => setDeckDeleteTarget(null), {
+    enabled: Boolean(deckDeleteTarget),
     ignoreEditable: false,
   });
   useEscapeKey(() => setIsMenuOpen(false), {
@@ -333,7 +358,7 @@ export default function CardFirstNav({
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleDeleteDeck(deck)}
+                              onClick={() => setDeckDeleteTarget(deck)}
                               className={`h-8 rounded-full border px-2.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
                                 isActiveDeck
                                   ? "border-white/28 bg-white/12 text-[#fffaf0] hover:bg-white/20"
@@ -418,6 +443,52 @@ export default function CardFirstNav({
               </div>
             </div>
           </aside>
+        </div>
+      ) : null}
+
+      {deckDeleteTarget ? (
+        <div className="fixed inset-0 z-[60] bg-[#3b3126]/45 p-4 backdrop-blur-sm">
+          <button
+            type="button"
+            aria-label="Close deck delete confirmation"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setDeckDeleteTarget(null)}
+          />
+          <section className="relative mx-auto mt-[18vh] grid w-full max-w-[360px] gap-4 rounded-[20px] border border-[#e8ddcb] bg-[#fffaf0] p-5 text-[#332d25] shadow-[0_24px_70px_rgba(87,72,52,0.28)]">
+            <div>
+              <h2 className="text-lg font-semibold">このDeckを削除しますか？</h2>
+              <p className="mt-2 text-sm font-medium text-[#7d705f]">
+                {deckDeleteTarget.name}
+              </p>
+              <p className="mt-1 text-sm text-[#8d7f6e]">
+                対象カード: {cardCountFor(deckDeleteTarget.id)}枚
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <button
+                type="button"
+                onClick={() => deleteDeckMovingCards(deckDeleteTarget)}
+                className="rounded-full border border-[#d8c8aa] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+              >
+                カードを未分類へ移動
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteDeckWithCards(deckDeleteTarget)}
+                className="rounded-full border border-[#e6c9be] bg-[#fff4ef] px-4 py-3 text-sm font-semibold text-[#9b4b35] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#e6c9be]"
+              >
+                カードも一緒に削除
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeckDeleteTarget(null)}
+                className="rounded-full border border-[#e0d3c0] bg-[#fffaf0]/72 px-4 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+              >
+                キャンセル
+              </button>
+            </div>
+          </section>
         </div>
       ) : null}
 

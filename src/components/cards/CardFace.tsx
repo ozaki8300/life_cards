@@ -10,6 +10,7 @@ type Props = {
   face: "front" | "back";
   frontComment?: string;
   frontText?: string;
+  linkUrl?: string;
   preserve3d?: boolean;
   size: CardFaceSize;
 };
@@ -24,7 +25,7 @@ const faceSize = {
     comment: "line-clamp-3 text-[15px] leading-6 sm:text-sm",
     date: "text-[10px]",
     backContent: "px-5 pb-5 pt-4 sm:px-4 sm:pb-4",
-    backMemo: "max-h-[calc(100%-4.75rem)] overflow-hidden text-[15px] leading-6 sm:text-sm",
+    backMemo: "max-h-[calc(100%-4.75rem)] overflow-hidden text-[15px] leading-5 sm:text-sm sm:leading-6",
   },
   preview: {
     rounded: "rounded-[22px]",
@@ -35,7 +36,7 @@ const faceSize = {
     comment: "text-sm leading-6",
     date: "text-xs",
     backContent: "px-5 pb-5 pt-4",
-    backMemo: "card-back-scroll overflow-y-auto pr-2 text-sm leading-6",
+    backMemo: "card-back-scroll overflow-y-auto pr-2 text-sm leading-5 sm:leading-6",
   },
   detail: {
     rounded: "rounded-[24px]",
@@ -50,6 +51,16 @@ const faceSize = {
   },
 } as const;
 
+function normalizeLinkUrl(linkUrl: string) {
+  const trimmed = linkUrl.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 export default function CardFace({
   backgroundImage,
   backText = "",
@@ -58,12 +69,14 @@ export default function CardFace({
   face,
   frontComment = "",
   frontText = "",
+  linkUrl = "",
   preserve3d = true,
   size,
 }: Props) {
   const styles = faceSize[size];
   const backgroundStyle = { backgroundImage: `url(${backgroundImage})` };
   const isBack = face === "back";
+  const linkHref = normalizeLinkUrl(linkUrl);
   const faceTransform = isBack
     ? preserve3d
       ? "[transform:rotateY(180deg)_translateZ(0)]"
@@ -146,6 +159,17 @@ export default function CardFace({
               {backText}
             </MarkdownMemo>
           </div>
+          {linkHref ? (
+            <a
+              href={linkHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              className="mt-3 block shrink-0 truncate rounded-full border border-[#d8c8aa] bg-white/64 px-3 py-2 text-xs font-semibold text-[#6f6253] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+            >
+              Open link ↗
+            </a>
+          ) : null}
         </div>
       )}
     </section>

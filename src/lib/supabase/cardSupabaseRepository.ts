@@ -13,6 +13,7 @@ type SupabaseCardRow = {
   id: string;
   image_path: string | null;
   is_favorite: boolean;
+  link_url: string | null;
   updated_at: string;
 };
 
@@ -45,6 +46,7 @@ async function rowToCard(row: SupabaseCardRow): Promise<Card> {
     id: row.id,
     imagePath,
     isFavorite: row.is_favorite,
+    linkUrl: row.link_url ?? "",
     updatedAt: row.updated_at,
   };
 }
@@ -123,6 +125,7 @@ async function cardToRow(
     id: card.id,
     image_path: await resolveImagePathForSave(card, client),
     is_favorite: Boolean(card.isFavorite),
+    link_url: card.linkUrl?.trim() || null,
     updated_at: card.updatedAt,
     user_id: client.userId,
   };
@@ -144,7 +147,7 @@ async function fetchCards(
   const { data, error } = await client.supabase
     .from("cards")
     .select(
-      "id,deck_id,front_text,front_comment,back_text,image_path,is_favorite,created_at,updated_at",
+      "id,deck_id,front_text,front_comment,back_text,image_path,is_favorite,link_url,created_at,updated_at",
     )
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: false });

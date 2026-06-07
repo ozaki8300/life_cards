@@ -14,6 +14,8 @@ export type Card = {
 
   imagePath?: string;
 
+  linkUrl?: string;
+
   isFavorite?: boolean;
 
   frontText?: string;

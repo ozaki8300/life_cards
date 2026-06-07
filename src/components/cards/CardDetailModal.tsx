@@ -180,6 +180,7 @@ export default function CardDetailModal({
                   face="front"
                   frontComment={card.frontComment}
                   frontText={card.frontText}
+                  linkUrl={card.linkUrl}
                   size="detail"
                 />
               </div>
@@ -197,6 +198,7 @@ export default function CardDetailModal({
                   face="back"
                   frontComment={card.frontComment}
                   frontText={card.frontText}
+                  linkUrl={card.linkUrl}
                   size="detail"
                 />
               </div>
@@ -211,7 +213,7 @@ export default function CardDetailModal({
                 event.stopPropagation();
                 onToggleFavorite();
               }}
-              className={`absolute bottom-6 right-6 z-20 flex h-11 w-11 items-center justify-center rounded-full border text-lg leading-none shadow-sm backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
+              className={`absolute bottom-5 right-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border text-lg leading-none shadow-sm backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
                 isFavorite
                   ? "border-[#ffe28a]/70 bg-[#fff4c7]/95 text-[#8a6410] hover:bg-[#ffef9c]"
                   : "border-white/25 bg-black/35 text-white/85 hover:bg-black/50 hover:text-white"

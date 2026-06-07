@@ -11,6 +11,7 @@ type Props = {
   frontComment: string;
   frontText: string;
   imagePath: string;
+  linkUrl: string;
   selectedDeckName: string;
 };
 
@@ -22,6 +23,7 @@ type PreviewFaceProps = {
   face: "front" | "back";
   frontComment: string;
   frontText: string;
+  linkUrl: string;
 };
 
 function PreviewFace({
@@ -32,8 +34,10 @@ function PreviewFace({
   face,
   frontComment,
   frontText,
+  linkUrl,
 }: PreviewFaceProps) {
   const isBack = face === "back";
+  const trimmedLinkUrl = linkUrl.trim();
 
   return (
     <div className="absolute inset-0 isolate overflow-hidden rounded-[22px] border border-white/25 bg-[#fffaf0]">
@@ -86,6 +90,11 @@ function PreviewFace({
               {backText}
             </MarkdownMemo>
           </div>
+          {trimmedLinkUrl ? (
+            <span className="mt-3 block shrink-0 truncate rounded-full border border-[#d8c8aa] bg-white/70 px-3 py-2 text-xs font-semibold text-[#6f6253]">
+              {trimmedLinkUrl}
+            </span>
+          ) : null}
         </div>
       )}
     </div>
@@ -99,6 +108,7 @@ export default function CardFormPreview({
   frontComment,
   frontText,
   imagePath,
+  linkUrl,
   selectedDeckName,
 }: Props) {
   const [isBack, setIsBack] = useState(false);
@@ -121,6 +131,7 @@ export default function CardFormPreview({
           face={isBack ? "back" : "front"}
           frontComment={frontComment}
           frontText={frontText}
+          linkUrl={linkUrl}
         />
       </button>
     </section>

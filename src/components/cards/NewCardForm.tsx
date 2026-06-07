@@ -29,6 +29,7 @@ export default function NewCardForm({
       id: `card_${Date.now()}`,
       deckId: values.deckId,
       imagePath: values.imagePath,
+      linkUrl: values.linkUrl,
       frontText: values.frontText,
       frontComment: values.frontComment,
       backText: values.backText,
@@ -68,6 +69,7 @@ export default function NewCardForm({
             frontComment: "",
             frontText: "",
             imagePath: "",
+            linkUrl: "",
           }}
           mode="new"
           onSubmit={handleSubmit}

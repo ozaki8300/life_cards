@@ -27,6 +27,7 @@ export type CardFormValues = {
   frontComment: string;
   frontText: string;
   imagePath: string;
+  linkUrl: string;
 };
 
 type Props = {
@@ -56,12 +57,14 @@ export default function CardForm({
   const [cardDate, setCardDate] = useState(initialValues.cardDate);
   const [imageLabel, setImageLabel] = useState("");
   const [imagePath, setImagePath] = useState(initialValues.imagePath);
+  const [linkUrl, setLinkUrl] = useState(initialValues.linkUrl);
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
   const [availableDecks, setAvailableDecks] = useState(deckOptions);
   const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const screenshotInputRef = useRef<HTMLInputElement>(null);
   const selectedDeckName =
     availableDecks.find((deck) => deck.id === selectedDeckId)?.name ??
     "Deck";
@@ -237,21 +240,10 @@ export default function CardForm({
       return;
     }
 
-    if (action.id === "remove") {
-      setImagePath("");
-      setImageLabel("");
-      return;
-    }
-
     if (action.id === "screenshot") {
-      setImageLabel(action.label);
-      console.log("draft action", action.draftLabel);
-      alert("PCでは画像をコピーして、この画面で貼り付けてください。");
+      screenshotInputRef.current?.click();
       return;
     }
-
-    setImageLabel(action.label);
-    console.log("draft action", action.draftLabel);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -264,6 +256,7 @@ export default function CardForm({
       frontComment,
       frontText,
       imagePath,
+      linkUrl: linkUrl.trim(),
     });
   }
 
@@ -284,6 +277,7 @@ export default function CardForm({
           frontComment={frontComment}
           frontText={frontText}
           imagePath={imagePath}
+          linkUrl={linkUrl}
           selectedDeckName={selectedDeckName}
         />
 
@@ -315,6 +309,14 @@ export default function CardForm({
                 className="hidden"
                 onChange={(event) => handleFileChange(event, "カメラ")}
               />
+              <input
+                ref={screenshotInputRef}
+                type="file"
+                accept="image/*"
+                disabled={!isSignedIn}
+                className="hidden"
+                onChange={(event) => handleFileChange(event, "スクショ")}
+              />
 
               <div className="flex flex-wrap gap-2">
                 {imageActions.map((action) => (
@@ -327,7 +329,7 @@ export default function CardForm({
                       imageLabel === action.label
                         ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
                         : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
-                    } ${action.id === "remove" ? "border-[#e6c9be] bg-[#fff4ef] text-[#9b4b35]" : ""}`}
+                    }`}
                   >
                     {action.label}
                   </button>
@@ -403,6 +405,20 @@ export default function CardForm({
             onBackModeChange={setBackMode}
             onBackTextChange={setBackText}
           />
+
+          <label>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
+              Link
+            </span>
+            <input
+              type="url"
+              name="linkUrl"
+              value={linkUrl}
+              onChange={(event) => setLinkUrl(event.target.value)}
+              placeholder="https://example.com"
+              className="mt-2 w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+            />
+          </label>
 
           <div className="sticky bottom-0 z-10 -mx-4 -mb-4 grid gap-2 border-t border-[#eadfce] bg-[#fffaf0]/90 px-4 pb-3 pt-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 sm:pb-4">
             <button

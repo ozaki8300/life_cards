@@ -23,6 +23,7 @@ export default function CardEditDialog({
       ...card,
       deckId: values.deckId,
       imagePath: values.imagePath,
+      linkUrl: values.linkUrl,
       frontText: values.frontText,
       frontComment: values.frontComment,
       backText: values.backText,
@@ -59,6 +60,7 @@ export default function CardEditDialog({
           frontComment: card.frontComment ?? "",
           frontText: card.frontText ?? "",
           imagePath: card.imagePath ?? "",
+          linkUrl: card.linkUrl ?? "",
         }}
         mode="edit"
         onCancel={onClose}

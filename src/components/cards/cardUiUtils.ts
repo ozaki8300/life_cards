@@ -4,26 +4,16 @@ const gradients = [
   "linear-gradient(145deg, #fff7ec 0%, #f4eddf 100%)",
 ];
 
-const defaultCardImage = "/card-images/default-sea.webp";
-
-const defaultCardImages = [
-  defaultCardImage,
-  "/card-images/default-library.webp",
-  "/card-images/default-night.webp",
-  "/card-images/default-mountain.webp",
-] as const;
+const defaultCardImage = "/card-images/default-night.webp";
 
 export function gradientFor(index: number) {
   return gradients[index % gradients.length];
 }
 
-export function defaultImageForCard(cardId: string) {
-  const score = Array.from(cardId).reduce(
-    (sum, char) => sum + char.charCodeAt(0),
-    0,
-  );
-
-  return defaultCardImages[score % defaultCardImages.length] ?? defaultCardImage;
+export function defaultImageForCard(cardId: string): string;
+export function defaultImageForCard(): string;
+export function defaultImageForCard() {
+  return defaultCardImage;
 }
 
 export function formatDate(date: string) {

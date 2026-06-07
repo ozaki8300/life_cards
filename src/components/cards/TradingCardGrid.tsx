@@ -23,7 +23,7 @@ type Props = {
 const GRID_CLASS =
   "grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-3 sm:justify-items-stretch lg:grid-cols-4";
 const RAIL_OUTER_CLASS =
-  "w-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-3 [contain:paint]";
+  "w-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-3";
 const RAIL_INNER_CLASS =
   "flex min-w-full snap-x snap-mandatory flex-nowrap gap-4 sm:gap-5";
 const RAIL_ITEM_CLASS =
@@ -269,7 +269,7 @@ export default function TradingCardGrid({
   return (
     <>
       {layout === "rail" ? (
-        <div>
+        <div className="relative overflow-visible pb-1">
           <div className="relative">
             <div
               ref={railRef}
@@ -293,17 +293,17 @@ export default function TradingCardGrid({
 
           {shouldShowCarouselIndicator ? (
             <div
-              className="mt-1 flex justify-center gap-1.5 sm:hidden"
+              className="relative z-20 mx-auto mt-2 flex min-h-5 w-fit items-center justify-center gap-2 rounded-full border border-[#d8c8aa]/80 bg-[#fffaf0]/92 px-3 py-1 shadow-[0_6px_16px_rgba(87,72,52,0.14)] sm:hidden"
               aria-label="今日の再会カードの位置"
             >
               {cards.map((card, index) => (
                 <button
                   key={card.id}
                   type="button"
-                  className={`h-1.5 rounded-full transition-all ${
+                  className={`h-2 rounded-full transition-all ${
                     index === activeRailIndex
-                      ? "w-4 bg-[#5f513f]"
-                      : "w-1.5 bg-[#d8c8aa]"
+                      ? "w-5 bg-[#4d4033]"
+                      : "w-2 bg-[#b9a68e]"
                   }`}
                   aria-label={`${index + 1}枚目のカードへ移動`}
                   aria-current={index === activeRailIndex ? "true" : undefined}
