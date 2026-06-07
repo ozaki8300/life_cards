@@ -27,7 +27,9 @@ export function defaultImageForCard(cardId: string) {
 }
 
 export function formatDate(date: string) {
-  return date.replaceAll("-", ".");
+  const datePart = date.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? date;
+
+  return datePart.replaceAll("-", ".");
 }
 
 export function isEditableElement(target: EventTarget | null) {

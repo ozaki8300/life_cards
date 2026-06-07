@@ -60,6 +60,10 @@ export default function TradingCardGrid({
   const shouldShowCarouselIndicator =
     layout === "rail" && showCarouselIndicator && hasMultipleCards;
 
+  function deckLabelFor(card: Card) {
+    return decks.find((deck) => deck.id === card.deckId)?.name ?? "Deck";
+  }
+
   const showCard = useCallback(
     (nextIndex: number) => {
       const boundedIndex = (nextIndex + cards.length) % cards.length;
@@ -251,6 +255,7 @@ export default function TradingCardGrid({
     >
       <CardTile
         card={card}
+        deckLabel={deckLabelFor(card)}
         isBack={flippedIds.has(card.id)}
         isFavorite={activeFavoriteIds.has(card.id)}
         layout={layout}
@@ -336,6 +341,7 @@ export default function TradingCardGrid({
               ) : (
                 <CardDetailModal
                   card={selectedCard}
+                  deckLabel={deckLabelFor(selectedCard)}
                   index={selectedIndex}
                   isFavorite={activeFavoriteIds.has(selectedCard.id)}
                   hasMultipleCards={hasMultipleCards}

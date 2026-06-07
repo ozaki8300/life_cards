@@ -15,6 +15,7 @@ import usePhotoPanZoom from "./usePhotoPanZoom";
 
 export default function CardDetailModal({
   card,
+  deckLabel,
   isFavorite,
   hasMultipleCards,
   onClose,
@@ -26,6 +27,7 @@ export default function CardDetailModal({
   onToggleFavorite,
 }: {
   card: Card;
+  deckLabel: string;
   index: number;
   isFavorite: boolean;
   hasMultipleCards: boolean;
@@ -174,7 +176,7 @@ export default function CardDetailModal({
                   backgroundImage={backgroundImage}
                   backText={card.backText}
                   date={date}
-                  deckLabel={card.deckId}
+                  deckLabel={deckLabel}
                   face="front"
                   frontComment={card.frontComment}
                   frontText={card.frontText}
@@ -191,7 +193,7 @@ export default function CardDetailModal({
                   backgroundImage={backgroundImage}
                   backText={card.backText}
                   date={date}
-                  deckLabel={card.deckId}
+                  deckLabel={deckLabel}
                   face="back"
                   frontComment={card.frontComment}
                   frontText={card.frontText}

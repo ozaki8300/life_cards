@@ -1,5 +1,3 @@
-import { notFound } from "next/navigation";
-
 import CardHome from "@/components/CardHome";
 import CardsPageHeader from "@/components/cards/CardsPageHeader";
 import NewCardFab from "@/components/cards/NewCardFab";
@@ -12,30 +10,23 @@ type Props = {
   }>;
 };
 
-export function generateStaticParams() {
-  return decks.map((deck) => ({
-    deckId: deck.id,
-  }));
-}
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 
 export default async function DeckCardsPage({ params }: Props) {
   const { deckId } = await params;
   const deck = decks.find((item) => item.id === deckId);
-
-  if (!deck) {
-    notFound();
-  }
-
-  const deckCards = cards.filter((card) => card.deckId === deck.id);
+  const deckName = deck?.name ?? deckId;
+  const deckCards = cards.filter((card) => card.deckId === deckId);
 
   return (
     <main className="min-h-screen bg-[#f7f3ea] px-5 py-8 text-[#2f2a23] sm:px-8 lg:px-12">
       <section className="mx-auto max-w-6xl">
-        <CardsPageHeader cardCount={deckCards.length} deckName={deck.name} />
+        <CardsPageHeader cardCount={deckCards.length} deckName={deckName} />
 
-        <CardHome cards={cards} decks={decks} activeDeckId={deck.id} />
+        <CardHome cards={cards} decks={decks} activeDeckId={deckId} />
       </section>
-      <NewCardFab href={`/cards/${deck.id}/new`} />
+      <NewCardFab href={`/cards/${deckId}/new`} />
     </main>
   );
 }

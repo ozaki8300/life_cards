@@ -59,7 +59,6 @@ export default function CardForm({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const selectedDeckName =
     availableDecks.find((deck) => deck.id === selectedDeckId)?.name ??
-    selectedDeckId ??
     "Deck";
 
   const applyImageFileFallback = useCallback((file: File, label: string) => {

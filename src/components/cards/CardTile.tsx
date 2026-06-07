@@ -14,6 +14,7 @@ const backFaceClass = `${faceBaseClass} ${
 
 export default function CardTile({
   card,
+  deckLabel,
   isBack,
   isFavorite,
   layout = "grid",
@@ -22,6 +23,7 @@ export default function CardTile({
   onToggleFavorite,
 }: {
   card: Card;
+  deckLabel: string;
   isBack: boolean;
   isFavorite: boolean;
   layout?: "grid" | "rail";
@@ -51,7 +53,7 @@ export default function CardTile({
             backgroundImage={backgroundImage}
             backText={card.backText}
             date={date}
-            deckLabel={card.deckId}
+            deckLabel={deckLabel}
             face="front"
             frontComment={card.frontComment}
             frontText={card.frontText}
@@ -63,7 +65,7 @@ export default function CardTile({
             backgroundImage={backgroundImage}
             backText={card.backText}
             date={date}
-            deckLabel={card.deckId}
+            deckLabel={deckLabel}
             face="back"
             frontComment={card.frontComment}
             frontText={card.frontText}
