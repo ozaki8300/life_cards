@@ -110,15 +110,6 @@ export default function CardDetailActionBar({
           </button>
           <button
             type="button"
-            aria-label="次へ"
-            onClick={onNext}
-            disabled={!hasMultipleCards}
-            className={actionButtonClass}
-          >
-            ▶
-          </button>
-          <button
-            type="button"
             aria-label="QR共有"
             onClick={onShare}
             className={actionButtonClass}
@@ -140,6 +131,15 @@ export default function CardDetailActionBar({
             className={deleteActionButtonClass}
           >
             削
+          </button>
+          <button
+            type="button"
+            aria-label="次へ"
+            onClick={onNext}
+            disabled={!hasMultipleCards}
+            className={actionButtonClass}
+          >
+            ▶
           </button>
           <button
             type="button"

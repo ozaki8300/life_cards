@@ -117,123 +117,127 @@ export default function CardDetailModal({
 
   return (
     <div
-      className={`mx-auto flex w-full flex-col items-center gap-4 sm:gap-4 ${
+      className={`pointer-events-none mx-auto flex w-full flex-col items-center gap-4 sm:gap-4 ${
         viewMode === "photo" ? "max-w-4xl" : "max-w-3xl"
       }`}
     >
-      <article
-        onClick={handleCardClick}
-        onTouchStart={(event) => {
-          if (viewMode === "photo") {
-            event.stopPropagation();
-            return;
-          }
-
-          handleCardTouchStart(event);
-        }}
-        onTouchEnd={(event) => {
-          if (viewMode === "photo") {
-            event.stopPropagation();
-            return;
-          }
-
-          handleCardTouchEnd(event);
-        }}
-        className={`relative w-full overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.3)] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] ${
-          viewMode === "photo"
-            ? "aspect-[4/3] max-h-[50dvh] max-w-[min(38rem,calc(100vw-2.5rem))] sm:max-h-[70vh] sm:max-w-4xl"
-            : "aspect-[3/4] max-w-[min(330px,calc((100dvh-13.5rem)*0.75),calc(100vw-3rem))] sm:max-w-[460px]"
-        } ${
-          viewMode === "photo" && photoZoom > 1 ? "cursor-default" : "cursor-pointer"
-        }`}
-      >
-        {viewMode === "photo" ? (
-          <CardDetailPhotoFace
-            backgroundImage={backgroundImage}
-            isDragging={isPhotoDragging}
-            offset={photoOffset}
-            photoZoom={photoZoom}
-            onPointerCancel={handlePhotoPointerEnd}
-            onPointerDown={handlePhotoPointerDown}
-            onPointerMove={handlePhotoPointerMove}
-            onPointerUp={handlePhotoPointerEnd}
-          />
-        ) : (
-          <div
-            className="absolute inset-0 rounded-[24px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
-            style={{ transform: `rotateY(${rotationAngle}deg)` }}
-          >
-            <div
-              className={`absolute inset-0 [transform-style:preserve-3d] ${
-                viewMode === "front" ? "z-10" : "pointer-events-none z-0"
-              }`}
-              style={{ transform: `rotateY(${frontFaceStep * 180}deg)` }}
-            >
-              <CardFace
-                backgroundImage={backgroundImage}
-                backText={card.backText}
-                date={date}
-                deckLabel={card.deckId}
-                face="front"
-                frontComment={card.frontComment}
-                frontText={card.frontText}
-                size="detail"
-              />
-            </div>
-            <div
-              className={`absolute inset-0 [transform-style:preserve-3d] ${
-                viewMode === "back" ? "z-10" : "pointer-events-none z-0"
-              }`}
-              style={{ transform: `rotateY(${backFaceStep * 180 - 180}deg)` }}
-            >
-              <CardFace
-                backgroundImage={backgroundImage}
-                backText={card.backText}
-                date={date}
-                deckLabel={card.deckId}
-                face="back"
-                frontComment={card.frontComment}
-                frontText={card.frontText}
-                size="detail"
-              />
-            </div>
-          </div>
-        )}
-        {viewMode !== "photo" ? (
-          <button
-            type="button"
-            aria-label={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
-            aria-pressed={isFavorite}
-            onClick={(event) => {
+      <div className="pointer-events-none w-full">
+        <article
+          onClick={handleCardClick}
+          onTouchStart={(event) => {
+            if (viewMode === "photo") {
               event.stopPropagation();
-              onToggleFavorite();
-            }}
-            className={`absolute bottom-6 right-6 z-20 flex h-11 w-11 items-center justify-center rounded-full border text-lg leading-none shadow-sm backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
-              isFavorite
-                ? "border-[#ffe28a]/70 bg-[#fff4c7]/95 text-[#8a6410] hover:bg-[#ffef9c]"
-                : "border-white/25 bg-black/35 text-white/85 hover:bg-black/50 hover:text-white"
-            }`}
-          >
-            {isFavorite ? "★" : "☆"}
-          </button>
-        ) : null}
-      </article>
+              return;
+            }
 
-      <CardDetailActionBar
-        hasMultipleCards={hasMultipleCards}
-        isPhotoMode={viewMode === "photo"}
-        photoZoom={photoZoom}
-        zoomLabel={zoomLabel}
-        onClose={onClose}
-        onDecreasePhotoZoom={decreasePhotoZoom}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onIncreasePhotoZoom={increasePhotoZoom}
-        onNext={viewMode === "photo" ? showNextPhoto : onNext}
-        onPrevious={viewMode === "photo" ? showPreviousPhoto : onPrevious}
-        onResetPhotoZoom={resetPhotoZoom}
-        onShare={onShare}
-      />
+            handleCardTouchStart(event);
+          }}
+          onTouchEnd={(event) => {
+            if (viewMode === "photo") {
+              event.stopPropagation();
+              return;
+            }
+
+            handleCardTouchEnd(event);
+          }}
+          className={`pointer-events-auto relative mx-auto w-full overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.3)] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] ${
+            viewMode === "photo"
+              ? "aspect-[4/3] max-h-[58dvh] max-w-[min(38rem,calc(100vw-2rem))] sm:max-h-[70vh] sm:max-w-4xl"
+              : "aspect-[3/4] max-w-[min(330px,calc((100dvh-13.5rem)*0.75),calc(100vw-3rem))] sm:max-w-[460px]"
+          } ${
+            viewMode === "photo" && photoZoom > 1 ? "cursor-default" : "cursor-pointer"
+          }`}
+        >
+          {viewMode === "photo" ? (
+            <CardDetailPhotoFace
+              backgroundImage={backgroundImage}
+              isDragging={isPhotoDragging}
+              offset={photoOffset}
+              photoZoom={photoZoom}
+              onPointerCancel={handlePhotoPointerEnd}
+              onPointerDown={handlePhotoPointerDown}
+              onPointerMove={handlePhotoPointerMove}
+              onPointerUp={handlePhotoPointerEnd}
+            />
+          ) : (
+            <div
+              className="absolute inset-0 rounded-[24px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
+              style={{ transform: `rotateY(${rotationAngle}deg)` }}
+            >
+              <div
+                className={`absolute inset-0 [transform-style:preserve-3d] ${
+                  viewMode === "front" ? "z-10" : "pointer-events-none z-0"
+                }`}
+                style={{ transform: `rotateY(${frontFaceStep * 180}deg)` }}
+              >
+                <CardFace
+                  backgroundImage={backgroundImage}
+                  backText={card.backText}
+                  date={date}
+                  deckLabel={card.deckId}
+                  face="front"
+                  frontComment={card.frontComment}
+                  frontText={card.frontText}
+                  size="detail"
+                />
+              </div>
+              <div
+                className={`absolute inset-0 [transform-style:preserve-3d] ${
+                  viewMode === "back" ? "z-10" : "pointer-events-none z-0"
+                }`}
+                style={{ transform: `rotateY(${backFaceStep * 180 - 180}deg)` }}
+              >
+                <CardFace
+                  backgroundImage={backgroundImage}
+                  backText={card.backText}
+                  date={date}
+                  deckLabel={card.deckId}
+                  face="back"
+                  frontComment={card.frontComment}
+                  frontText={card.frontText}
+                  size="detail"
+                />
+              </div>
+            </div>
+          )}
+          {viewMode !== "photo" ? (
+            <button
+              type="button"
+              aria-label={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
+              aria-pressed={isFavorite}
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleFavorite();
+              }}
+              className={`absolute bottom-6 right-6 z-20 flex h-11 w-11 items-center justify-center rounded-full border text-lg leading-none shadow-sm backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
+                isFavorite
+                  ? "border-[#ffe28a]/70 bg-[#fff4c7]/95 text-[#8a6410] hover:bg-[#ffef9c]"
+                  : "border-white/25 bg-black/35 text-white/85 hover:bg-black/50 hover:text-white"
+              }`}
+            >
+              {isFavorite ? "★" : "☆"}
+            </button>
+          ) : null}
+        </article>
+      </div>
+
+      <div className="pointer-events-auto">
+        <CardDetailActionBar
+          hasMultipleCards={hasMultipleCards}
+          isPhotoMode={viewMode === "photo"}
+          photoZoom={photoZoom}
+          zoomLabel={zoomLabel}
+          onClose={onClose}
+          onDecreasePhotoZoom={decreasePhotoZoom}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onIncreasePhotoZoom={increasePhotoZoom}
+          onNext={viewMode === "photo" ? showNextPhoto : onNext}
+          onPrevious={viewMode === "photo" ? showPreviousPhoto : onPrevious}
+          onResetPhotoZoom={resetPhotoZoom}
+          onShare={onShare}
+        />
+      </div>
     </div>
   );
 }

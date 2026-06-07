@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MutableRefObject, PointerEvent } from "react";
 
-const photoZoomLevels = [1, 1.5, 2, 3] as const;
+const photoZoomLevels = [1, 1.3, 1.5, 2, 3] as const;
 
 type PhotoOffset = {
   x: number;
@@ -31,6 +31,7 @@ export default function usePhotoPanZoom({
   const [photoDragStart, setPhotoDragStart] = useState<PhotoDragStart | null>(
     null,
   );
+  const wasPhotoMode = useRef(false);
 
   const isPhotoDragging = Boolean(photoDragStart);
   const zoomLabel =
@@ -42,6 +43,17 @@ export default function usePhotoPanZoom({
     setPhotoDragStart(null);
     shouldSkipNextClickRef.current = false;
   }
+
+  useEffect(() => {
+    if (isPhotoMode && !wasPhotoMode.current) {
+      setPhotoZoom(1);
+      setPhotoOffset({ x: 0, y: 0 });
+      setPhotoDragStart(null);
+      shouldSkipNextClickRef.current = false;
+    }
+
+    wasPhotoMode.current = isPhotoMode;
+  }, [isPhotoMode, shouldSkipNextClickRef]);
 
   function increasePhotoZoom() {
     const nextZoom = photoZoomLevels.find((zoom) => zoom > photoZoom);

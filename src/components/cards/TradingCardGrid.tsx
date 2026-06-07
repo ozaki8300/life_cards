@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Card, Deck } from "@/lib/types";
 
@@ -17,6 +17,7 @@ type Props = {
   onCardViewed?: (cardId: string) => void;
   onDeleteCard?: (cardId: string) => void;
   onToggleFavorite?: (cardId: string) => void;
+  showCarouselIndicator?: boolean;
 };
 
 const GRID_CLASS =
@@ -36,11 +37,14 @@ export default function TradingCardGrid({
   onCardViewed,
   onDeleteCard,
   onToggleFavorite,
+  showCarouselIndicator = false,
 }: Props) {
+  const railRef = useRef<HTMLDivElement | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [activeRailIndex, setActiveRailIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [localFavoriteIds, setLocalFavoriteIds] = useState<Set<string>>(
     () =>
@@ -53,6 +57,8 @@ export default function TradingCardGrid({
     : localFavoriteIds;
   const selectedCard = selectedIndex === null ? null : cards[selectedIndex];
   const hasMultipleCards = cards.length > 1;
+  const shouldShowCarouselIndicator =
+    layout === "rail" && showCarouselIndicator && hasMultipleCards;
 
   const showCard = useCallback(
     (nextIndex: number) => {
@@ -83,6 +89,31 @@ export default function TradingCardGrid({
     setIsSharing(false);
   }, []);
 
+  const updateActiveRailIndex = useCallback(() => {
+    const rail = railRef.current;
+    const track = rail?.firstElementChild;
+
+    if (!rail || !track) {
+      return;
+    }
+
+    const railLeft = rail.getBoundingClientRect().left;
+    const items = Array.from(track.children);
+    let nextIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    items.forEach((item, index) => {
+      const distance = Math.abs(item.getBoundingClientRect().left - railLeft);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        nextIndex = index;
+      }
+    });
+
+    setActiveRailIndex(nextIndex);
+  }, []);
+
   useEffect(() => {
     if (selectedIndex === null) {
       return;
@@ -108,6 +139,33 @@ export default function TradingCardGrid({
 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isEditing, isSharing, selectedIndex, showNext, showPrevious]);
+
+  useEffect(() => {
+    if (!shouldShowCarouselIndicator) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(updateActiveRailIndex);
+
+    window.addEventListener("resize", updateActiveRailIndex);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateActiveRailIndex);
+    };
+  }, [cards.length, shouldShowCarouselIndicator, updateActiveRailIndex]);
+
+  function scrollToRailIndex(index: number) {
+    const rail = railRef.current;
+    const track = rail?.firstElementChild;
+    const item = track?.children[index] as HTMLElement | undefined;
+
+    item?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "start",
+    });
+  }
 
   function toggleCard(cardId: string) {
     setFlippedIds((current) => {
@@ -206,8 +264,36 @@ export default function TradingCardGrid({
   return (
     <>
       {layout === "rail" ? (
-        <div className={RAIL_OUTER_CLASS}>
-          <div className={RAIL_INNER_CLASS}>{cardTiles}</div>
+        <div>
+          <div
+            ref={railRef}
+            className={RAIL_OUTER_CLASS}
+            onScroll={shouldShowCarouselIndicator ? updateActiveRailIndex : undefined}
+          >
+            <div className={RAIL_INNER_CLASS}>{cardTiles}</div>
+          </div>
+
+          {shouldShowCarouselIndicator ? (
+            <div
+              className="mt-1 flex justify-center gap-1.5 sm:hidden"
+              aria-label="今日の再会カードの位置"
+            >
+              {cards.map((card, index) => (
+                <button
+                  key={card.id}
+                  type="button"
+                  className={`h-1.5 rounded-full transition-all ${
+                    index === activeRailIndex
+                      ? "w-4 bg-[#5f513f]"
+                      : "w-1.5 bg-[#d8c8aa]"
+                  }`}
+                  aria-label={`${index + 1}枚目のカードへ移動`}
+                  aria-current={index === activeRailIndex ? "true" : undefined}
+                  onClick={() => scrollToRailIndex(index)}
+                />
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className={GRID_CLASS}>{cardTiles}</div>
@@ -222,11 +308,11 @@ export default function TradingCardGrid({
           <button
             type="button"
             aria-label="Close card preview"
-            className="fixed inset-0 cursor-default"
+            className="fixed inset-0 z-0 cursor-default"
             onClick={closePreview}
           />
 
-          <div className="relative mx-auto flex min-h-full max-w-6xl items-center">
+          <div className="relative z-10 mx-auto flex min-h-full max-w-6xl items-center">
             <div className="relative w-full">
               {isEditing ? (
                 <CardEditDialog
