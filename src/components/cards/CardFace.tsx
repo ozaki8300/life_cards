@@ -38,14 +38,14 @@ const faceSize = {
   },
   detail: {
     rounded: "rounded-[24px]",
-    topFade: "h-32",
-    label: "left-6 top-7 max-w-[70%] px-3 py-1 text-[11px] sm:left-7 sm:top-8",
-    frontContent: "px-6 pb-8 pt-7 sm:px-7 sm:pb-9 sm:pt-8",
-    title: "text-4xl leading-tight",
-    comment: "text-base leading-7",
-    date: "text-xs",
-    backContent: "px-6 pb-6 pt-5 sm:px-7 sm:pb-7 sm:pt-6",
-    backMemo: "card-back-scroll overflow-y-auto pr-2 text-base leading-7",
+    topFade: "h-28 sm:h-32",
+    label: "left-5 top-5 max-w-[70%] px-3 py-1 text-[10px] sm:left-7 sm:top-8 sm:text-[11px]",
+    frontContent: "px-5 pb-6 pt-6 sm:px-7 sm:pb-9 sm:pt-8",
+    title: "text-[1.65rem] leading-tight sm:text-4xl",
+    comment: "text-sm leading-6 sm:text-base sm:leading-7",
+    date: "text-[11px] sm:text-xs",
+    backContent: "px-5 pb-5 pt-4 sm:px-7 sm:pb-7 sm:pt-6",
+    backMemo: "card-back-scroll overflow-y-auto pr-2 text-sm leading-6 sm:text-base sm:leading-7",
   },
 } as const;
 

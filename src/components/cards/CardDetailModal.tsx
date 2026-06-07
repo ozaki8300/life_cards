@@ -46,7 +46,6 @@ export default function CardDetailModal({
     rotationAngle,
     frontFaceStep,
     backFaceStep,
-    photoFaceStep,
     showFront,
     cycleViewMode,
   } = useCardDetailViewCycle({
@@ -118,7 +117,7 @@ export default function CardDetailModal({
 
   return (
     <div
-      className={`mx-auto flex w-full flex-col items-center gap-3 sm:gap-4 ${
+      className={`mx-auto flex w-full flex-col items-center gap-4 sm:gap-4 ${
         viewMode === "photo" ? "max-w-4xl" : "max-w-3xl"
       }`}
     >
@@ -142,68 +141,64 @@ export default function CardDetailModal({
         }}
         className={`relative w-full overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.3)] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] ${
           viewMode === "photo"
-            ? "aspect-[4/3] max-h-[62dvh] max-w-4xl sm:max-h-[70vh]"
-            : "aspect-[3/4] max-w-[min(390px,calc((100dvh-11rem)*0.75),calc(100vw-2rem))] sm:max-w-[460px]"
+            ? "aspect-[4/3] max-h-[50dvh] max-w-[min(38rem,calc(100vw-2.5rem))] sm:max-h-[70vh] sm:max-w-4xl"
+            : "aspect-[3/4] max-w-[min(330px,calc((100dvh-13.5rem)*0.75),calc(100vw-3rem))] sm:max-w-[460px]"
         } ${
           viewMode === "photo" && photoZoom > 1 ? "cursor-default" : "cursor-pointer"
         }`}
       >
-        <div
-          className="absolute inset-0 rounded-[24px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
-          style={{ transform: `rotateY(${rotationAngle}deg)` }}
-        >
+        {viewMode === "photo" ? (
+          <CardDetailPhotoFace
+            backgroundImage={backgroundImage}
+            isDragging={isPhotoDragging}
+            offset={photoOffset}
+            photoZoom={photoZoom}
+            onPointerCancel={handlePhotoPointerEnd}
+            onPointerDown={handlePhotoPointerDown}
+            onPointerMove={handlePhotoPointerMove}
+            onPointerUp={handlePhotoPointerEnd}
+          />
+        ) : (
           <div
-            className={`absolute inset-0 [transform-style:preserve-3d] ${
-              viewMode === "front" ? "z-10" : "pointer-events-none z-0"
-            }`}
-            style={{ transform: `rotateY(${frontFaceStep * 180}deg)` }}
+            className="absolute inset-0 rounded-[24px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
+            style={{ transform: `rotateY(${rotationAngle}deg)` }}
           >
-            <CardFace
-              backgroundImage={backgroundImage}
-              backText={card.backText}
-              date={date}
-              deckLabel={card.deckId}
-              face="front"
-              frontComment={card.frontComment}
-              frontText={card.frontText}
-              size="detail"
-            />
+            <div
+              className={`absolute inset-0 [transform-style:preserve-3d] ${
+                viewMode === "front" ? "z-10" : "pointer-events-none z-0"
+              }`}
+              style={{ transform: `rotateY(${frontFaceStep * 180}deg)` }}
+            >
+              <CardFace
+                backgroundImage={backgroundImage}
+                backText={card.backText}
+                date={date}
+                deckLabel={card.deckId}
+                face="front"
+                frontComment={card.frontComment}
+                frontText={card.frontText}
+                size="detail"
+              />
+            </div>
+            <div
+              className={`absolute inset-0 [transform-style:preserve-3d] ${
+                viewMode === "back" ? "z-10" : "pointer-events-none z-0"
+              }`}
+              style={{ transform: `rotateY(${backFaceStep * 180 - 180}deg)` }}
+            >
+              <CardFace
+                backgroundImage={backgroundImage}
+                backText={card.backText}
+                date={date}
+                deckLabel={card.deckId}
+                face="back"
+                frontComment={card.frontComment}
+                frontText={card.frontText}
+                size="detail"
+              />
+            </div>
           </div>
-          <div
-            className={`absolute inset-0 [transform-style:preserve-3d] ${
-              viewMode === "back" ? "z-10" : "pointer-events-none z-0"
-            }`}
-            style={{ transform: `rotateY(${backFaceStep * 180 - 180}deg)` }}
-          >
-            <CardFace
-              backgroundImage={backgroundImage}
-              backText={card.backText}
-              date={date}
-              deckLabel={card.deckId}
-              face="back"
-              frontComment={card.frontComment}
-              frontText={card.frontText}
-              size="detail"
-            />
-          </div>
-          <div
-            className={`absolute inset-0 [transform-style:preserve-3d] ${
-              viewMode === "photo" ? "z-10" : "pointer-events-none z-0"
-            }`}
-            style={{ transform: `rotateY(${photoFaceStep * 180}deg)` }}
-          >
-            <CardDetailPhotoFace
-              backgroundImage={backgroundImage}
-              isDragging={isPhotoDragging}
-              offset={photoOffset}
-              photoZoom={photoZoom}
-              onPointerCancel={handlePhotoPointerEnd}
-              onPointerDown={handlePhotoPointerDown}
-              onPointerMove={handlePhotoPointerMove}
-              onPointerUp={handlePhotoPointerEnd}
-            />
-          </div>
-        </div>
+        )}
         {viewMode !== "photo" ? (
           <button
             type="button"

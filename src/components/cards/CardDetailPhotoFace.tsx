@@ -28,7 +28,7 @@ export default function CardDetailPhotoFace({
   onPointerUp,
 }: Props) {
   return (
-    <section className="absolute inset-0 overflow-hidden rounded-[24px] border border-white/25 bg-black/88 [backface-visibility:hidden]">
+    <section className="absolute inset-0 overflow-hidden rounded-[24px] border border-white/25 bg-black/88">
       <div
         className="absolute inset-0 overflow-hidden"
         onPointerDown={onPointerDown}
