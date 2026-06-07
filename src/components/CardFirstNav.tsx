@@ -1,36 +1,169 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import type { FormEvent } from "react";
 
-import type { Deck } from "@/lib/types";
+import { CardRepository } from "@/lib/cardRepository";
+import { DeckRepository } from "@/lib/deckRepository";
+import type { Card, Deck } from "@/lib/types";
+import { useEscapeKey } from "@/lib/useEscapeKey";
 
-const tabs = ["すべて", "お気に入り", "最近追加", "忘却対象"];
+import AboutLifeCardsModal from "./AboutLifeCardsModal";
+import DeckCreateModal from "./cards/DeckCreateModal";
+import { todayInputValue } from "./cards/cardFormUtils";
+
+const tabs = ["すべて", "お気に入り"];
 
 type Props = {
-  decks: Deck[];
   activeDeckId?: string;
   activeTab?: string;
+  cards: Card[];
+  decks: Deck[];
   searchQuery?: string;
+  onCardsChange?: (cards: Card[]) => void;
+  onDecksChange?: (decks: Deck[]) => void;
   onTabChange?: (tab: string) => void;
   onSearchChange?: (query: string) => void;
   children: React.ReactNode;
 };
 
 export default function CardFirstNav({
-  decks,
   activeDeckId,
   activeTab = "すべて",
+  cards,
+  decks,
   searchQuery = "",
+  onCardsChange,
+  onDecksChange,
   onTabChange,
   onSearchChange,
   children,
 }: Props) {
+  const router = useRouter();
+  const [deckSearchQuery, setDeckSearchQuery] = useState("");
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isDeckCreateOpen, setIsDeckCreateOpen] = useState(false);
+  const [isDeckPanelOpen, setIsDeckPanelOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const uncategorizedDeck = decks.find((deck) => deck.id === "uncategorized");
+  const displayDecks = uncategorizedDeck
+    ? [
+        ...decks.filter((deck) => deck.id !== "uncategorized"),
+        uncategorizedDeck,
+      ]
+    : decks;
+  const filteredDecks = displayDecks.filter((deck) =>
+    deck.name.toLowerCase().includes(deckSearchQuery.trim().toLowerCase()),
+  );
+  const reorderableDecks = displayDecks.filter(
+    (deck) => deck.id !== "uncategorized",
+  );
 
-  function createDeckDraft() {
-    console.log("Life Cards deck draft");
-    alert("デッキ作成はまだ仮実装です。");
+  function cardCountFor(deckId: string) {
+    return cards.filter((card) => card.deckId === deckId).length;
+  }
+
+  function reorderWithUncategorizedLast(nextReorderableDecks: Deck[]) {
+    return uncategorizedDeck
+      ? [...nextReorderableDecks, uncategorizedDeck]
+      : nextReorderableDecks;
+  }
+
+  function moveDeck(deckId: string, direction: "up" | "down") {
+    const currentIndex = reorderableDecks.findIndex((deck) => deck.id === deckId);
+    const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (
+      currentIndex < 0 ||
+      nextIndex < 0 ||
+      nextIndex >= reorderableDecks.length
+    ) {
+      return;
+    }
+
+    const nextReorderableDecks = [...reorderableDecks];
+    const targetDeck = nextReorderableDecks[currentIndex];
+    const swapDeck = nextReorderableDecks[nextIndex];
+
+    nextReorderableDecks[currentIndex] = swapDeck;
+    nextReorderableDecks[nextIndex] = targetDeck;
+
+    const nextDecks = DeckRepository.reorderDecks(
+      reorderWithUncategorizedLast(nextReorderableDecks),
+    );
+
+    onDecksChange?.(nextDecks);
+  }
+
+  function handleCreateDeck(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const deckName = String(formData.get("deckName") ?? "").trim();
+
+    if (!deckName) {
+      alert("デッキ名を入力してください。");
+      return;
+    }
+
+    const nextDeck: Deck = {
+      id: `deck_${Date.now()}`,
+      name: deckName,
+      cardCount: 0,
+      isShared: false,
+      createdAt: todayInputValue(),
+    };
+    const nextDecks = DeckRepository.saveDeck(nextDeck);
+
+    onDecksChange?.(nextDecks);
+    setDeckSearchQuery("");
+    setIsDeckCreateOpen(false);
+  }
+
+  function ensureUncategorizedDeck(deckList: Deck[]) {
+    const uncategorizedDeck = deckList.find(
+      (deck) => deck.id === "uncategorized",
+    );
+
+    if (uncategorizedDeck) {
+      return deckList;
+    }
+
+    return DeckRepository.saveDeck({
+      id: "uncategorized",
+      name: "未分類",
+      cardCount: 0,
+      isShared: false,
+      createdAt: todayInputValue(),
+    });
+  }
+
+  function handleDeleteDeck(deck: Deck) {
+    if (deck.id === "uncategorized") {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      "このDeckを削除しますか？カードは削除されず、未分類に移動します。",
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    ensureUncategorizedDeck(decks);
+    const nextDecks = DeckRepository.deleteDeck(deck.id);
+    const nextCards = CardRepository.moveCardsToDeck(deck.id, "uncategorized");
+
+    onDecksChange?.(nextDecks);
+    onCardsChange?.(nextCards);
+
+    if (activeDeckId === deck.id) {
+      setIsDeckPanelOpen(false);
+      router.push("/cards");
+    }
   }
 
   const displayButtons = (
@@ -52,56 +185,173 @@ export default function CardFirstNav({
     </div>
   );
 
-  const deckLinks = (
-    <div className="space-y-2">
-      <Link
-        href="/cards"
-        onClick={() => setIsMenuOpen(false)}
-        className={`block rounded-[14px] border px-4 py-3 text-sm font-semibold transition ${
-          activeDeckId
-            ? "border-[#e0d3c0] bg-[#fffaf0]/80 text-[#7d705f] hover:bg-white"
-            : "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-        }`}
-      >
-        すべて
-      </Link>
-
-      {decks.map((deck) => (
-        <Link
-          key={deck.id}
-          href={`/cards/${deck.id}`}
-          onClick={() => setIsMenuOpen(false)}
-          className={`block rounded-[14px] border px-4 py-3 text-sm font-semibold transition ${
-            activeDeckId === deck.id
-              ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-              : "border-[#e0d3c0] bg-[#fffaf0]/80 text-[#7d705f] hover:bg-white"
-          }`}
-        >
-          {deck.name}
-        </Link>
-      ))}
-      <button
-        type="button"
-        onClick={createDeckDraft}
-        className="block w-full rounded-[14px] border border-dashed border-[#d8c8aa] bg-white/56 px-4 py-3 text-left text-sm font-semibold text-[#7d705f] transition hover:bg-white"
-      >
-        ＋ 新しいデッキ
-      </button>
-    </div>
-  );
+  useEscapeKey(() => setIsDeckPanelOpen(false), {
+    enabled: isDeckPanelOpen,
+    ignoreEditable: false,
+  });
+  useEscapeKey(() => setIsMenuOpen(false), {
+    enabled: isMenuOpen,
+    ignoreEditable: false,
+  });
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsMenuOpen(true)}
-        aria-label="Open menu"
-        className="fixed right-5 top-8 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 text-2xl leading-none text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:right-8 lg:right-12 xl:right-[calc((100vw-72rem)/2+3rem)]"
-      >
-        ☰
-      </button>
+      <div className="fixed right-5 top-8 z-40 flex items-center gap-2 sm:right-8 lg:right-12 xl:right-[calc((100vw-72rem)/2+3rem)]">
+        <button
+          type="button"
+          onClick={() => setIsDeckPanelOpen(true)}
+          aria-label="Open decks"
+          className="inline-flex h-11 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 px-4 text-sm font-semibold text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
+        >
+          Decks
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsMenuOpen(true)}
+          aria-label="Open menu"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 text-2xl leading-none text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
+        >
+          ☰
+        </button>
+      </div>
 
       {children}
+
+      {isDeckPanelOpen ? (
+        <div className="fixed inset-0 z-50 bg-[#3b3126]/40 p-4 backdrop-blur-sm">
+          <button
+            type="button"
+            aria-label="Close deck panel"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setIsDeckPanelOpen(false)}
+          />
+          <aside className="relative flex h-full max-w-[360px] flex-col rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_24px_70px_rgba(87,72,52,0.28)]">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-[#332d25]">Decks</h2>
+              <button
+                type="button"
+                onClick={() => setIsDeckPanelOpen(false)}
+                className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-1 text-sm font-semibold text-[#7d705f]"
+              >
+                閉じる
+              </button>
+            </div>
+            <input
+              type="search"
+              value={deckSearchQuery}
+              onChange={(event) => setDeckSearchQuery(event.target.value)}
+              placeholder="Deckを検索"
+              className="mt-4 w-full rounded-[12px] border border-[#e8ddcb] bg-white/72 px-3 py-2 text-sm text-[#332d25] outline-none placeholder:text-[#a19380] focus:ring-2 focus:ring-[#e8ddcb]"
+            />
+
+            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+              <div className="grid gap-2">
+                <Link
+                  href="/cards"
+                  onClick={() => setIsDeckPanelOpen(false)}
+                  className={`rounded-[14px] border px-4 py-3 text-sm font-semibold transition ${
+                    activeDeckId
+                      ? "border-[#e0d3c0] bg-[#fffaf0]/80 text-[#7d705f] hover:bg-white"
+                      : "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                  }`}
+                >
+                  <span className="block">すべて</span>
+                  <span className="mt-1 block text-xs opacity-70">
+                    {cards.length} cards
+                  </span>
+                </Link>
+
+                {filteredDecks.length > 0 ? (
+                  filteredDecks.map((deck) => {
+                    const deckIndex = reorderableDecks.findIndex(
+                      (item) => item.id === deck.id,
+                    );
+                    const canReorder = deck.id !== "uncategorized";
+                    const isFirstDeck = deckIndex === 0;
+                    const isLastDeck =
+                      deckIndex === reorderableDecks.length - 1;
+                    const isActiveDeck = activeDeckId === deck.id;
+                    const reorderButtonClass = `flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:opacity-35 ${
+                      isActiveDeck
+                        ? "border-white/24 bg-white/10 text-[#fffaf0] hover:bg-white/18"
+                        : "border-[#e0d3c0] bg-white/60 text-[#7d705f] hover:bg-white"
+                    }`;
+
+                    return (
+                      <div
+                        key={deck.id}
+                        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[14px] border px-4 py-3 text-sm font-semibold transition ${
+                          isActiveDeck
+                            ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                            : "border-[#e0d3c0] bg-[#fffaf0]/80 text-[#7d705f] hover:bg-white"
+                        }`}
+                      >
+                        <Link
+                          href={`/cards/${deck.id}`}
+                          onClick={() => setIsDeckPanelOpen(false)}
+                          className="min-w-0"
+                        >
+                          <span className="block truncate">{deck.name}</span>
+                          <span className="mt-1 block text-xs opacity-70">
+                            {cardCountFor(deck.id)} cards
+                          </span>
+                        </Link>
+                        {canReorder ? (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              aria-label={`${deck.name}を上へ移動`}
+                              onClick={() => moveDeck(deck.id, "up")}
+                              disabled={isFirstDeck}
+                              className={reorderButtonClass}
+                            >
+                              ↑
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`${deck.name}を下へ移動`}
+                              onClick={() => moveDeck(deck.id, "down")}
+                              disabled={isLastDeck}
+                              className={reorderButtonClass}
+                            >
+                              ↓
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteDeck(deck)}
+                              className={`h-8 rounded-full border px-2.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                                isActiveDeck
+                                  ? "border-white/28 bg-white/12 text-[#fffaf0] hover:bg-white/20"
+                                  : "border-[#e6c9be] bg-[#fff4ef] text-[#9b4b35] hover:bg-white"
+                              }`}
+                            >
+                              削除
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="rounded-[14px] border border-dashed border-[#d8c8aa] bg-white/56 px-4 py-4 text-sm font-semibold text-[#8d7f6e]">
+                    該当するDeckがありません
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-3 border-t border-[#eadfce] pt-3">
+              <button
+                type="button"
+                onClick={() => setIsDeckCreateOpen(true)}
+                className="w-full rounded-[14px] border border-dashed border-[#d8c8aa] bg-white/56 px-4 py-3 text-left text-sm font-semibold text-[#7d705f] transition hover:bg-white"
+              >
+                ＋ 新しいDeck
+              </button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       {isMenuOpen ? (
         <div className="fixed inset-0 z-50 bg-[#3b3126]/40 p-4 backdrop-blur-sm">
@@ -112,41 +362,59 @@ export default function CardFirstNav({
             onClick={() => setIsMenuOpen(false)}
           />
           <aside className="relative h-full max-w-[340px] rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_24px_70px_rgba(87,72,52,0.28)]">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                検索
-              </p>
-              <button
-                type="button"
-                onClick={() => setIsMenuOpen(false)}
-                className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-1 text-sm font-semibold text-[#7d705f]"
-              >
-                閉じる
-              </button>
-            </div>
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(event) => onSearchChange?.(event.target.value)}
-              placeholder="カードを検索（AND検索）"
-              className="mt-4 w-full rounded-[12px] border border-[#e8ddcb] bg-white/72 px-3 py-2 text-sm text-[#332d25] outline-none placeholder:text-[#a19380] focus:ring-2 focus:ring-[#e8ddcb]"
-            />
-            <div className="mt-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                表示
-              </p>
-              <div className="mt-3">{displayButtons}</div>
-            </div>
-            <div className="mt-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                分類
-              </p>
-              <div className="mt-3 max-h-[calc(100vh-430px)] overflow-y-auto">
-                {deckLinks}
+            <div className="flex h-full flex-col">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
+                  検索
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-1 text-sm font-semibold text-[#7d705f]"
+                >
+                  閉じる
+                </button>
+              </div>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => onSearchChange?.(event.target.value)}
+                placeholder="カードを検索（AND検索）"
+                className="mt-4 w-full rounded-[12px] border border-[#e8ddcb] bg-white/72 px-3 py-2 text-sm text-[#332d25] outline-none placeholder:text-[#a19380] focus:ring-2 focus:ring-[#e8ddcb]"
+              />
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
+                  表示
+                </p>
+                <div className="mt-3">{displayButtons}</div>
+              </div>
+
+              <div className="mt-auto border-t border-[#eadfce] pt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsAboutOpen(true);
+                  }}
+                  className="w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-4 py-3 text-left text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                >
+                  About Life Cards
+                </button>
               </div>
             </div>
           </aside>
         </div>
+      ) : null}
+
+      {isAboutOpen ? (
+        <AboutLifeCardsModal onClose={() => setIsAboutOpen(false)} />
+      ) : null}
+
+      {isDeckCreateOpen ? (
+        <DeckCreateModal
+          onClose={() => setIsDeckCreateOpen(false)}
+          onSubmit={handleCreateDeck}
+        />
       ) : null}
     </>
   );

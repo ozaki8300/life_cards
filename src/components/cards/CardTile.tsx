@@ -1,0 +1,92 @@
+import type { Card } from "@/lib/types";
+
+import CardFace from "./CardFace";
+import { defaultImageForCard, formatDate } from "./cardUiUtils";
+
+export default function CardTile({
+  card,
+  isBack,
+  isFavorite,
+  layout = "grid",
+  onFlip,
+  onOpen,
+  onToggleFavorite,
+}: {
+  card: Card;
+  isBack: boolean;
+  isFavorite: boolean;
+  layout?: "grid" | "rail";
+  onFlip: () => void;
+  onOpen: () => void;
+  onToggleFavorite: () => void;
+}) {
+  const date = formatDate(card.createdAt);
+  const backgroundImage = card.imagePath || defaultImageForCard(card.id);
+  const isRail = layout === "rail";
+
+  return (
+    <article
+      onClick={onFlip}
+      className={`group relative isolate aspect-[3/4] cursor-pointer overflow-hidden rounded-[18px] transition duration-200 [perspective:1000px] focus-within:ring-2 focus-within:ring-[#d8c8aa] focus-within:ring-offset-2 focus-within:ring-offset-[#fffaf0] ${
+        isRail ? "" : "hover:-translate-y-1"
+      } ${isRail ? "shadow-[0_10px_24px_rgba(32,24,16,0.16)]" : "shadow-[0_18px_42px_rgba(32,24,16,0.22)] hover:shadow-[0_24px_54px_rgba(32,24,16,0.28)]"}`}
+    >
+      <div
+        className={`absolute inset-0 rounded-[18px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none ${
+          isBack ? "[transform:rotateY(180deg)]" : ""
+        }`}
+      >
+        <CardFace
+          backgroundImage={backgroundImage}
+          backText={card.backText}
+          date={date}
+          deckLabel={card.deckId}
+          face="front"
+          frontComment={card.frontComment}
+          frontText={card.frontText}
+          size="tile"
+        />
+        <CardFace
+          backgroundImage={backgroundImage}
+          backText={card.backText}
+          date={date}
+          deckLabel={card.deckId}
+          face="back"
+          frontComment={card.frontComment}
+          frontText={card.frontText}
+          size="tile"
+        />
+      </div>
+
+      <button
+        type="button"
+        aria-label="Open card detail"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpen();
+        }}
+        className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/35 text-lg font-semibold leading-none text-white shadow-sm backdrop-blur-md transition hover:bg-black/50 focus:outline-none focus:ring-2 focus:ring-white/70"
+      >
+        ...
+      </button>
+
+      <button
+        type="button"
+        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        aria-pressed={isFavorite}
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggleFavorite();
+        }}
+        className={`absolute bottom-6 right-6 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-lg leading-none shadow-sm backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
+          isFavorite
+            ? "border-[#ffe28a]/70 bg-[#fff4c7]/95 text-[#8a6410] hover:bg-[#ffef9c]"
+            : "border-white/25 bg-black/35 text-white/85 hover:bg-black/50 hover:text-white"
+        }`}
+      >
+        {isFavorite ? "★" : "☆"}
+      </button>
+
+    </article>
+  );
+}

@@ -13,16 +13,19 @@ export default function Home() {
               Life Cards
             </h1>
             <p className="mt-6 max-w-xl text-xl font-semibold leading-relaxed text-[#3c352c] sm:text-2xl">
-              写真・スクショ・言葉をカードにして、デッキで育てる
+              忘れた頃に、もう一度出会う。
             </p>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#6f6253] sm:text-lg">
-              学び、読書、授業、ChatGPTとの対話。残したい瞬間を1枚のカードにし、忘れた頃に再会するための知的チェキアプリ。
+              Life Cardsは、カードを管理するためのアプリではありません。
+              写真、学び、読書、会話。残したい瞬間をカードとして残し、
+              忘れた頃にもう一度出会うためのアプリです。保存し、忘れ、
+              再会する。その循環をつくります。
             </p>
             <Link
               href="/cards"
               className="mt-9 inline-flex rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
             >
-              カードデッキを開く
+              再会を始める
             </Link>
           </div>
 

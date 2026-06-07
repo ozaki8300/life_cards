@@ -18,6 +18,8 @@ export type Card = {
 
   frontText?: string;
 
+  frontComment?: string;
+
   backText?: string;
 
   createdAt: string;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import CardHome from "@/components/CardHome";
+import CardsPageHeader from "@/components/cards/CardsPageHeader";
 import { cards } from "@/data/cards/cards";
 import { decks } from "@/data/decks/decks";
 
@@ -30,24 +31,9 @@ export default async function DeckCardsPage({ params }: Props) {
   return (
     <main className="min-h-screen bg-[#f7f3ea] px-5 py-8 text-[#2f2a23] sm:px-8 lg:px-12">
       <section className="mx-auto max-w-6xl">
-        <header className="mb-7">
-          <div>
-            <Link
-              href="/cards"
-              className="text-sm font-medium text-[#8d7f6e] transition hover:text-[#2f2a23]"
-            >
-              All cards
-            </Link>
-            <h1 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
-              Life Cards
-            </h1>
-            <p className="mt-2 text-sm font-medium uppercase tracking-[0.24em] text-[#8d7f6e]">
-              {deck.name} / {deckCards.length} cards
-            </p>
-          </div>
-        </header>
+        <CardsPageHeader cardCount={deckCards.length} deckName={deck.name} />
 
-        <CardHome cards={deckCards} decks={decks} activeDeckId={deck.id} />
+        <CardHome cards={cards} decks={decks} activeDeckId={deck.id} />
       </section>
       <Link
         href={`/cards/${deck.id}/new`}
