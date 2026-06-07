@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 import { DeckRepository } from "@/lib/deckRepository";
+import { compressImage } from "@/lib/imageCompression";
 import type { Deck } from "@/lib/types";
 
 import BackMemoEditor from "./BackMemoEditor";
@@ -61,7 +62,7 @@ export default function CardForm({
     selectedDeckId ??
     "Deck";
 
-  const applyImageFile = useCallback((file: File, label: string) => {
+  const applyImageFileFallback = useCallback((file: File, label: string) => {
     const reader = new FileReader();
 
     reader.addEventListener("load", () => {
@@ -73,6 +74,21 @@ export default function CardForm({
 
     reader.readAsDataURL(file);
   }, []);
+
+  const applyImageFile = useCallback(
+    async (file: File, label: string) => {
+      try {
+        const result = await compressImage(file);
+
+        setImagePath(result.dataUrl);
+        setImageLabel(label);
+      } catch (error) {
+        console.warn("Life Cards image compression failed", error);
+        applyImageFileFallback(file, label);
+      }
+    },
+    [applyImageFileFallback],
+  );
 
   useEffect(() => {
     let isActive = true;
