@@ -1,0 +1,168 @@
+"use client";
+
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { Deck } from "@/lib/types";
+
+type SupabaseDeckRow = {
+  created_at: string;
+  id: string;
+  is_shared: boolean;
+  name: string;
+  sort_order: number;
+};
+
+function rowToDeck(row: SupabaseDeckRow): Deck {
+  return {
+    createdAt: row.created_at,
+    id: row.id,
+    isShared: row.is_shared,
+    name: row.name,
+  };
+}
+
+function deckToRow(deck: Deck, userId: string, sortOrder: number) {
+  return {
+    created_at: deck.createdAt,
+    id: deck.id,
+    is_shared: Boolean(deck.isShared),
+    name: deck.name,
+    sort_order: sortOrder,
+    updated_at: new Date().toISOString(),
+    user_id: userId,
+  };
+}
+
+async function getClient() {
+  const supabase = createSupabaseBrowserClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const userId = session?.user.id;
+
+  return userId ? { supabase, userId } : null;
+}
+
+async function fetchDecks(
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+) {
+  const { data, error } = await client.supabase
+    .from("decks")
+    .select("id,name,is_shared,created_at,sort_order")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as SupabaseDeckRow[]).map(rowToDeck);
+}
+
+export const DeckSupabaseRepository = {
+  async getDecks() {
+    const client = await getClient();
+
+    return client ? fetchDecks(client) : null;
+  },
+
+  async seedDecksIfEmpty(seedDecks: Deck[]) {
+    const client = await getClient();
+
+    if (!client) {
+      return null;
+    }
+
+    const currentDecks = await fetchDecks(client);
+
+    if (currentDecks.length > 0) {
+      return currentDecks;
+    }
+
+    const rows = seedDecks.map((deck, index) =>
+      deckToRow(deck, client.userId, index),
+    );
+
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const { error } = await client.supabase
+      .from("decks")
+      .upsert(rows, { onConflict: "user_id,id" });
+
+    if (error) {
+      throw error;
+    }
+
+    return fetchDecks(client);
+  },
+
+  async saveDeck(deck: Deck, seedDecks: Deck[]) {
+    const client = await getClient();
+
+    if (!client) {
+      return null;
+    }
+
+    const currentDecks =
+      (await DeckSupabaseRepository.seedDecksIfEmpty(seedDecks)) ?? [];
+    const existingIndex = currentDecks.findIndex((item) => item.id === deck.id);
+    const sortOrder = existingIndex >= 0 ? existingIndex : currentDecks.length;
+
+    const { error } = await client.supabase
+      .from("decks")
+      .upsert(deckToRow(deck, client.userId, sortOrder), {
+        onConflict: "user_id,id",
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    return fetchDecks(client);
+  },
+
+  async deleteDeck(deckId: string, seedDecks: Deck[]) {
+    const client = await getClient();
+
+    if (!client) {
+      return null;
+    }
+
+    await DeckSupabaseRepository.seedDecksIfEmpty(seedDecks);
+
+    const { error } = await client.supabase
+      .from("decks")
+      .delete()
+      .eq("user_id", client.userId)
+      .eq("id", deckId);
+
+    if (error) {
+      throw error;
+    }
+
+    return fetchDecks(client);
+  },
+
+  async reorderDecks(nextDecks: Deck[]) {
+    const client = await getClient();
+
+    if (!client) {
+      return null;
+    }
+
+    const rows = nextDecks.map((deck, index) =>
+      deckToRow(deck, client.userId, index),
+    );
+
+    const { error } = await client.supabase
+      .from("decks")
+      .upsert(rows, { onConflict: "user_id,id" });
+
+    if (error) {
+      throw error;
+    }
+
+    return fetchDecks(client);
+  },
+};

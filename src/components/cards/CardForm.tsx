@@ -93,9 +93,12 @@ export default function CardForm({
   useEffect(() => {
     let isActive = true;
 
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
+      const repositoryDecks =
+        await DeckRepository.getDecksForCurrentUser(deckOptions);
+
       if (isActive) {
-        setAvailableDecks(DeckRepository.getDecks(deckOptions));
+        setAvailableDecks(repositoryDecks);
       }
     });
 
@@ -135,7 +138,7 @@ export default function CardForm({
     event.target.value = "";
   }
 
-  function handleCreateDeck(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateDeck(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
@@ -153,7 +156,10 @@ export default function CardForm({
       createdAt: todayInputValue(),
       cardCount: 0,
     };
-    const nextDecks = DeckRepository.saveDeck(nextDeck);
+    const nextDecks = await DeckRepository.saveDeckForCurrentUser(
+      nextDeck,
+      availableDecks,
+    );
 
     setAvailableDecks(nextDecks);
     setSelectedDeckId(nextDeck.id);

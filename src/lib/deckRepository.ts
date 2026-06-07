@@ -1,4 +1,7 @@
+"use client";
+
 import { decks as seedDecks } from "@/data/decks/decks";
+import { DeckSupabaseRepository } from "@/lib/supabase/deckSupabaseRepository";
 import type { Deck } from "@/lib/types";
 
 import { STORAGE_KEYS } from "./storageKeys";
@@ -36,9 +39,28 @@ function writeStoredDecks(decks: Deck[]) {
   window.localStorage.setItem(STORAGE_KEYS.decks, JSON.stringify(decks));
 }
 
+function localOrSeedDecks(seed: Deck[]) {
+  const localDecks = readStoredDecks();
+
+  return localDecks && localDecks.length > 0 ? localDecks : seed;
+}
+
 export const DeckRepository = {
   getDecks(seed: Deck[] = seedDecks) {
-    return readStoredDecks() ?? seed;
+    return localOrSeedDecks(seed);
+  },
+
+  async getDecksForCurrentUser(seed: Deck[] = seedDecks) {
+    try {
+      return (
+        (await DeckSupabaseRepository.seedDecksIfEmpty(
+          localOrSeedDecks(seed),
+        )) ?? DeckRepository.getDecks(seed)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase decks fetch failed", error);
+      return DeckRepository.getDecks(seed);
+    }
   },
 
   saveDeck(deck: Deck) {
@@ -51,6 +73,20 @@ export const DeckRepository = {
     return nextDecks;
   },
 
+  async saveDeckForCurrentUser(deck: Deck, seed: Deck[] = seedDecks) {
+    try {
+      return (
+        (await DeckSupabaseRepository.saveDeck(
+          deck,
+          localOrSeedDecks(seed),
+        )) ?? DeckRepository.saveDeck(deck)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase deck save failed", error);
+      return DeckRepository.saveDeck(deck);
+    }
+  },
+
   deleteDeck(deckId: string) {
     const decks = DeckRepository.getDecks();
     const nextDecks = decks.filter((deck) => deck.id !== deckId);
@@ -59,8 +95,34 @@ export const DeckRepository = {
     return nextDecks;
   },
 
+  async deleteDeckForCurrentUser(deckId: string, seed: Deck[] = seedDecks) {
+    try {
+      return (
+        (await DeckSupabaseRepository.deleteDeck(
+          deckId,
+          localOrSeedDecks(seed),
+        )) ?? DeckRepository.deleteDeck(deckId)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase deck delete failed", error);
+      return DeckRepository.deleteDeck(deckId);
+    }
+  },
+
   reorderDecks(nextDecks: Deck[]) {
     writeStoredDecks(nextDecks);
     return nextDecks;
+  },
+
+  async reorderDecksForCurrentUser(nextDecks: Deck[]) {
+    try {
+      return (
+        (await DeckSupabaseRepository.reorderDecks(nextDecks)) ??
+        DeckRepository.reorderDecks(nextDecks)
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase deck reorder failed", error);
+      return DeckRepository.reorderDecks(nextDecks);
+    }
   },
 };

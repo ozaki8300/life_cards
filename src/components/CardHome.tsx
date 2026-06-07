@@ -49,14 +49,18 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
   useEffect(() => {
     let isActive = true;
 
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
       if (!isActive) {
         return;
       }
 
       const repositoryCards = CardRepository.getCards(cards);
-      const repositoryDecks = DeckRepository.getDecks(decks);
+      const repositoryDecks = await DeckRepository.getDecksForCurrentUser(decks);
       const repositoryEncounterMetadata = EncounterRepository.getMetadataMap();
+
+      if (!isActive) {
+        return;
+      }
 
       setAllCards(repositoryCards);
       setAllDecks(repositoryDecks);

@@ -72,7 +72,7 @@ export default function CardFirstNav({
       : nextReorderableDecks;
   }
 
-  function moveDeck(deckId: string, direction: "up" | "down") {
+  async function moveDeck(deckId: string, direction: "up" | "down") {
     const currentIndex = reorderableDecks.findIndex((deck) => deck.id === deckId);
     const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
 
@@ -91,14 +91,14 @@ export default function CardFirstNav({
     nextReorderableDecks[currentIndex] = swapDeck;
     nextReorderableDecks[nextIndex] = targetDeck;
 
-    const nextDecks = DeckRepository.reorderDecks(
+    const nextDecks = await DeckRepository.reorderDecksForCurrentUser(
       reorderWithUncategorizedLast(nextReorderableDecks),
     );
 
     onDecksChange?.(nextDecks);
   }
 
-  function handleCreateDeck(event: FormEvent<HTMLFormElement>) {
+  async function handleCreateDeck(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
@@ -116,14 +116,17 @@ export default function CardFirstNav({
       isShared: false,
       createdAt: todayInputValue(),
     };
-    const nextDecks = DeckRepository.saveDeck(nextDeck);
+    const nextDecks = await DeckRepository.saveDeckForCurrentUser(
+      nextDeck,
+      decks,
+    );
 
     onDecksChange?.(nextDecks);
     setDeckSearchQuery("");
     setIsDeckCreateOpen(false);
   }
 
-  function ensureUncategorizedDeck(deckList: Deck[]) {
+  async function ensureUncategorizedDeck(deckList: Deck[]) {
     const uncategorizedDeck = deckList.find(
       (deck) => deck.id === "uncategorized",
     );
@@ -132,16 +135,19 @@ export default function CardFirstNav({
       return deckList;
     }
 
-    return DeckRepository.saveDeck({
-      id: "uncategorized",
-      name: "未分類",
-      cardCount: 0,
-      isShared: false,
-      createdAt: todayInputValue(),
-    });
+    return DeckRepository.saveDeckForCurrentUser(
+      {
+        id: "uncategorized",
+        name: "未分類",
+        cardCount: 0,
+        isShared: false,
+        createdAt: todayInputValue(),
+      },
+      deckList,
+    );
   }
 
-  function handleDeleteDeck(deck: Deck) {
+  async function handleDeleteDeck(deck: Deck) {
     if (deck.id === "uncategorized") {
       return;
     }
@@ -154,8 +160,11 @@ export default function CardFirstNav({
       return;
     }
 
-    ensureUncategorizedDeck(decks);
-    const nextDecks = DeckRepository.deleteDeck(deck.id);
+    await ensureUncategorizedDeck(decks);
+    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(
+      deck.id,
+      decks,
+    );
     const nextCards = CardRepository.moveCardsToDeck(deck.id, "uncategorized");
 
     onDecksChange?.(nextDecks);
