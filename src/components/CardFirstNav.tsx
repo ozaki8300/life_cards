@@ -11,6 +11,7 @@ import type { Card, Deck } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
 import AboutLifeCardsModal from "./AboutLifeCardsModal";
+import AuthStatus from "./auth/AuthStatus";
 import DeckCreateModal from "./cards/DeckCreateModal";
 import { todayInputValue } from "./cards/cardFormUtils";
 
@@ -197,6 +198,7 @@ export default function CardFirstNav({
   return (
     <>
       <div className="fixed right-5 top-8 z-40 flex items-center gap-2 sm:right-8 lg:right-12 xl:right-[calc((100vw-72rem)/2+3rem)]">
+        <AuthStatus />
         <button
           type="button"
           onClick={() => setIsDeckPanelOpen(true)}
