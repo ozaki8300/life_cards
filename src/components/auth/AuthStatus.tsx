@@ -85,7 +85,9 @@ export default function AuthStatus() {
             {authState.email}
           </span>
         ) : null}
-        <LogoutButton />
+        <LogoutButton
+          onSignedOut={() => setAuthState({ status: "signed-out" })}
+        />
       </span>
     );
   }
