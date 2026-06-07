@@ -57,7 +57,8 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
       const repositoryDecks = await DeckRepository.getDecksForCurrentUser(decks);
       const repositoryCards =
         await CardRepository.getCardsForCurrentUser(cards);
-      const repositoryEncounterMetadata = EncounterRepository.getMetadataMap();
+      const repositoryEncounterMetadata =
+        await EncounterRepository.getMetadataMapForCurrentUser();
 
       if (!isActive) {
         return;
@@ -129,12 +130,24 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     });
   }
 
-  const recordCardView = useCallback((cardId: string) => {
-    EncounterRepository.recordView(cardId, new Date().toISOString());
+  const recordCardView = useCallback(async (cardId: string) => {
+    const nextEncounterMetadata =
+      await EncounterRepository.recordViewForCurrentUser(
+        cardId,
+        new Date().toISOString(),
+      );
+
+    setEncounterMetadataByCardId(nextEncounterMetadata);
   }, []);
 
-  const recordCardReencounter = useCallback((cardId: string) => {
-    EncounterRepository.recordReencounter(cardId, new Date().toISOString());
+  const recordCardReencounter = useCallback(async (cardId: string) => {
+    const nextEncounterMetadata =
+      await EncounterRepository.recordReencounterForCurrentUser(
+        cardId,
+        new Date().toISOString(),
+      );
+
+    setEncounterMetadataByCardId(nextEncounterMetadata);
   }, []);
 
   const handleDeleteCard = useCallback(async (cardId: string) => {
@@ -142,7 +155,8 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
       cardId,
       allCards,
     );
-    const nextEncounterMetadata = EncounterRepository.deleteMetadata(cardId);
+    const nextEncounterMetadata =
+      await EncounterRepository.deleteMetadataForCurrentUser(cardId);
 
     setAllCards(nextCards);
     setEncounterMetadataByCardId(nextEncounterMetadata);

@@ -1,5 +1,6 @@
 import type { EncounterMetadata } from "@/domain/reencounter/types";
 import { getNextReencounterAt } from "@/domain/reencounter/schedule";
+import { EncounterSupabaseRepository } from "@/lib/supabase/encounterSupabaseRepository";
 
 import { STORAGE_KEYS } from "./storageKeys";
 
@@ -94,6 +95,19 @@ export const EncounterRepository = {
     return readStoredMetadataMap();
   },
 
+  async getMetadataMapForCurrentUser() {
+    try {
+      return (
+        (await EncounterSupabaseRepository.seedMetadataIfEmpty(
+          readStoredMetadataMap(),
+        )) ?? EncounterRepository.getMetadataMap()
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase encounters fetch failed", error);
+      return EncounterRepository.getMetadataMap();
+    }
+  },
+
   getMetadata(cardId: string) {
     return readStoredMetadataMap()[cardId];
   },
@@ -108,6 +122,22 @@ export const EncounterRepository = {
 
     writeStoredMetadataMap(metadataByCardId);
     return metadata;
+  },
+
+  async recordViewForCurrentUser(cardId: string, viewedAt: string) {
+    const metadata = EncounterRepository.recordView(cardId, viewedAt);
+
+    try {
+      return (
+        (await EncounterSupabaseRepository.saveMetadata(
+          metadata,
+          readStoredMetadataMap(),
+        )) ?? EncounterRepository.getMetadataMap()
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase encounter view save failed", error);
+      return EncounterRepository.getMetadataMap();
+    }
   },
 
   recordReencounter(cardId: string, viewedAt: string) {
@@ -131,6 +161,25 @@ export const EncounterRepository = {
     return nextMetadata;
   },
 
+  async recordReencounterForCurrentUser(cardId: string, viewedAt: string) {
+    const metadata = EncounterRepository.recordReencounter(cardId, viewedAt);
+
+    try {
+      return (
+        (await EncounterSupabaseRepository.saveMetadata(
+          metadata,
+          readStoredMetadataMap(),
+        )) ?? EncounterRepository.getMetadataMap()
+      );
+    } catch (error) {
+      console.warn(
+        "Life Cards Supabase encounter reencounter save failed",
+        error,
+      );
+      return EncounterRepository.getMetadataMap();
+    }
+  },
+
   deleteMetadata(cardId: string) {
     const currentMap = readStoredMetadataMap();
 
@@ -143,5 +192,19 @@ export const EncounterRepository = {
 
     writeStoredMetadataMap(nextMap);
     return nextMap;
+  },
+
+  async deleteMetadataForCurrentUser(cardId: string) {
+    const nextMap = EncounterRepository.deleteMetadata(cardId);
+
+    try {
+      return (
+        (await EncounterSupabaseRepository.deleteMetadata(cardId, nextMap)) ??
+        nextMap
+      );
+    } catch (error) {
+      console.warn("Life Cards Supabase encounter delete failed", error);
+      return nextMap;
+    }
   },
 };
