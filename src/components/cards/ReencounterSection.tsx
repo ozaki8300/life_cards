@@ -47,6 +47,7 @@ export default function ReencounterSection({
         onCardViewed={onCardViewed}
         onDeleteCard={onDeleteCard}
         onToggleFavorite={onToggleFavorite}
+        showCarouselIndicator
       />
     </section>
   );

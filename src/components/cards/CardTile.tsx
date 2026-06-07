@@ -3,6 +3,15 @@ import type { Card } from "@/lib/types";
 import CardFace from "./CardFace";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
+const faceBaseClass =
+  "absolute inset-0 transition-opacity duration-150 [-webkit-backface-visibility:hidden] [backface-visibility:hidden] [transform-style:preserve-3d] [transform:translateZ(0)]";
+const frontFaceClass = `${faceBaseClass} ${
+  "visible opacity-100 group-data-[side=back]:invisible group-data-[side=back]:opacity-0 group-data-[side=back]:pointer-events-none"
+}`;
+const backFaceClass = `${faceBaseClass} ${
+  "invisible opacity-0 pointer-events-none group-data-[side=back]:visible group-data-[side=back]:opacity-100 group-data-[side=back]:pointer-events-auto"
+}`;
+
 export default function CardTile({
   card,
   isBack,
@@ -27,6 +36,7 @@ export default function CardTile({
   return (
     <article
       onClick={onFlip}
+      data-side={isBack ? "back" : "front"}
       className={`group relative isolate aspect-[3/4] cursor-pointer overflow-hidden rounded-[18px] transition duration-200 [perspective:1000px] focus-within:ring-2 focus-within:ring-[#d8c8aa] focus-within:ring-offset-2 focus-within:ring-offset-[#fffaf0] ${
         isRail ? "" : "hover:-translate-y-1"
       } ${isRail ? "shadow-[0_10px_24px_rgba(32,24,16,0.16)]" : "shadow-[0_18px_42px_rgba(32,24,16,0.22)] hover:shadow-[0_24px_54px_rgba(32,24,16,0.28)]"}`}
@@ -36,26 +46,30 @@ export default function CardTile({
           isBack ? "[transform:rotateY(180deg)]" : ""
         }`}
       >
-        <CardFace
-          backgroundImage={backgroundImage}
-          backText={card.backText}
-          date={date}
-          deckLabel={card.deckId}
-          face="front"
-          frontComment={card.frontComment}
-          frontText={card.frontText}
-          size="tile"
-        />
-        <CardFace
-          backgroundImage={backgroundImage}
-          backText={card.backText}
-          date={date}
-          deckLabel={card.deckId}
-          face="back"
-          frontComment={card.frontComment}
-          frontText={card.frontText}
-          size="tile"
-        />
+        <div className={frontFaceClass}>
+          <CardFace
+            backgroundImage={backgroundImage}
+            backText={card.backText}
+            date={date}
+            deckLabel={card.deckId}
+            face="front"
+            frontComment={card.frontComment}
+            frontText={card.frontText}
+            size="tile"
+          />
+        </div>
+        <div className={backFaceClass}>
+          <CardFace
+            backgroundImage={backgroundImage}
+            backText={card.backText}
+            date={date}
+            deckLabel={card.deckId}
+            face="back"
+            frontComment={card.frontComment}
+            frontText={card.frontText}
+            size="tile"
+          />
+        </div>
       </div>
 
       <button

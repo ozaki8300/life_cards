@@ -265,12 +265,25 @@ export default function TradingCardGrid({
     <>
       {layout === "rail" ? (
         <div>
-          <div
-            ref={railRef}
-            className={RAIL_OUTER_CLASS}
-            onScroll={shouldShowCarouselIndicator ? updateActiveRailIndex : undefined}
-          >
-            <div className={RAIL_INNER_CLASS}>{cardTiles}</div>
+          <div className="relative">
+            <div
+              ref={railRef}
+              className={RAIL_OUTER_CLASS}
+              onScroll={shouldShowCarouselIndicator ? updateActiveRailIndex : undefined}
+            >
+              <div className={RAIL_INNER_CLASS}>{cardTiles}</div>
+            </div>
+
+            {shouldShowCarouselIndicator ? (
+              <>
+                <div className="pointer-events-none absolute left-1 top-1/2 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/70 bg-[#fffaf0]/68 text-lg font-semibold text-[#5f513f] shadow-[0_6px_18px_rgba(87,72,52,0.12)] backdrop-blur-md sm:flex">
+                  ‹
+                </div>
+                <div className="pointer-events-none absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/70 bg-[#fffaf0]/68 text-lg font-semibold text-[#5f513f] shadow-[0_6px_18px_rgba(87,72,52,0.12)] backdrop-blur-md">
+                  ›
+                </div>
+              </>
+            ) : null}
           </div>
 
           {shouldShowCarouselIndicator ? (

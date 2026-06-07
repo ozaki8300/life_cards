@@ -9,6 +9,124 @@ const actionBarClass =
 const photoActionBarClass =
   "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(520px,calc(100vw-2rem))] flex-wrap items-center justify-center gap-1.5 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:gap-2";
 
+type IconProps = {
+  className?: string;
+};
+
+function ChevronLeftIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+function XIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+function PencilIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function QrCodeIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect height="5" width="5" x="3" y="3" />
+      <rect height="5" width="5" x="16" y="3" />
+      <rect height="5" width="5" x="3" y="16" />
+      <path d="M16 16h.01" />
+      <path d="M21 16h-2v3" />
+      <path d="M16 21v-2h3" />
+      <path d="M21 21h.01" />
+    </svg>
+  );
+}
+
+function TrashIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6 18 20H6L5 6" />
+      <path d="M10 11v5" />
+      <path d="M14 11v5" />
+    </svg>
+  );
+}
+
 type Props = {
   hasMultipleCards: boolean;
   isPhotoMode: boolean;
@@ -51,7 +169,7 @@ export default function CardDetailActionBar({
             disabled={!hasMultipleCards}
             className={actionButtonClass}
           >
-            ◀
+            <ChevronLeftIcon />
           </button>
           <button
             type="button"
@@ -60,7 +178,7 @@ export default function CardDetailActionBar({
             disabled={photoZoom <= 1}
             className={actionButtonClass}
           >
-            −
+            <span aria-hidden="true">−</span>
           </button>
           <button
             type="button"
@@ -77,7 +195,7 @@ export default function CardDetailActionBar({
             disabled={photoZoom >= 3}
             className={actionButtonClass}
           >
-            ＋
+            <span aria-hidden="true">＋</span>
           </button>
           <button
             type="button"
@@ -86,7 +204,7 @@ export default function CardDetailActionBar({
             disabled={!hasMultipleCards}
             className={actionButtonClass}
           >
-            ▶
+            <ChevronRightIcon />
           </button>
           <button
             type="button"
@@ -94,7 +212,7 @@ export default function CardDetailActionBar({
             onClick={onClose}
             className={actionButtonClass}
           >
-            ✕
+            <XIcon />
           </button>
         </>
       ) : (
@@ -106,7 +224,7 @@ export default function CardDetailActionBar({
             disabled={!hasMultipleCards}
             className={actionButtonClass}
           >
-            ◀
+            <ChevronLeftIcon />
           </button>
           <button
             type="button"
@@ -114,7 +232,7 @@ export default function CardDetailActionBar({
             onClick={onShare}
             className={actionButtonClass}
           >
-            QR
+            <QrCodeIcon />
           </button>
           <button
             type="button"
@@ -122,7 +240,7 @@ export default function CardDetailActionBar({
             onClick={onEdit}
             className={actionButtonClass}
           >
-            ✎
+            <PencilIcon />
           </button>
           <button
             type="button"
@@ -130,7 +248,7 @@ export default function CardDetailActionBar({
             onClick={onDelete}
             className={deleteActionButtonClass}
           >
-            削
+            <TrashIcon />
           </button>
           <button
             type="button"
@@ -139,7 +257,7 @@ export default function CardDetailActionBar({
             disabled={!hasMultipleCards}
             className={actionButtonClass}
           >
-            ▶
+            <ChevronRightIcon />
           </button>
           <button
             type="button"
@@ -147,7 +265,7 @@ export default function CardDetailActionBar({
             onClick={onClose}
             className={actionButtonClass}
           >
-            ✕
+            <XIcon />
           </button>
         </>
       )}

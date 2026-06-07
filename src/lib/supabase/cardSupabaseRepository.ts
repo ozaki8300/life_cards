@@ -1,6 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card } from "@/lib/types";
 
 type SupabaseCardRow = {
@@ -10,11 +11,31 @@ type SupabaseCardRow = {
   front_comment: string | null;
   front_text: string | null;
   id: string;
+  image_path: string | null;
   is_favorite: boolean;
   updated_at: string;
 };
 
-function rowToCard(row: SupabaseCardRow): Card {
+function isDataUrl(value: string) {
+  return value.startsWith("data:");
+}
+
+function isDisplayOnlyImagePath(value: string) {
+  return value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/");
+}
+
+async function rowToCard(row: SupabaseCardRow): Promise<Card> {
+  let imagePath = "";
+
+  if (row.image_path) {
+    try {
+      imagePath =
+        (await CardImageStorageRepository.getSignedImageUrl(row.image_path)) ?? "";
+    } catch (error) {
+      console.warn("Life Cards Supabase image signed URL failed", error);
+    }
+  }
+
   return {
     backText: row.back_text ?? "",
     createdAt: row.created_at,
@@ -22,13 +43,77 @@ function rowToCard(row: SupabaseCardRow): Card {
     frontComment: row.front_comment ?? "",
     frontText: row.front_text ?? "",
     id: row.id,
-    imagePath: "",
+    imagePath,
     isFavorite: row.is_favorite,
     updatedAt: row.updated_at,
   };
 }
 
-function cardToRow(card: Card, userId: string) {
+async function getStoredImagePath(
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+  cardId: string,
+) {
+  const { data, error } = await client.supabase
+    .from("cards")
+    .select("image_path")
+    .eq("user_id", client.userId)
+    .eq("id", cardId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as Pick<SupabaseCardRow, "image_path"> | null)?.image_path ?? "";
+}
+
+async function removeStoredImagePath(path: string) {
+  try {
+    await CardImageStorageRepository.removeCardImage(path);
+  } catch (error) {
+    console.warn("Life Cards Supabase image remove failed", error);
+  }
+}
+
+async function resolveImagePathForSave(
+  card: Card,
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+) {
+  const imagePath = (card.imagePath ?? "").trim();
+
+  if (!imagePath) {
+    const storedPath = await getStoredImagePath(client, card.id);
+
+    if (storedPath) {
+      await removeStoredImagePath(storedPath);
+    }
+
+    return "";
+  }
+
+  if (isDataUrl(imagePath)) {
+    try {
+      return (await CardImageStorageRepository.uploadCardImage(
+        card.id,
+        imagePath,
+      )) ?? "";
+    } catch (error) {
+      console.warn("Life Cards Supabase image upload failed", error);
+      return "";
+    }
+  }
+
+  if (isDisplayOnlyImagePath(imagePath)) {
+    return getStoredImagePath(client, card.id);
+  }
+
+  return imagePath;
+}
+
+async function cardToRow(
+  card: Card,
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+) {
   return {
     back_text: card.backText ?? "",
     created_at: card.createdAt,
@@ -36,10 +121,10 @@ function cardToRow(card: Card, userId: string) {
     front_comment: card.frontComment ?? "",
     front_text: card.frontText ?? "",
     id: card.id,
-    image_path: "",
+    image_path: await resolveImagePathForSave(card, client),
     is_favorite: Boolean(card.isFavorite),
     updated_at: card.updatedAt,
-    user_id: userId,
+    user_id: client.userId,
   };
 }
 
@@ -59,7 +144,7 @@ async function fetchCards(
   const { data, error } = await client.supabase
     .from("cards")
     .select(
-      "id,deck_id,front_text,front_comment,back_text,is_favorite,created_at,updated_at",
+      "id,deck_id,front_text,front_comment,back_text,image_path,is_favorite,created_at,updated_at",
     )
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: false });
@@ -68,7 +153,7 @@ async function fetchCards(
     throw error;
   }
 
-  return ((data ?? []) as SupabaseCardRow[]).map(rowToCard);
+  return Promise.all(((data ?? []) as SupabaseCardRow[]).map(rowToCard));
 }
 
 export const CardSupabaseRepository = {
@@ -91,7 +176,9 @@ export const CardSupabaseRepository = {
       return currentCards;
     }
 
-    const rows = seedCards.map((card) => cardToRow(card, client.userId));
+    const rows = await Promise.all(
+      seedCards.map((card) => cardToRow(card, client)),
+    );
 
     if (rows.length === 0) {
       return [];
@@ -119,7 +206,7 @@ export const CardSupabaseRepository = {
 
     const { error } = await client.supabase
       .from("cards")
-      .upsert(cardToRow(card, client.userId), {
+      .upsert(await cardToRow(card, client), {
         onConflict: "user_id,id",
       });
 
@@ -143,6 +230,8 @@ export const CardSupabaseRepository = {
 
     await CardSupabaseRepository.seedCardsIfEmpty(seedCards);
 
+    const storedPath = await getStoredImagePath(client, cardId);
+
     const { error } = await client.supabase
       .from("cards")
       .delete()
@@ -151,6 +240,10 @@ export const CardSupabaseRepository = {
 
     if (error) {
       throw error;
+    }
+
+    if (storedPath) {
+      await removeStoredImagePath(storedPath);
     }
 
     return fetchCards(client);

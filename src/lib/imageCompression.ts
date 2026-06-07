@@ -5,6 +5,7 @@ export type ImageCompressionOptions = {
 };
 
 export type CompressedImageResult = {
+  blob: Blob;
   dataUrl: string;
   width: number;
   height: number;
@@ -82,6 +83,24 @@ function blobToDataUrl(blob: Blob) {
   });
 }
 
+export function dataUrlToBlob(dataUrl: string) {
+  const [metadata, base64Data] = dataUrl.split(",");
+  const mimeType = metadata.match(/^data:([^;]+);base64$/)?.[1];
+
+  if (!mimeType || !base64Data) {
+    throw new Error("Invalid data URL");
+  }
+
+  const binary = window.atob(base64Data);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+}
+
 export async function compressImage(
   file: File,
   options: ImageCompressionOptions = {},
@@ -127,6 +146,7 @@ export async function compressImage(
   const dataUrl = await blobToDataUrl(blob);
 
   return {
+    blob,
     dataUrl,
     width,
     height,
