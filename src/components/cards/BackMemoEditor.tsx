@@ -7,6 +7,7 @@ type Props = {
   backText: string;
   onBackModeChange: (mode: BackMemoMode) => void;
   onBackTextChange: (value: string) => void;
+  onFocus?: () => void;
 };
 
 export default function BackMemoEditor({
@@ -14,9 +15,13 @@ export default function BackMemoEditor({
   backText,
   onBackModeChange,
   onBackTextChange,
+  onFocus,
 }: Props) {
   return (
-    <section className="rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/25">
+    <section
+      className="rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/25"
+      onFocusCapture={onFocus}
+    >
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">

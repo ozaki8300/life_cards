@@ -79,6 +79,7 @@ export default function CardForm({
     initialValues.imageFitMode ?? "cover",
   );
   const [linkUrl, setLinkUrl] = useState(initialValues.linkUrl);
+  const [previewFace, setPreviewFace] = useState<"front" | "back">("front");
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
   const [availableDecks, setAvailableDecks] = useState(deckOptions);
   const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
@@ -89,6 +90,10 @@ export default function CardForm({
   const selectedDeckName =
     availableDecks.find((deck) => deck.id === selectedDeckId)?.name ??
     "Deck";
+
+  function requestPreviewFace(face: "front" | "back") {
+    setPreviewFace(face);
+  }
 
   const applyImageFile = useCallback(
     async (file: File, label: string) => {
@@ -314,6 +319,8 @@ export default function CardForm({
           imageFitMode={imageFitMode}
           imagePath={imagePath}
           linkUrl={linkUrl}
+          onPreviewFaceChange={setPreviewFace}
+          previewFace={previewFace}
           selectedDeckName={selectedDeckName}
         />
 
@@ -443,6 +450,7 @@ export default function CardForm({
               name="frontText"
               value={frontText}
               onChange={(event) => setFrontText(event.target.value)}
+              onFocus={() => requestPreviewFace("front")}
               placeholder="表面タイトル"
               className="mt-2 w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base font-semibold leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
             />
@@ -456,6 +464,7 @@ export default function CardForm({
               name="frontComment"
               value={frontComment}
               onChange={(event) => setFrontComment(event.target.value)}
+              onFocus={() => requestPreviewFace("front")}
               rows={3}
               placeholder="表面に添える数行コメント"
               className="mt-2 w-full resize-none rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
@@ -467,6 +476,7 @@ export default function CardForm({
             backText={backText}
             onBackModeChange={setBackMode}
             onBackTextChange={setBackText}
+            onFocus={() => requestPreviewFace("back")}
           />
 
           <label>

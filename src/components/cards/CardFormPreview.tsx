@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import MarkdownMemo from "@/components/MarkdownMemo";
 import type { CardImageFitMode } from "@/lib/types";
 
@@ -14,6 +12,8 @@ type Props = {
   imageFitMode?: CardImageFitMode;
   imagePath: string;
   linkUrl: string;
+  onPreviewFaceChange: (face: "front" | "back") => void;
+  previewFace: "front" | "back";
   selectedDeckName: string;
 };
 
@@ -159,17 +159,19 @@ export default function CardFormPreview({
   imageFitMode = "cover",
   imagePath,
   linkUrl,
+  onPreviewFaceChange,
+  previewFace,
   selectedDeckName,
 }: Props) {
-  const [isBack, setIsBack] = useState(false);
   const previewBackground = imagePath || defaultImageForCard(cardId);
   const date = formatDate(cardDate);
+  const isBack = previewFace === "back";
 
   return (
     <section className="mx-auto w-full max-w-[360px] lg:sticky lg:top-4">
       <button
         type="button"
-        onClick={() => setIsBack((current) => !current)}
+        onClick={() => onPreviewFaceChange(isBack ? "front" : "back")}
         className="group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-[22px] text-left shadow-[0_20px_54px_rgba(87,72,52,0.24)] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
         aria-label={isBack ? "表面プレビューを表示" : "裏面プレビューを表示"}
       >
