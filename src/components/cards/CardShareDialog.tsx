@@ -66,9 +66,10 @@ export default function CardShareDialog({
       setCopyStatus("共有URLを作成しました");
     } catch (error) {
       console.warn("Life Cards share URL create failed", error);
-      setErrorMessage(
-        error instanceof Error ? error.message : "共有URLを作成できませんでした",
-      );
+      const message =
+        error instanceof Error ? error.message : "Unknown share creation error";
+
+      setErrorMessage(`共有URLを作成できませんでした: ${message}`);
     } finally {
       setIsCreatingShare(false);
     }

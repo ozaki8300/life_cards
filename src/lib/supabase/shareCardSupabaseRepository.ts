@@ -89,6 +89,13 @@ export async function createShareCardForCurrentUser(
   const shareType = options.shareType ?? "card";
   const expiresAt = new Date(Date.now() + shareDurationMs).toISOString();
   const payload = createShareCardPayload(card, creatorLabel);
+
+  console.log("Life Cards share creation started", {
+    creatorLabel,
+    shareType,
+    userId: user.id,
+  });
+
   const row: ShareCardInsertRow = {
     card_payload: payload,
     creator_label: creatorLabel,
@@ -99,15 +106,33 @@ export async function createShareCardForCurrentUser(
     token,
   };
 
+  console.log("Life Cards share_cards insert payload", {
+    card_payload: {
+      hasImagePath: Boolean(payload.card.imagePath),
+      schemaVersion: payload.schemaVersion,
+    },
+    creator_label: row.creator_label,
+    creator_user_id: row.creator_user_id,
+    expires_at: row.expires_at,
+    share_type: row.share_type,
+    source_card_id: row.source_card_id,
+    token: row.token,
+  });
+
   const { error } = await supabase.from("share_cards").insert(row);
 
   if (error) {
-    console.warn("Life Cards share_cards insert failed", {
-      code: error.code,
-      details: error.details,
-      message: error.message,
-    });
-    throw error;
+    console.error("Life Cards share insert message:", error.message);
+    console.error("Life Cards share insert code:", error.code);
+    console.error("Life Cards share insert details:", error.details);
+    console.error("Life Cards share insert hint:", error.hint);
+    console.error(
+      "Life Cards share insert full:",
+      JSON.stringify(error, null, 2),
+    );
+    throw new Error(
+      `share_cards insert failed: ${error.message} (${error.code ?? "no-code"})`,
+    );
   }
 
   return {
