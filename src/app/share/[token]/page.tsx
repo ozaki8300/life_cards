@@ -11,6 +11,8 @@ import type { CardImageFitMode } from "@/lib/types";
 
 import SharedCardPreview from "./SharedCardPreview";
 
+const cardImagesBucket = "card-images";
+
 type Props = {
   params: Promise<{
     token: string;
@@ -69,6 +71,53 @@ function generateImportedCardId() {
   }
 
   return `card_${Date.now()}`;
+}
+
+function importedCardImagePath(userId: string, cardId: string) {
+  return `${userId}/cards/${cardId}/front.webp`;
+}
+
+async function copySharedImageToRecipientStorage({
+  cardId,
+  imagePath,
+  supabase,
+  userId,
+}: {
+  cardId: string;
+  imagePath: string;
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  userId: string;
+}) {
+  if (!imagePath) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(imagePath);
+
+    if (!response.ok) {
+      throw new Error(`Image fetch failed: ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type") ?? "image/webp";
+    const imageBody = await response.arrayBuffer();
+    const storagePath = importedCardImagePath(userId, cardId);
+    const { error } = await supabase.storage
+      .from(cardImagesBucket)
+      .upload(storagePath, imageBody, {
+        contentType,
+        upsert: true,
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    return storagePath;
+  } catch (error) {
+    console.warn("Life Cards shared card image copy failed", error);
+    return null;
+  }
 }
 
 function isString(value: unknown): value is string {
@@ -270,6 +319,13 @@ async function importSharedCard(formData: FormData) {
 
   const now = new Date().toISOString();
   const card = shareCard.payload.card;
+  const newCardId = generateImportedCardId();
+  const importedImagePath = await copySharedImageToRecipientStorage({
+    cardId: newCardId,
+    imagePath: card.imagePath ?? "",
+    supabase,
+    userId: user.id,
+  });
   const { error: deckError } = await supabase.from("decks").upsert(
     {
       created_at: now,
@@ -294,9 +350,9 @@ async function importSharedCard(formData: FormData) {
     deck_id: "uncategorized",
     front_comment: card.frontComment ?? "",
     front_text: card.frontText ?? "",
-    id: generateImportedCardId(),
+    id: newCardId,
     image_fit_mode: card.imageFitMode ?? "cover",
-    image_path: card.imagePath || null,
+    image_path: importedImagePath,
     is_favorite: false,
     link_url: card.linkUrl?.trim() || null,
     updated_at: now,
