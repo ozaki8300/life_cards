@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 
 import { createShareCardForCurrentUser } from "@/lib/supabase/shareCardSupabaseRepository";
@@ -8,15 +8,21 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
-import { formatDate, gradientFor } from "./cardUiUtils";
+import CardFace from "./CardFace";
+import { defaultImageForCard, formatDate } from "./cardUiUtils";
+
+const SHARE_EXPIRATION_DAYS = 7;
+const COPY_SUCCESS_RESET_MS = 1500;
+const SHARE_PREVIEW_BASE_WIDTH = 360;
+const SHARE_PREVIEW_BASE_HEIGHT = 480;
 
 export default function CardShareDialog({
   card,
-  index,
+  deckLabel,
   onClose,
 }: {
   card: Card;
-  index: number;
+  deckLabel: string;
   onClose: () => void;
 }) {
   const [copyStatus, setCopyStatus] = useState("");
@@ -24,8 +30,35 @@ export default function CardShareDialog({
   const [expiresAt, setExpiresAt] = useState("");
   const [isCreatingShare, setIsCreatingShare] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const copyStatusResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   useEscapeKey(onClose, { ignoreEditable: false });
   const formattedExpiresAt = useMemo(() => formatExpiresAt(expiresAt), [expiresAt]);
+  const previewBackground = card.imagePath || defaultImageForCard(card.id);
+  const copyButtonLabel = copyStatus === "コピーしました" ? "コピーしました" : "リンクをコピー";
+
+  useEffect(() => {
+    return () => {
+      clearCopyStatusResetTimer();
+    };
+  }, []);
+
+  function clearCopyStatusResetTimer() {
+    if (copyStatusResetTimerRef.current) {
+      clearTimeout(copyStatusResetTimerRef.current);
+      copyStatusResetTimerRef.current = null;
+    }
+  }
+
+  function showCopySuccess() {
+    clearCopyStatusResetTimer();
+    setCopyStatus("コピーしました");
+    copyStatusResetTimerRef.current = setTimeout(() => {
+      setCopyStatus("");
+      copyStatusResetTimerRef.current = null;
+    }, COPY_SUCCESS_RESET_MS);
+  }
 
   async function resolveCreatorLabel() {
     const supabase = createSupabaseBrowserClient();
@@ -50,6 +83,7 @@ export default function CardShareDialog({
   }
 
   async function createShareUrl() {
+    clearCopyStatusResetTimer();
     setCopyStatus("");
     setErrorMessage("");
     setIsCreatingShare(true);
@@ -63,27 +97,28 @@ export default function CardShareDialog({
 
       setExpiresAt(result.expiresAt);
       setShareUrl(result.shareUrl);
-      setCopyStatus("共有URLを作成しました");
     } catch (error) {
       console.warn("Life Cards share URL create failed", error);
       const message =
         error instanceof Error ? error.message : "Unknown share creation error";
 
-      setErrorMessage(`共有URLを作成できませんでした: ${message}`);
+      setErrorMessage(`共有リンクを作成できませんでした: ${message}`);
     } finally {
       setIsCreatingShare(false);
     }
   }
 
   async function copyShareUrl() {
+    clearCopyStatusResetTimer();
+
     if (!shareUrl) {
-      setCopyStatus("先に共有URLを作成してください");
+      setCopyStatus("先に共有リンクを作成してください");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setCopyStatus("コピーしました");
+      showCopySuccess();
     } catch (error) {
       console.warn("Life Cards share URL copy failed", error);
       setCopyStatus("コピーできませんでした");
@@ -92,7 +127,7 @@ export default function CardShareDialog({
 
   async function shareWithOs() {
     if (!shareUrl) {
-      await createShareUrl();
+      setCopyStatus("先に共有リンクを作成してください");
       return;
     }
 
@@ -103,7 +138,6 @@ export default function CardShareDialog({
           text: card.frontText,
           url: shareUrl,
         });
-        setCopyStatus("共有シートを開きました");
         return;
       } catch (error) {
         console.warn("Life Cards OS share failed", error);
@@ -141,52 +175,41 @@ export default function CardShareDialog({
         </div>
 
         <div className="mt-5 grid gap-4">
-          <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] p-3">
-            <div
-              className="overflow-hidden rounded-[14px] border border-[#e0d3c0] bg-[#fffaf0] p-3 shadow-sm"
-              style={!card.imagePath ? { background: gradientFor(index) } : undefined}
-            >
-              {card.imagePath ? (
-                <div
-                  className="aspect-[4/3] rounded-[10px] bg-cover bg-center"
-                  style={{ backgroundImage: `url(${card.imagePath})` }}
-                />
-              ) : null}
-              <h3 className="mt-3 line-clamp-3 text-lg font-semibold leading-snug text-[#332d25]">
-                {card.frontText || "Untitled"}
-              </h3>
-              <p className="mt-2 text-[11px] font-medium text-[#a19380]">
-                {formatDate(card.createdAt)}
-              </p>
-            </div>
+          {!shareUrl ? (
+            <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] p-3">
+              <div className="rounded-[14px] border border-[#e0d3c0] bg-[#fffaf0] p-3 shadow-sm">
+                <div className="relative mx-auto h-[316.8px] w-[237.6px] overflow-visible sm:h-[345.6px] sm:w-[259.2px]">
+                  <div
+                    className="absolute left-1/2 top-1/2 origin-center -translate-x-1/2 -translate-y-1/2 scale-[0.66] overflow-hidden rounded-[22px] shadow-[0_18px_42px_rgba(32,24,16,0.18)] sm:scale-[0.72]"
+                    style={{
+                      height: SHARE_PREVIEW_BASE_HEIGHT,
+                      width: SHARE_PREVIEW_BASE_WIDTH,
+                    }}
+                  >
+                    <CardFace
+                      backgroundImage={previewBackground}
+                      backText={card.backText}
+                      date={formatDate(card.createdAt)}
+                      deckLabel={deckLabel}
+                      face="front"
+                      frontComment={card.frontComment}
+                      frontText={card.frontText}
+                      imageFitMode={card.imageFitMode}
+                      linkUrl={card.linkUrl}
+                      preserve3d={false}
+                      size="preview"
+                    />
+                  </div>
+                </div>
+              </div>
 
-            <label className="mt-4 block">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                共有URL
-              </span>
-              <input
-                readOnly
-                value={shareUrl}
-                placeholder="共有URLを作成するとここに表示されます"
-                className="mt-2 w-full rounded-[14px] border border-[#e8ddcb] bg-white/72 px-4 py-3 text-sm text-[#5f5346] outline-none focus:ring-2 focus:ring-[#d8c8aa]"
-              />
-            </label>
-            {formattedExpiresAt ? (
-              <p className="mt-2 text-xs font-medium text-[#8d7f6e]">
-                有効期限: {formattedExpiresAt}
-              </p>
-            ) : null}
-            {copyStatus ? (
-              <p className="mt-2 text-xs font-semibold text-[#8d7f6e]">
-                {copyStatus}
-              </p>
-            ) : null}
-            {errorMessage ? (
-              <p className="mt-2 text-xs font-semibold text-[#a24d3c]">
-                {errorMessage}
-              </p>
-            ) : null}
-          </section>
+              {errorMessage ? (
+                <p className="mt-3 text-xs font-semibold text-[#a24d3c]">
+                  {errorMessage}
+                </p>
+              ) : null}
+            </section>
+          ) : null}
 
           {shareUrl ? (
             <section className="rounded-[16px] border border-[#e8ddcb] bg-white/70 p-4 text-center">
@@ -200,41 +223,48 @@ export default function CardShareDialog({
                   level="M"
                 />
               </div>
-              <p className="mt-3 text-xs font-semibold text-[#5f5346]">
-                このQRは共有URLを開きます
-              </p>
-              <p className="mt-1 text-xs leading-5 text-[#8d7f6e]">
-                URLを知っている人はカードを閲覧できます
-              </p>
+              <div className="mt-4 rounded-[14px] border border-[#eadfce] bg-[#fffaf0]/72 px-4 py-3 text-left">
+                <p className="text-xs font-medium leading-5 text-[#6f6253]">
+                  この共有リンクは{SHARE_EXPIRATION_DAYS}日間有効です。
+                </p>
+                {formattedExpiresAt ? (
+                  <p className="mt-1 text-xs font-semibold text-[#5f5346]">
+                    有効期限: {formattedExpiresAt}
+                  </p>
+                ) : null}
+              </div>
             </section>
           ) : null}
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <button
-            type="button"
-            onClick={createShareUrl}
-            disabled={isCreatingShare}
-            className="rounded-full bg-[#2f2a23] px-4 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] disabled:cursor-not-allowed disabled:bg-[#8d7f6e]"
-          >
-            {isCreatingShare ? "作成中..." : "共有URLを作成"}
-          </button>
-          <button
-            type="button"
-            onClick={shareWithOs}
-            disabled={isCreatingShare}
-            className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            共有する
-          </button>
-          <button
-            type="button"
-            onClick={copyShareUrl}
-            disabled={isCreatingShare}
-            className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white"
-          >
-            URLをコピー
-          </button>
+        <div className={`mt-5 grid grid-cols-1 gap-3 ${shareUrl ? "sm:grid-cols-2" : ""}`}>
+          {!shareUrl ? (
+            <button
+              type="button"
+              onClick={createShareUrl}
+              disabled={isCreatingShare}
+              className="rounded-full bg-[#2f2a23] px-4 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] disabled:cursor-not-allowed disabled:bg-[#8d7f6e]"
+            >
+              {isCreatingShare ? "作成中..." : "共有リンクを作る"}
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={shareWithOs}
+                className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white"
+              >
+                LINE・メールで送る
+              </button>
+              <button
+                type="button"
+                onClick={copyShareUrl}
+                className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white"
+              >
+                {copyButtonLabel}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -253,7 +283,11 @@ function formatExpiresAt(expiresAt: string) {
   }
 
   return new Intl.DateTimeFormat("ja-JP", {
-    dateStyle: "medium",
-    timeStyle: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
   }).format(date);
 }

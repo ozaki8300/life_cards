@@ -419,7 +419,7 @@ export default function TradingCardGrid({
           {isSharing ? (
             <CardShareDialog
               card={selectedCard}
-              index={selectedIndex}
+              deckLabel={deckLabelFor(selectedCard)}
               onClose={() => setIsSharing(false)}
             />
           ) : null}
