@@ -64,18 +64,18 @@ function resolveShareOrigin(origin?: string) {
   throw new Error("Share URL origin is required outside the browser.");
 }
 
-async function getCurrentUserId() {
+async function getCurrentUser() {
   const supabase = createSupabaseBrowserClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const userId = session?.user.id;
+  const user = session?.user;
 
-  if (!userId) {
+  if (!user?.id) {
     throw new Error("Life Cards share creation requires a signed-in user.");
   }
 
-  return { supabase, userId };
+  return { supabase, user };
 }
 
 export async function createShareCardForCurrentUser(
@@ -83,7 +83,7 @@ export async function createShareCardForCurrentUser(
   creatorLabel: string,
   options: CreateShareCardOptions = {},
 ): Promise<CreatedShareCard> {
-  const { supabase, userId } = await getCurrentUserId();
+  const { supabase, user } = await getCurrentUser();
   const token = generateShareToken();
   const origin = resolveShareOrigin(options.origin);
   const shareType = options.shareType ?? "card";
@@ -92,7 +92,7 @@ export async function createShareCardForCurrentUser(
   const row: ShareCardInsertRow = {
     card_payload: payload,
     creator_label: creatorLabel,
-    creator_user_id: userId,
+    creator_user_id: user.id,
     expires_at: expiresAt,
     share_type: shareType,
     source_card_id: card.id,
@@ -102,6 +102,11 @@ export async function createShareCardForCurrentUser(
   const { error } = await supabase.from("share_cards").insert(row);
 
   if (error) {
+    console.warn("Life Cards share_cards insert failed", {
+      code: error.code,
+      details: error.details,
+      message: error.message,
+    });
     throw error;
   }
 
