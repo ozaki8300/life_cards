@@ -33,6 +33,11 @@ type ShareCardInsertRow = {
   token: string;
 };
 
+type ReusableShareCardRow = {
+  expires_at: string;
+  token: string;
+};
+
 function generateShareToken() {
   const crypto = globalThis.crypto;
 
@@ -92,17 +97,58 @@ export async function createShareCardForCurrentUser(
   options: CreateShareCardOptions = {},
 ): Promise<CreatedShareCard> {
   const { supabase, user } = await getCurrentUser();
-  const token = generateShareToken();
   const origin = resolveShareOrigin(options.origin);
   const shareType = options.shareType ?? "card";
-  const expiresAt = new Date(Date.now() + shareDurationMs).toISOString();
-  const payload = createShareCardPayload(card, creatorLabel);
+  const now = new Date();
+  const nowIso = now.toISOString();
 
   console.log("Life Cards share creation started", {
     creatorLabel,
     shareType,
     userId: user.id,
   });
+
+  const { data: reusableShare, error: reusableShareError } = await supabase
+    .from("share_cards")
+    .select("token, expires_at")
+    .eq("creator_user_id", user.id)
+    .eq("source_card_id", card.id)
+    .eq("share_type", shareType)
+    .gt("expires_at", nowIso)
+    .order("expires_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<ReusableShareCardRow>();
+
+  if (reusableShareError) {
+    console.error("Life Cards share reuse lookup message:", reusableShareError.message);
+    console.error("Life Cards share reuse lookup code:", reusableShareError.code);
+    console.error("Life Cards share reuse lookup details:", reusableShareError.details);
+    console.error("Life Cards share reuse lookup hint:", reusableShareError.hint);
+    throw new Error(
+      `share_cards reuse lookup failed: ${reusableShareError.message} (${
+        reusableShareError.code ?? "no-code"
+      })`,
+    );
+  }
+
+  if (reusableShare?.token && reusableShare.expires_at) {
+    console.log("Life Cards share_cards reusable row found", {
+      expires_at: reusableShare.expires_at,
+      share_type: shareType,
+      source_card_id: card.id,
+      token: reusableShare.token,
+    });
+
+    return {
+      expiresAt: reusableShare.expires_at,
+      shareUrl: `${origin}/share/${reusableShare.token}`,
+      token: reusableShare.token,
+    };
+  }
+
+  const token = generateShareToken();
+  const expiresAt = new Date(now.getTime() + shareDurationMs).toISOString();
+  const payload = createShareCardPayload(card, creatorLabel);
 
   const row: ShareCardInsertRow = {
     card_payload: payload,
