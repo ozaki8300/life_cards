@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { MouseEvent, TouchEvent } from "react";
 
 import type { Card } from "@/lib/types";
@@ -30,6 +30,8 @@ export default function CardDetailModal({
   onPrevious,
   onShare,
   onToggleFavorite,
+  photoExitRequest = 0,
+  onPhotoModeChange,
 }: {
   card: Card;
   deckLabel: string;
@@ -43,6 +45,8 @@ export default function CardDetailModal({
   onPrevious: () => void;
   onShare: () => void;
   onToggleFavorite: () => void;
+  photoExitRequest?: number;
+  onPhotoModeChange?: (isPhotoMode: boolean) => void;
 }) {
   const touchStartX = useRef<number | null>(null);
   const shouldSkipNextClick = useRef(false);
@@ -83,6 +87,16 @@ export default function CardDetailModal({
 
     onClose();
   });
+
+  useEffect(() => {
+    onPhotoModeChange?.(viewMode === "photo");
+  }, [onPhotoModeChange, viewMode]);
+
+  useEffect(() => {
+    if (photoExitRequest > 0 && viewMode === "photo") {
+      showFront();
+    }
+  }, [photoExitRequest, showFront, viewMode]);
 
   function showPreviousPhoto() {
     resetPhotoZoom();

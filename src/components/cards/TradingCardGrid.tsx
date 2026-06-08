@@ -48,6 +48,8 @@ export default function TradingCardGrid({
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isDetailPhotoMode, setIsDetailPhotoMode] = useState(false);
+  const [photoExitRequest, setPhotoExitRequest] = useState(0);
   const [activeRailIndex, setActiveRailIndex] = useState(0);
   const [updatedCardsById, setUpdatedCardsById] = useState<Map<string, Card>>(
     new Map(),
@@ -111,7 +113,17 @@ export default function TradingCardGrid({
     setSelectedIndex(null);
     setIsEditing(false);
     setIsSharing(false);
+    setIsDetailPhotoMode(false);
   }, []);
+
+  const handlePreviewBackdropClick = useCallback(() => {
+    if (isDetailPhotoMode) {
+      setPhotoExitRequest((current) => current + 1);
+      return;
+    }
+
+    closePreview();
+  }, [closePreview, isDetailPhotoMode]);
 
   const updateActiveRailIndex = useCallback(() => {
     const rail = railRef.current;
@@ -370,7 +382,7 @@ export default function TradingCardGrid({
             type="button"
             aria-label="Close card preview"
             className="fixed inset-0 z-0 cursor-default"
-            onClick={closePreview}
+            onClick={handlePreviewBackdropClick}
           />
 
           <div className="relative z-10 mx-auto flex min-h-full max-w-6xl items-center">
@@ -397,6 +409,8 @@ export default function TradingCardGrid({
                   onPrevious={showPrevious}
                   onShare={() => setIsSharing(true)}
                   onToggleFavorite={() => toggleFavorite(selectedCard.id)}
+                  photoExitRequest={photoExitRequest}
+                  onPhotoModeChange={setIsDetailPhotoMode}
                 />
               )}
             </div>
