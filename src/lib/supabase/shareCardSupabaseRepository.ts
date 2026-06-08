@@ -10,6 +10,7 @@ import type { Card } from "@/lib/types";
 
 const shareDurationMs = 7 * 24 * 60 * 60 * 1000;
 const shareTokenByteLength = 24;
+const fallbackProductionOrigin = "https://life-cards-three.vercel.app";
 
 type CreateShareCardOptions = {
   origin?: string;
@@ -51,17 +52,24 @@ function generateShareToken() {
 }
 
 function resolveShareOrigin(origin?: string) {
+  const productionOrigin =
+    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/g, "") ||
+    fallbackProductionOrigin;
   const trimmedOrigin = origin?.trim().replace(/\/+$/g, "");
 
-  if (trimmedOrigin) {
+  if (trimmedOrigin && !trimmedOrigin.includes("localhost")) {
     return trimmedOrigin;
   }
 
   if (typeof window !== "undefined") {
-    return window.location.origin;
+    const windowOrigin = window.location.origin.replace(/\/+$/g, "");
+
+    if (!windowOrigin.includes("localhost")) {
+      return windowOrigin;
+    }
   }
 
-  throw new Error("Share URL origin is required outside the browser.");
+  return productionOrigin;
 }
 
 async function getCurrentUser() {
