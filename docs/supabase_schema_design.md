@@ -66,6 +66,7 @@ cards
 - `front_comment text`
 - `back_text text`
 - `image_path text`
+- `image_fit_mode text`
 - `is_favorite boolean not null default false`
 - `created_at timestamptz not null`
 - `updated_at timestamptz not null`
@@ -77,6 +78,7 @@ cards
 - 将来 server-side 作成に寄せる場合は `uuid` も検討できる。
 - `deck_id` も現行の seed / localStorage deck id と互換を保つため、まずは `text` とする。
 - `image_path` は画像本体ではなく Supabase Storage path または adapter が解決できる参照を保存する。
+- `image_fit_mode` は `cover` / `blurExtend` を保存する。`null` は互換性のため `cover` 扱い。
 - `deleted_at` は今回は optional。最小実装では物理削除でもよいが、端末間 sync の競合を考えると soft delete 余地を残す。
 
 Card 型との対応:
@@ -85,6 +87,7 @@ Card 型との対応:
 - `front_comment` -> `Card.frontComment`
 - `back_text` -> `Card.backText`
 - `image_path` -> `Card.imagePath`
+- `image_fit_mode` -> `Card.imageFitMode`
 - `is_favorite` -> `Card.isFavorite`
 - `created_at` / `updated_at` -> `Card.createdAt` / `Card.updatedAt`
 

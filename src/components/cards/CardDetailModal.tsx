@@ -15,6 +15,8 @@ import usePhotoPanZoom from "./usePhotoPanZoom";
 
 const sideNavButtonClass =
   "pointer-events-auto absolute top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/80 bg-[#fffaf0]/86 text-3xl font-semibold leading-none text-[#5f513f] shadow-[0_8px_24px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:h-12 sm:w-12 sm:text-4xl";
+const shutterButtonClass =
+  "relative flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
 
 export default function CardDetailModal({
   card,
@@ -52,6 +54,7 @@ export default function CardDetailModal({
     frontFaceStep,
     backFaceStep,
     showFront,
+    showPhoto,
     cycleViewMode,
   } = useCardDetailViewCycle({
     resetPhotoZoom: () => resetPhotoZoom(),
@@ -117,7 +120,11 @@ export default function CardDetailModal({
       return;
     }
 
-    cycleViewMode(photoZoom);
+    if (viewMode === "photo") {
+      return;
+    }
+
+    cycleViewMode();
   }
 
   const previousNavPositionClass =
@@ -198,6 +205,7 @@ export default function CardDetailModal({
                   face="front"
                   frontComment={card.frontComment}
                   frontText={card.frontText}
+                  imageFitMode={card.imageFitMode}
                   linkUrl={card.linkUrl}
                   size="detail"
                 />
@@ -216,6 +224,7 @@ export default function CardDetailModal({
                   face="back"
                   frontComment={card.frontComment}
                   frontText={card.frontText}
+                  imageFitMode={card.imageFitMode}
                   linkUrl={card.linkUrl}
                   size="detail"
                 />
@@ -290,10 +299,33 @@ export default function CardDetailModal({
           onDelete={onDelete}
           onEdit={onEdit}
           onIncreasePhotoZoom={increasePhotoZoom}
+          onOpenPhoto={showPhoto}
           onResetPhotoZoom={resetPhotoZoom}
+          onShowFront={showFront}
           onShare={onShare}
         />
       </div>
+
+      {hasMultipleCards ? (
+        <div className="pointer-events-auto -mt-1 flex justify-center pb-[env(safe-area-inset-bottom)] sm:-mt-0.5">
+          <button
+            type="button"
+            aria-label="次のカードを見る"
+            onClick={(event) => {
+              event.stopPropagation();
+              if (viewMode === "photo") {
+                showNextPhoto();
+                return;
+              }
+
+              onNext();
+            }}
+            className={shutterButtonClass}
+          >
+            <span className="h-[54px] w-[54px] rounded-full border-[5px] border-[#fefbf4] bg-[#f0e4d2] shadow-inner shadow-white/80 sm:h-[60px] sm:w-[60px]" />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
-import type { Card } from "@/lib/types";
+import type { Card, CardImageFitMode } from "@/lib/types";
 
 type SupabaseCardRow = {
   back_text: string | null;
@@ -11,11 +11,28 @@ type SupabaseCardRow = {
   front_comment: string | null;
   front_text: string | null;
   id: string;
+  image_fit_mode: string | null;
   image_path: string | null;
   is_favorite: boolean;
   link_url: string | null;
   updated_at: string;
 };
+
+function normalizeImageFitMode(value: string | null | undefined): CardImageFitMode {
+  if (value === "blurExtend" || value === "blur_extend") {
+    return "blurExtend";
+  }
+
+  return "cover";
+}
+
+function rowImageFitModeToCard(value: string | null): CardImageFitMode {
+  return normalizeImageFitMode(value);
+}
+
+function cardImageFitModeToRow(card: Card): CardImageFitMode {
+  return normalizeImageFitMode(card.imageFitMode);
+}
 
 function isDataUrl(value: string) {
   return value.startsWith("data:");
@@ -44,6 +61,7 @@ async function rowToCard(row: SupabaseCardRow): Promise<Card> {
     frontComment: row.front_comment ?? "",
     frontText: row.front_text ?? "",
     id: row.id,
+    imageFitMode: rowImageFitModeToCard(row.image_fit_mode),
     imagePath,
     isFavorite: row.is_favorite,
     linkUrl: row.link_url ?? "",
@@ -123,12 +141,52 @@ async function cardToRow(
     front_comment: card.frontComment ?? "",
     front_text: card.frontText ?? "",
     id: card.id,
+    image_fit_mode: cardImageFitModeToRow(card),
     image_path: await resolveImagePathForSave(card, client),
     is_favorite: Boolean(card.isFavorite),
     link_url: card.linkUrl?.trim() || null,
     updated_at: card.updatedAt,
     user_id: client.userId,
   };
+}
+
+async function persistImageFitMode(
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+  cardId: string,
+  imageFitMode: CardImageFitMode,
+) {
+  const { error } = await client.supabase
+    .from("cards")
+    .update({
+      image_fit_mode: imageFitMode,
+    })
+    .eq("user_id", client.userId)
+    .eq("id", cardId);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function verifyImageFitMode(
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+  cardId: string,
+) {
+  const { data, error } = await client.supabase
+    .from("cards")
+    .select("image_fit_mode")
+    .eq("user_id", client.userId)
+    .eq("id", cardId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    (data as Pick<SupabaseCardRow, "image_fit_mode"> | null)?.image_fit_mode ??
+    null
+  );
 }
 
 async function getClient() {
@@ -147,7 +205,7 @@ async function fetchCards(
   const { data, error } = await client.supabase
     .from("cards")
     .select(
-      "id,deck_id,front_text,front_comment,back_text,image_path,is_favorite,link_url,created_at,updated_at",
+      "id,deck_id,front_text,front_comment,back_text,image_path,image_fit_mode,is_favorite,link_url,created_at,updated_at",
     )
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: false });
@@ -207,15 +265,30 @@ export const CardSupabaseRepository = {
 
     await CardSupabaseRepository.seedCardsIfEmpty(seedCards);
 
+    const row = await cardToRow(card, client);
+
+    console.log("Life Cards Supabase card upsert payload", {
+      id: row.id,
+      imageFitMode: card.imageFitMode,
+      image_fit_mode: row.image_fit_mode,
+    });
+
     const { error } = await client.supabase
       .from("cards")
-      .upsert(await cardToRow(card, client), {
+      .upsert(row, {
         onConflict: "user_id,id",
       });
 
     if (error) {
       throw error;
     }
+
+    await persistImageFitMode(client, row.id, row.image_fit_mode);
+
+    console.log("Life Cards Supabase card image_fit_mode saved", {
+      id: row.id,
+      image_fit_mode: await verifyImageFitMode(client, row.id),
+    });
 
     return fetchCards(client);
   },

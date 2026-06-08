@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import MarkdownMemo from "@/components/MarkdownMemo";
+import type { CardImageFitMode } from "@/lib/types";
 
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
@@ -10,6 +11,7 @@ type Props = {
   cardId: string;
   frontComment: string;
   frontText: string;
+  imageFitMode?: CardImageFitMode;
   imagePath: string;
   linkUrl: string;
   selectedDeckName: string;
@@ -23,6 +25,7 @@ type PreviewFaceProps = {
   face: "front" | "back";
   frontComment: string;
   frontText: string;
+  imageFitMode?: CardImageFitMode;
   linkUrl: string;
 };
 
@@ -34,17 +37,43 @@ function PreviewFace({
   face,
   frontComment,
   frontText,
+  imageFitMode = "cover",
   linkUrl,
 }: PreviewFaceProps) {
   const isBack = face === "back";
+  const isBlurExtend = imageFitMode === "blurExtend";
   const trimmedLinkUrl = linkUrl.trim();
+  const backgroundStyle = {
+    backgroundImage: `url(${backgroundImage})`,
+  };
+  const blurExtendImageStyle = {
+    ...backgroundStyle,
+    backgroundPosition: "center 35%",
+  };
 
   return (
-    <div className="absolute inset-0 isolate overflow-hidden rounded-[22px] border border-white/25 bg-[#fffaf0]">
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      />
+    <div
+      className={`absolute inset-0 isolate overflow-hidden rounded-[22px] border bg-[#fffaf0] ${
+        isBlurExtend ? "border-white/45" : "border-white/25"
+      }`}
+    >
+      {isBlurExtend ? (
+        <>
+          <div
+            className="absolute inset-0 z-0 scale-110 bg-cover blur-xl brightness-[0.82]"
+            style={blurExtendImageStyle}
+          />
+          <div
+            className="absolute inset-0 z-0 bg-contain bg-no-repeat"
+            style={blurExtendImageStyle}
+          />
+        </>
+      ) : (
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center"
+          style={backgroundStyle}
+        />
+      )}
       <div
         className={`absolute inset-0 z-0 ${
           isBack
@@ -107,6 +136,7 @@ export default function CardFormPreview({
   cardId,
   frontComment,
   frontText,
+  imageFitMode = "cover",
   imagePath,
   linkUrl,
   selectedDeckName,
@@ -131,6 +161,7 @@ export default function CardFormPreview({
           face={isBack ? "back" : "front"}
           frontComment={frontComment}
           frontText={frontText}
+          imageFitMode={imageFitMode}
           linkUrl={linkUrl}
         />
       </button>

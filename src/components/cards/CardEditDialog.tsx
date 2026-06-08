@@ -26,6 +26,7 @@ export default function CardEditDialog({
     const nextCard: Card = {
       ...card,
       deckId: values.deckId,
+      imageFitMode: values.imageFitMode,
       imagePath: values.imagePath,
       linkUrl: values.linkUrl,
       frontText: values.frontText,
@@ -34,6 +35,11 @@ export default function CardEditDialog({
       createdAt: values.cardDate,
       updatedAt: todayInputValue(),
     };
+
+    console.log("Life Cards edit card payload", {
+      id: nextCard.id,
+      imageFitMode: nextCard.imageFitMode,
+    });
 
     const nextCards = await CardRepository.updateCardForCurrentUser(
       nextCard,
@@ -67,6 +73,7 @@ export default function CardEditDialog({
           deckId: card.deckId,
           frontComment: card.frontComment ?? "",
           frontText: card.frontText ?? "",
+          imageFitMode: card.imageFitMode ?? "cover",
           imagePath: card.imagePath ?? "",
           linkUrl: card.linkUrl ?? "",
         }}

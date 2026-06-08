@@ -57,6 +57,7 @@ export default function CardTile({
             face="front"
             frontComment={card.frontComment}
             frontText={card.frontText}
+            imageFitMode={card.imageFitMode}
             linkUrl={card.linkUrl}
             size="tile"
           />
@@ -70,6 +71,7 @@ export default function CardTile({
             face="back"
             frontComment={card.frontComment}
             frontText={card.frontText}
+            imageFitMode={card.imageFitMode}
             linkUrl={card.linkUrl}
             size="tile"
           />

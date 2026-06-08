@@ -70,6 +70,11 @@ export const CardRepository = {
   },
 
   async saveCardForCurrentUser(card: Card, seed: Card[] = seedCards) {
+    console.log("Life Cards repository save card", {
+      id: card.id,
+      imageFitMode: card.imageFitMode,
+    });
+
     try {
       return (
         (await CardSupabaseRepository.saveCard(
@@ -92,6 +97,11 @@ export const CardRepository = {
   },
 
   async updateCardForCurrentUser(card: Card, seed: Card[] = seedCards) {
+    console.log("Life Cards repository update card", {
+      id: card.id,
+      imageFitMode: card.imageFitMode,
+    });
+
     try {
       return (
         (await CardSupabaseRepository.updateCard(

@@ -28,6 +28,7 @@ export default function NewCardForm({
     const nextCard: Card = {
       id: `card_${Date.now()}`,
       deckId: values.deckId,
+      imageFitMode: values.imageFitMode,
       imagePath: values.imagePath,
       linkUrl: values.linkUrl,
       frontText: values.frontText,
@@ -37,6 +38,11 @@ export default function NewCardForm({
       updatedAt: todayInputValue(),
       isFavorite: false,
     };
+
+    console.log("Life Cards new card payload", {
+      id: nextCard.id,
+      imageFitMode: nextCard.imageFitMode,
+    });
 
     await CardRepository.saveCardForCurrentUser(nextCard);
     console.log("Life Cards saved", nextCard);
@@ -68,6 +74,7 @@ export default function NewCardForm({
             deckId: initialDeckId,
             frontComment: "",
             frontText: "",
+            imageFitMode: "cover",
             imagePath: "",
             linkUrl: "",
           }}

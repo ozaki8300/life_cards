@@ -6,7 +6,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { DeckRepository } from "@/lib/deckRepository";
 import { compressImage } from "@/lib/imageCompression";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { Deck } from "@/lib/types";
+import type { CardImageFitMode, Deck } from "@/lib/types";
 
 import BackMemoEditor from "./BackMemoEditor";
 import CardFormPreview from "./CardFormPreview";
@@ -19,6 +19,19 @@ import {
 
 const imageLoginMessage =
   "写真カードはログイン後に利用できます。ログインすると画像をクラウド保存し、PC/スマホで同期できます。";
+const imageFitModeOptions = [
+  {
+    id: "cover",
+    label: "Cover",
+  },
+  {
+    id: "blurExtend",
+    label: "Blur Extend",
+  },
+] as const satisfies ReadonlyArray<{
+  id: CardImageFitMode;
+  label: string;
+}>;
 
 export type CardFormValues = {
   backText: string;
@@ -26,6 +39,7 @@ export type CardFormValues = {
   deckId: string;
   frontComment: string;
   frontText: string;
+  imageFitMode?: CardImageFitMode;
   imagePath: string;
   linkUrl: string;
 };
@@ -57,6 +71,9 @@ export default function CardForm({
   const [cardDate, setCardDate] = useState(initialValues.cardDate);
   const [imageLabel, setImageLabel] = useState("");
   const [imagePath, setImagePath] = useState(initialValues.imagePath);
+  const [imageFitMode, setImageFitMode] = useState<CardImageFitMode>(
+    initialValues.imageFitMode ?? "cover",
+  );
   const [linkUrl, setLinkUrl] = useState(initialValues.linkUrl);
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
   const [availableDecks, setAvailableDecks] = useState(deckOptions);
@@ -249,15 +266,22 @@ export default function CardForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await onSubmit({
+    const values: CardFormValues = {
       backText,
       cardDate,
       deckId: selectedDeckId,
       frontComment,
       frontText,
+      imageFitMode,
       imagePath,
       linkUrl: linkUrl.trim(),
+    };
+
+    console.log("Life Cards form submit values", {
+      imageFitMode: values.imageFitMode,
     });
+
+    await onSubmit(values);
   }
 
   return (
@@ -268,6 +292,7 @@ export default function CardForm({
       >
         <input type="hidden" name="deckId" value={selectedDeckId} />
         <input type="hidden" name="imageAction" value={imageLabel} />
+        <input type="hidden" name="imageFitMode" value={imageFitMode} />
         <input type="hidden" name="imagePath" value={imagePath} />
 
         <CardFormPreview
@@ -276,6 +301,7 @@ export default function CardForm({
           cardId={cardId}
           frontComment={frontComment}
           frontText={frontText}
+          imageFitMode={imageFitMode}
           imagePath={imagePath}
           linkUrl={linkUrl}
           selectedDeckName={selectedDeckName}
@@ -334,6 +360,28 @@ export default function CardForm({
                     {action.label}
                   </button>
                 ))}
+              </div>
+              <div className="grid gap-2 pt-1">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
+                  画像表示
+                </span>
+                <div className="grid grid-cols-2 overflow-hidden rounded-full border border-[#e0d3c0] bg-white/52 p-1">
+                  {imageFitModeOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      aria-pressed={imageFitMode === option.id}
+                      onClick={() => setImageFitMode(option.id)}
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                        imageFitMode === option.id
+                          ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
+                          : "text-[#6f6253] hover:bg-white/78"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>

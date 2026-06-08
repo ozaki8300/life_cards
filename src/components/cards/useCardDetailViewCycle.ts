@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-const viewModes = ["front", "back", "photo"] as const;
+const viewModes = ["front", "back"] as const;
+type ViewMode = (typeof viewModes)[number] | "photo";
 
 type UseCardDetailViewCycleInput = {
   resetPhotoZoom: () => void;
@@ -12,7 +13,9 @@ export default function useCardDetailViewCycle({
   resetPhotoZoom,
 }: UseCardDetailViewCycleInput) {
   const [rotationStep, setRotationStep] = useState(0);
-  const viewMode = viewModes[rotationStep % viewModes.length];
+  const [isPhotoMode, setIsPhotoMode] = useState(false);
+  const cardViewMode = viewModes[rotationStep % viewModes.length];
+  const viewMode: ViewMode = isPhotoMode ? "photo" : cardViewMode;
   const rotationAngle = rotationStep * 180;
   const currentViewIndex = rotationStep % viewModes.length;
 
@@ -25,10 +28,9 @@ export default function useCardDetailViewCycle({
 
   const frontFaceStep = faceStepFor(0);
   const backFaceStep = faceStepFor(1);
-  const photoFaceStep = faceStepFor(2);
-
   function showFront() {
     resetPhotoZoom();
+    setIsPhotoMode(false);
     setRotationStep((current) => {
       const currentIndex = current % viewModes.length;
       const delta = (0 - currentIndex + viewModes.length) % viewModes.length;
@@ -37,15 +39,17 @@ export default function useCardDetailViewCycle({
     });
   }
 
-  function cycleViewMode(photoZoom: number) {
-    if (viewMode === "photo" && photoZoom > 1) {
+  function showPhoto() {
+    resetPhotoZoom();
+    setIsPhotoMode(true);
+  }
+
+  function cycleViewMode() {
+    if (isPhotoMode) {
       return;
     }
 
-    if (viewMode === "back" || viewMode === "photo") {
-      resetPhotoZoom();
-    }
-
+    setIsPhotoMode(false);
     setRotationStep((current) => current + 1);
   }
 
@@ -54,8 +58,8 @@ export default function useCardDetailViewCycle({
     rotationAngle,
     frontFaceStep,
     backFaceStep,
-    photoFaceStep,
     showFront,
+    showPhoto,
     cycleViewMode,
   };
 }

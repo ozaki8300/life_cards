@@ -14,6 +14,8 @@ export type Card = {
 
   imagePath?: string;
 
+  imageFitMode?: CardImageFitMode;
+
   linkUrl?: string;
 
   isFavorite?: boolean;
@@ -27,3 +29,5 @@ export type Card = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type CardImageFitMode = "cover" | "blurExtend";

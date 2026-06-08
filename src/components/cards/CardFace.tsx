@@ -1,4 +1,5 @@
 import MarkdownMemo from "@/components/MarkdownMemo";
+import type { CardImageFitMode } from "@/lib/types";
 
 type CardFaceSize = "tile" | "preview" | "detail";
 
@@ -10,6 +11,7 @@ type Props = {
   face: "front" | "back";
   frontComment?: string;
   frontText?: string;
+  imageFitMode?: CardImageFitMode;
   linkUrl?: string;
   preserve3d?: boolean;
   size: CardFaceSize;
@@ -69,12 +71,18 @@ export default function CardFace({
   face,
   frontComment = "",
   frontText = "",
+  imageFitMode = "cover",
   linkUrl = "",
   preserve3d = true,
   size,
 }: Props) {
   const styles = faceSize[size];
   const backgroundStyle = { backgroundImage: `url(${backgroundImage})` };
+  const blurExtendImageStyle = {
+    ...backgroundStyle,
+    backgroundPosition: "center 35%",
+  };
+  const isBlurExtend = imageFitMode === "blurExtend";
   const isBack = face === "back";
   const linkHref = normalizeLinkUrl(linkUrl);
   const faceTransform = isBack
@@ -85,11 +93,25 @@ export default function CardFace({
 
   return (
     <section
-      className={`absolute inset-0 overflow-hidden border border-white/25 bg-cover bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
+      className={`absolute inset-0 overflow-hidden border bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
+        isBlurExtend ? "border-white/45 bg-[#1f1b16]" : "border-white/25 bg-cover"
+      } ${
         styles.rounded
       } ${faceTransform}`}
-      style={backgroundStyle}
+      style={isBlurExtend ? undefined : backgroundStyle}
     >
+      {isBlurExtend ? (
+        <>
+          <div
+            className="absolute inset-0 scale-110 bg-cover blur-xl brightness-[0.82]"
+            style={blurExtendImageStyle}
+          />
+          <div
+            className="absolute inset-0 bg-contain bg-no-repeat"
+            style={blurExtendImageStyle}
+          />
+        </>
+      ) : null}
       {isBack ? <div className="absolute inset-0 backdrop-blur-[1.5px]" /> : null}
       <div
         className={`absolute inset-0 ${

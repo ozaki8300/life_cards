@@ -91,6 +91,7 @@ create table if not exists public.cards (
   front_comment text,
   back_text text,
   image_path text,
+  image_fit_mode text,
   is_favorite boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

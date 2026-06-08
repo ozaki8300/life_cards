@@ -72,6 +72,45 @@ function QrCodeIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+function ImageIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect height="18" rx="2" ry="2" width="18" x="3" y="3" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
+    </svg>
+  );
+}
+
+function CardIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <rect height="16" rx="2" ry="2" width="12" x="6" y="4" />
+      <path d="M9 8h6" />
+      <path d="M9 12h6" />
+      <path d="M9 16h3" />
+    </svg>
+  );
+}
+
 function TrashIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg
@@ -102,7 +141,9 @@ type Props = {
   onDelete: () => void;
   onEdit: () => void;
   onIncreasePhotoZoom: () => void;
+  onOpenPhoto: () => void;
   onResetPhotoZoom: () => void;
+  onShowFront: () => void;
   onShare: () => void;
 };
 
@@ -115,7 +156,9 @@ export default function CardDetailActionBar({
   onDelete,
   onEdit,
   onIncreasePhotoZoom,
+  onOpenPhoto,
   onResetPhotoZoom,
+  onShowFront,
   onShare,
 }: Props) {
   return (
@@ -150,6 +193,14 @@ export default function CardDetailActionBar({
           </button>
           <button
             type="button"
+            aria-label="カードへ戻る"
+            onClick={onShowFront}
+            className={actionButtonClass}
+          >
+            <CardIcon />
+          </button>
+          <button
+            type="button"
             aria-label="閉じる"
             onClick={onClose}
             className={actionButtonClass}
@@ -174,6 +225,14 @@ export default function CardDetailActionBar({
             className={actionButtonClass}
           >
             <PencilIcon />
+          </button>
+          <button
+            type="button"
+            aria-label="画像を開く"
+            onClick={onOpenPhoto}
+            className={actionButtonClass}
+          >
+            <ImageIcon />
           </button>
           <button
             type="button"

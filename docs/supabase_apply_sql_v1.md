@@ -183,6 +183,7 @@ create table if not exists public.cards (
   front_comment text,
   back_text text,
   image_path text,
+  image_fit_mode text,
   is_favorite boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -190,6 +191,9 @@ create table if not exists public.cards (
   foreign key (user_id, deck_id)
     references public.decks(user_id, id)
 );
+
+alter table public.cards
+  add column if not exists image_fit_mode text;
 
 create table if not exists public.encounters (
   user_id uuid not null references auth.users(id) on delete cascade,
