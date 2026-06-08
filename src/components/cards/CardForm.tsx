@@ -288,7 +288,7 @@ export default function CardForm({
     <>
       <form
         onSubmit={handleSubmit}
-        className="grid gap-5 pb-24 lg:grid-cols-[minmax(280px,0.42fr)_minmax(0,0.58fr)] lg:items-start"
+        className="grid gap-5 pb-[calc(env(safe-area-inset-bottom)+7rem)] lg:grid-cols-[minmax(280px,0.42fr)_minmax(0,0.58fr)] lg:items-start"
       >
         <input type="hidden" name="deckId" value={selectedDeckId} />
         <input type="hidden" name="imageAction" value={imageLabel} />
@@ -307,7 +307,7 @@ export default function CardForm({
           selectedDeckName={selectedDeckName}
         />
 
-        <section className="grid gap-4 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5">
+        <section className="grid min-w-0 gap-4 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5">
           <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
             <div className="grid gap-2">
               <p className="text-xs font-semibold text-[#8d7f6e]">
@@ -386,14 +386,14 @@ export default function CardForm({
             </div>
           </section>
 
-          <section className="grid gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <section className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
               <select
                 name="deckId"
                 aria-label="Deck"
                 value={selectedDeckId}
                 onChange={(event) => setSelectedDeckId(event.target.value)}
-                className="w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+                className="w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
               >
                 {availableDecks.map((deck) => (
                   <option key={deck.id} value={deck.id}>
@@ -416,7 +416,7 @@ export default function CardForm({
               aria-label="Date"
               value={cardDate}
               onChange={(event) => setCardDate(event.target.value)}
-              className="w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+              className="box-border w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </section>
 
@@ -468,7 +468,7 @@ export default function CardForm({
             />
           </label>
 
-          <div className="sticky bottom-0 z-10 -mx-4 -mb-4 grid gap-2 border-t border-[#eadfce] bg-[#fffaf0]/90 px-4 pb-3 pt-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 sm:pb-4">
+          <div className="sticky bottom-[env(safe-area-inset-bottom)] z-10 -mx-4 -mb-4 grid gap-2 border-t border-[#eadfce] bg-[#fffaf0]/92 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:bottom-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 sm:pb-4">
             <button
               type="submit"
               className="rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
