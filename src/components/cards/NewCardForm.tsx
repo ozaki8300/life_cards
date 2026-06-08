@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { CardRepository } from "@/lib/cardRepository";
 import type { Card, Deck } from "@/lib/types";
@@ -22,9 +23,12 @@ export default function NewCardForm({
   deckOptions = [],
 }: Props) {
   const router = useRouter();
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
   const initialDeckId = deckId ?? deckOptions[0]?.id ?? "";
 
   async function handleSubmit(values: CardFormValues) {
+    setSaveErrorMessage("");
+
     const nextCard: Card = {
       id: `card_${Date.now()}`,
       deckId: values.deckId,
@@ -44,9 +48,16 @@ export default function NewCardForm({
       imageFitMode: nextCard.imageFitMode,
     });
 
-    await CardRepository.saveCardForCurrentUser(nextCard);
-    console.log("Life Cards saved", nextCard);
-    router.push(backHref);
+    try {
+      await CardRepository.saveCardForCurrentUser(nextCard);
+      console.log("Life Cards saved", nextCard);
+      router.push(backHref);
+    } catch (error) {
+      console.warn("Life Cards new card save failed", error);
+      setSaveErrorMessage(
+        "カードを保存できませんでした。画像サイズが大きい可能性があります。",
+      );
+    }
   }
 
   return (
@@ -64,6 +75,12 @@ export default function NewCardForm({
           </h1>
           <span className="w-10" aria-hidden="true" />
         </header>
+
+        {saveErrorMessage ? (
+          <p className="mb-4 rounded-[14px] border border-[#e7b8a9] bg-[#fff2ee] px-4 py-3 text-sm font-semibold text-[#a24d3c]">
+            {saveErrorMessage}
+          </p>
+        ) : null}
 
         <CardForm
           cardId="new_card_preview"

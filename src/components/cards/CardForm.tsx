@@ -73,6 +73,7 @@ export default function CardForm({
     normalizeDateInputValue(initialValues.cardDate),
   );
   const [imageLabel, setImageLabel] = useState("");
+  const [imageErrorMessage, setImageErrorMessage] = useState("");
   const [imagePath, setImagePath] = useState(initialValues.imagePath);
   const [imageFitMode, setImageFitMode] = useState<CardImageFitMode>(
     initialValues.imageFitMode ?? "cover",
@@ -89,19 +90,6 @@ export default function CardForm({
     availableDecks.find((deck) => deck.id === selectedDeckId)?.name ??
     "Deck";
 
-  const applyImageFileFallback = useCallback((file: File, label: string) => {
-    const reader = new FileReader();
-
-    reader.addEventListener("load", () => {
-      if (typeof reader.result === "string") {
-        setImagePath(reader.result);
-        setImageLabel(label);
-      }
-    });
-
-    reader.readAsDataURL(file);
-  }, []);
-
   const applyImageFile = useCallback(
     async (file: File, label: string) => {
       if (!isSignedIn) {
@@ -109,17 +97,36 @@ export default function CardForm({
         return;
       }
 
+      setImageErrorMessage("");
+      console.warn("Life Cards image selected", {
+        label,
+        size: file.size,
+        type: file.type || "unknown",
+      });
+
       try {
         const result = await compressImage(file);
 
+        console.warn("Life Cards image compressed", {
+          compressedSize: result.compressedSize,
+          height: result.height,
+          label,
+          originalSize: result.originalSize,
+          type: result.blob.type || "unknown",
+          width: result.width,
+        });
         setImagePath(result.dataUrl);
         setImageLabel(label);
       } catch (error) {
         console.warn("Life Cards image compression failed", error);
-        applyImageFileFallback(file, label);
+        setImagePath("");
+        setImageLabel("");
+        setImageErrorMessage(
+          "画像を圧縮できませんでした。別の写真を選んでください。",
+        );
       }
     },
-    [applyImageFileFallback, isSignedIn],
+    [isSignedIn],
   );
 
   useEffect(() => {
@@ -364,6 +371,11 @@ export default function CardForm({
                   </button>
                 ))}
               </div>
+              {imageErrorMessage ? (
+                <p className="text-xs font-semibold leading-5 text-[#a24d3c]">
+                  {imageErrorMessage}
+                </p>
+              ) : null}
               <div className="grid gap-2 pt-1">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
                   画像表示
