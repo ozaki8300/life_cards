@@ -160,7 +160,7 @@ export default function CardDetailModal({
         className={`pointer-events-none relative mx-auto w-full ${
           viewMode === "photo"
             ? "max-w-[min(38rem,calc(100vw-2rem))] sm:max-w-4xl"
-            : "max-w-[min(330px,calc((100dvh-13.5rem)*0.75),calc(100vw-3rem))] sm:max-w-[460px]"
+            : "max-w-[min(350px,calc((100dvh-13rem)*0.75),calc(100vw-2rem))] sm:max-w-[460px]"
         }`}
       >
         <article
@@ -184,7 +184,7 @@ export default function CardDetailModal({
           className={`pointer-events-auto relative mx-auto w-full overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.3)] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] ${
             viewMode === "photo"
               ? "aspect-[4/3] max-h-[58dvh] max-w-[min(38rem,calc(100vw-2rem))] sm:max-h-[70vh] sm:max-w-4xl"
-              : "aspect-[3/4] max-w-[min(330px,calc((100dvh-13.5rem)*0.75),calc(100vw-3rem))] sm:max-w-[460px]"
+              : "aspect-[3/4] max-w-[min(350px,calc((100dvh-13rem)*0.75),calc(100vw-2rem))] sm:max-w-[460px]"
           } ${
             viewMode === "photo" && photoZoom > 1 ? "cursor-default" : "cursor-pointer"
           }`}
