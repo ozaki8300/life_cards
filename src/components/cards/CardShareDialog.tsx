@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import QRCode from "react-qr-code";
 
 import { createShareCardForCurrentUser } from "@/lib/supabase/shareCardSupabaseRepository";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -185,6 +186,27 @@ export default function CardShareDialog({
               </p>
             ) : null}
           </section>
+
+          {shareUrl ? (
+            <section className="rounded-[16px] border border-[#e8ddcb] bg-white/70 p-4 text-center">
+              <div className="mx-auto flex w-full max-w-[220px] justify-center rounded-[14px] border border-[#e0d3c0] bg-white p-3 shadow-sm">
+                <QRCode
+                  value={shareUrl}
+                  size={192}
+                  className="h-auto w-full max-w-[192px]"
+                  bgColor="#ffffff"
+                  fgColor="#2f2a23"
+                  level="M"
+                />
+              </div>
+              <p className="mt-3 text-xs font-semibold text-[#5f5346]">
+                このQRは共有URLを開きます
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[#8d7f6e]">
+                URLを知っている人はカードを閲覧できます
+              </p>
+            </section>
+          ) : null}
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
