@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
+import { createShareCardForCurrentUser } from "@/lib/supabase/shareCardSupabaseRepository";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
@@ -17,25 +19,66 @@ export default function CardShareDialog({
   onClose: () => void;
 }) {
   const [copyStatus, setCopyStatus] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [isCreatingShare, setIsCreatingShare] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   useEscapeKey(onClose, { ignoreEditable: false });
-  const shareUrl = `https://life-cards.local/share/${card.id}`;
-  const qrCells = Array.from({ length: 81 }, (_, cellIndex) => {
-    const source = `${card.id}:${cellIndex}`;
-    const score = Array.from(source).reduce(
-      (total, char, charIndex) => total + char.charCodeAt(0) * (charIndex + 3),
-      0,
-    );
-    const row = Math.floor(cellIndex / 9);
-    const col = cellIndex % 9;
-    const isFinder =
-      (row < 3 && col < 3) ||
-      (row < 3 && col > 5) ||
-      (row > 5 && col < 3);
+  const formattedExpiresAt = useMemo(() => formatExpiresAt(expiresAt), [expiresAt]);
 
-    return isFinder || score % 5 < 2;
-  });
+  async function resolveCreatorLabel() {
+    const supabase = createSupabaseBrowserClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user;
+
+    if (!user) {
+      throw new Error("共有するにはログインしてください");
+    }
+
+    const metadataName = user.user_metadata.name;
+
+    if (typeof metadataName === "string" && metadataName.trim()) {
+      return metadataName.trim();
+    }
+
+    const emailPrefix = user.email?.split("@")[0]?.trim();
+
+    return emailPrefix || "Life Cards user";
+  }
+
+  async function createShareUrl() {
+    setCopyStatus("");
+    setErrorMessage("");
+    setIsCreatingShare(true);
+
+    try {
+      const creatorLabel = await resolveCreatorLabel();
+      const result = await createShareCardForCurrentUser(card, creatorLabel, {
+        origin: window.location.origin,
+        shareType: "card",
+      });
+
+      setExpiresAt(result.expiresAt);
+      setShareUrl(result.shareUrl);
+      setCopyStatus("共有URLを作成しました");
+    } catch (error) {
+      console.warn("Life Cards share URL create failed", error);
+      setErrorMessage(
+        error instanceof Error ? error.message : "共有URLを作成できませんでした",
+      );
+    } finally {
+      setIsCreatingShare(false);
+    }
+  }
 
   async function copyShareUrl() {
+    if (!shareUrl) {
+      setCopyStatus("先に共有URLを作成してください");
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopyStatus("コピーしました");
@@ -46,6 +89,11 @@ export default function CardShareDialog({
   }
 
   async function shareWithOs() {
+    if (!shareUrl) {
+      await createShareUrl();
+      return;
+    }
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -61,14 +109,6 @@ export default function CardShareDialog({
     }
 
     await copyShareUrl();
-  }
-
-  function saveQrDraft() {
-    console.log("Life Cards QR save draft", {
-      cardId: card.id,
-      shareUrl,
-    });
-    alert("QR保存はまだ仮実装です。");
   }
 
   return (
@@ -98,7 +138,7 @@ export default function CardShareDialog({
           </button>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px] sm:gap-5">
+        <div className="mt-5 grid gap-4">
           <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] p-3">
             <div
               className="overflow-hidden rounded-[14px] border border-[#e0d3c0] bg-[#fffaf0] p-3 shadow-sm"
@@ -125,64 +165,72 @@ export default function CardShareDialog({
               <input
                 readOnly
                 value={shareUrl}
+                placeholder="共有URLを作成するとここに表示されます"
                 className="mt-2 w-full rounded-[14px] border border-[#e8ddcb] bg-white/72 px-4 py-3 text-sm text-[#5f5346] outline-none focus:ring-2 focus:ring-[#d8c8aa]"
               />
             </label>
+            {formattedExpiresAt ? (
+              <p className="mt-2 text-xs font-medium text-[#8d7f6e]">
+                有効期限: {formattedExpiresAt}
+              </p>
+            ) : null}
             {copyStatus ? (
               <p className="mt-2 text-xs font-semibold text-[#8d7f6e]">
                 {copyStatus}
               </p>
             ) : null}
-          </section>
-
-          <section className="mx-auto w-full max-w-[220px] rounded-[16px] border border-[#e8ddcb] bg-white/70 p-3 sm:max-w-none sm:p-4">
-            <div className="grid aspect-square grid-cols-9 gap-1 rounded-[14px] border border-[#e0d3c0] bg-[#fffaf0] p-3">
-              {qrCells.map((isFilled, cellIndex) => (
-                <span
-                  key={`${card.id}-${cellIndex}`}
-                  className={`rounded-[2px] ${
-                    isFilled ? "bg-[#3b3329]" : "bg-[#efe4d2]"
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="mt-3 text-center text-xs font-semibold text-[#8d7f6e]">
-              QR preview
-            </p>
+            {errorMessage ? (
+              <p className="mt-2 text-xs font-semibold text-[#a24d3c]">
+                {errorMessage}
+              </p>
+            ) : null}
           </section>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={createShareUrl}
+            disabled={isCreatingShare}
+            className="rounded-full bg-[#2f2a23] px-4 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] disabled:cursor-not-allowed disabled:bg-[#8d7f6e]"
+          >
+            {isCreatingShare ? "作成中..." : "共有URLを作成"}
+          </button>
           <button
             type="button"
             onClick={shareWithOs}
-            className="rounded-full bg-[#2f2a23] px-4 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034]"
+            disabled={isCreatingShare}
+            className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
           >
             共有する
           </button>
           <button
             type="button"
             onClick={copyShareUrl}
-            className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white"
-          >
-            URLをコピー
-          </button>
-          <button
-            type="button"
-            onClick={saveQrDraft}
-            className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white"
-          >
-            QRを保存
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
+            disabled={isCreatingShare}
             className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white"
           >
-            閉じる
+            URLをコピー
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function formatExpiresAt(expiresAt: string) {
+  if (!expiresAt) {
+    return "";
+  }
+
+  const date = new Date(expiresAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("ja-JP", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
