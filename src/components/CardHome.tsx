@@ -10,6 +10,7 @@ import { EncounterRepository } from "@/lib/encounterRepository";
 import { ReencounterEngine } from "@/domain/reencounter/engine";
 
 import CardFirstNav from "./CardFirstNav";
+import CardsPageHeader from "./cards/CardsPageHeader";
 import ReencounterSection from "./cards/ReencounterSection";
 import TradingCardGrid from "./cards/TradingCardGrid";
 import {
@@ -99,6 +100,16 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
 
     return sortCardsByNewest(filteredCards);
   }, [activeTab, allDecks, favoriteIds, scopedCards, searchQuery]);
+  const activeDeckName = useMemo(() => {
+    if (!activeDeckId) {
+      return undefined;
+    }
+
+    return (
+      allDecks.find((deck) => deck.id === activeDeckId)?.name ??
+      (activeDeckId === "uncategorized" ? "未分類" : "Deck")
+    );
+  }, [activeDeckId, allDecks]);
 
   async function toggleFavorite(cardId: string) {
     const card = allCards.find((item) => item.id === cardId);
@@ -195,44 +206,51 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
   }, [encounterMetadataByCardId, scopedCards, today]);
 
   return (
-    <div className="space-y-6">
-      <ReencounterSection
-        title="今日の再会"
-        subtitle="久しぶりに見たいカード"
-        cards={todayCards}
-        decks={allDecks}
-        editSeedCards={allCards}
-        favoriteIds={activeFavoriteIds}
-        onCardViewed={recordCardReencounter}
-        onDeleteCard={handleDeleteCard}
-        onUpdateCard={handleUpdateCard}
-        onToggleFavorite={toggleFavorite}
+    <>
+      <CardsPageHeader
+        cardCount={activeDeckId ? scopedCards.length : undefined}
+        deckName={activeDeckName}
       />
 
-      <CardFirstNav
-        activeDeckId={activeDeckId}
-        activeTab={activeTab}
-        cards={allCards}
-        decks={allDecks}
-        searchQuery={searchQuery}
-        onCardsChange={setAllCards}
-        onDecksChange={setAllDecks}
-        onTabChange={setActiveTab}
-        onSearchChange={setSearchQuery}
-      >
-        <section>
-          <TradingCardGrid
-            cards={visibleCards}
-            decks={allDecks}
-            editSeedCards={allCards}
-            favoriteIds={activeFavoriteIds}
-            onCardViewed={recordCardView}
-            onDeleteCard={handleDeleteCard}
-            onUpdateCard={handleUpdateCard}
-            onToggleFavorite={toggleFavorite}
-          />
-        </section>
-      </CardFirstNav>
-    </div>
+      <div className="space-y-6">
+        <ReencounterSection
+          title="今日の再会"
+          subtitle="久しぶりに見たいカード"
+          cards={todayCards}
+          decks={allDecks}
+          editSeedCards={allCards}
+          favoriteIds={activeFavoriteIds}
+          onCardViewed={recordCardReencounter}
+          onDeleteCard={handleDeleteCard}
+          onUpdateCard={handleUpdateCard}
+          onToggleFavorite={toggleFavorite}
+        />
+
+        <CardFirstNav
+          activeDeckId={activeDeckId}
+          activeTab={activeTab}
+          cards={allCards}
+          decks={allDecks}
+          searchQuery={searchQuery}
+          onCardsChange={setAllCards}
+          onDecksChange={setAllDecks}
+          onTabChange={setActiveTab}
+          onSearchChange={setSearchQuery}
+        >
+          <section>
+            <TradingCardGrid
+              cards={visibleCards}
+              decks={allDecks}
+              editSeedCards={allCards}
+              favoriteIds={activeFavoriteIds}
+              onCardViewed={recordCardView}
+              onDeleteCard={handleDeleteCard}
+              onUpdateCard={handleUpdateCard}
+              onToggleFavorite={toggleFavorite}
+            />
+          </section>
+        </CardFirstNav>
+      </div>
+    </>
   );
 }
