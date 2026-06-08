@@ -14,6 +14,7 @@ import DeckCreateModal from "./DeckCreateModal";
 import {
   type BackMemoMode,
   imageActions,
+  normalizeDateInputValue,
   todayInputValue,
 } from "./cardFormUtils";
 
@@ -68,7 +69,9 @@ export default function CardForm({
   );
   const [backText, setBackText] = useState(initialValues.backText);
   const [selectedDeckId, setSelectedDeckId] = useState(initialValues.deckId);
-  const [cardDate, setCardDate] = useState(initialValues.cardDate);
+  const [cardDate, setCardDate] = useState(() =>
+    normalizeDateInputValue(initialValues.cardDate),
+  );
   const [imageLabel, setImageLabel] = useState("");
   const [imagePath, setImagePath] = useState(initialValues.imagePath);
   const [imageFitMode, setImageFitMode] = useState<CardImageFitMode>(
