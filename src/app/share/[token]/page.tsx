@@ -25,6 +25,11 @@ type ShareCardRow = {
   expires_at: string;
 };
 
+type ShareCardCountRow = {
+  import_count: number | null;
+  view_count: number | null;
+};
+
 type ShareCardState =
   | { status: "available"; creatorLabel: string; expiresAt: string; payload: ShareCardPayload }
   | { status: "expired" }
@@ -160,6 +165,71 @@ async function getShareCardState(token: string): Promise<ShareCardState> {
   };
 }
 
+async function incrementShareViewCount(token: string) {
+  const supabase = createShareReadClient();
+
+  if (!supabase) {
+    console.warn("Life Cards share view count requires SUPABASE_SERVICE_ROLE_KEY.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("share_cards")
+    .select("view_count")
+    .eq("token", token)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.warn("Life Cards share view count read failed", error);
+    return;
+  }
+
+  const row = data as Pick<ShareCardCountRow, "view_count">;
+  const { error: updateError } = await supabase
+    .from("share_cards")
+    .update({
+      last_viewed_at: new Date().toISOString(),
+      view_count: (row.view_count ?? 0) + 1,
+    })
+    .eq("token", token);
+
+  if (updateError) {
+    console.warn("Life Cards share view count update failed", updateError);
+  }
+}
+
+async function incrementShareImportCount(token: string) {
+  const supabase = createShareReadClient();
+
+  if (!supabase) {
+    console.warn("Life Cards share import count requires SUPABASE_SERVICE_ROLE_KEY.");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("share_cards")
+    .select("import_count")
+    .eq("token", token)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.warn("Life Cards share import count read failed", error);
+    return;
+  }
+
+  const row = data as Pick<ShareCardCountRow, "import_count">;
+  const { error: updateError } = await supabase
+    .from("share_cards")
+    .update({
+      import_count: (row.import_count ?? 0) + 1,
+    })
+    .eq("token", token);
+
+  if (updateError) {
+    console.warn("Life Cards share import count update failed", updateError);
+  }
+}
+
 async function getSignedInUserId() {
   try {
     const supabase = await createSupabaseServerClient();
@@ -236,6 +306,8 @@ async function importSharedCard(formData: FormData) {
     console.warn("Life Cards shared card import failed", cardError);
     redirect(`/share/${token}?import=failed`);
   }
+
+  await incrementShareImportCount(token);
 
   redirect("/cards");
 }
@@ -341,6 +413,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
   const backgroundImage = card.imagePath || defaultImageForCard();
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
+  await incrementShareViewCount(token);
   const userId = await getSignedInUserId();
 
   return (
