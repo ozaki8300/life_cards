@@ -84,7 +84,27 @@ export default function CardFace({
   };
   const isBlurExtend = imageFitMode === "blurExtend";
   const isBack = face === "back";
+  const isDocumentFront = isBlurExtend && !isBack;
   const linkHref = normalizeLinkUrl(linkUrl);
+  const frontOverlayClass = isDocumentFront
+    ? "bg-gradient-to-t from-[#fffaf0]/76 via-[#fffaf0]/34 to-[#fffaf0]/10"
+    : "bg-gradient-to-t from-black/56 via-black/18 to-black/5";
+  const frontTopFadeClass = isDocumentFront
+    ? "bg-gradient-to-b from-[#fffaf0]/46 to-transparent"
+    : "bg-gradient-to-b from-black/32 to-transparent";
+  const frontLabelClass = isDocumentFront
+    ? "bg-white/76 text-[#5f5346] shadow-sm"
+    : "bg-black/16 text-white/70 backdrop-blur-sm";
+  const frontContentClass = isDocumentFront ? "text-[#2f2a23]" : "text-white";
+  const frontDateClass = isDocumentFront
+    ? "text-[#5f5346]"
+    : "text-white/88 drop-shadow-[0_1px_7px_rgba(0,0,0,0.86)]";
+  const frontTitleClass = isDocumentFront
+    ? "text-[#231f1a]"
+    : "text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]";
+  const frontCommentClass = isDocumentFront
+    ? "text-[#3b352d]"
+    : "text-white/88 drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]";
   const faceTransform = isBack
     ? preserve3d
       ? "[transform:rotateY(180deg)_translateZ(0)]"
@@ -115,41 +135,39 @@ export default function CardFace({
       {isBack ? <div className="absolute inset-0 backdrop-blur-[1.5px]" /> : null}
       <div
         className={`absolute inset-0 ${
-          isBack
-            ? "bg-[#fff7ec]/88"
-            : "bg-gradient-to-t from-black/56 via-black/18 to-black/5"
+          isBack ? "bg-[#fff7ec]/88" : frontOverlayClass
         }`}
       />
       {!isBack ? (
         <div
-          className={`absolute inset-x-0 top-0 bg-gradient-to-b from-black/32 to-transparent ${styles.topFade}`}
+          className={`absolute inset-x-0 top-0 ${frontTopFadeClass} ${styles.topFade}`}
         />
       ) : null}
 
       {!isBack ? (
         <>
           <p
-            className={`absolute truncate rounded-full bg-black/16 font-semibold uppercase tracking-[0.16em] text-white/70 backdrop-blur-sm ${styles.label}`}
+            className={`absolute truncate rounded-full font-semibold uppercase tracking-[0.16em] ${frontLabelClass} ${styles.label}`}
           >
             {deckLabel}
           </p>
 
           <div
-            className={`absolute inset-x-0 bottom-0 text-white ${styles.frontContent}`}
+            className={`absolute inset-x-0 bottom-0 ${frontContentClass} ${styles.frontContent}`}
           >
             <p
-              className={`font-medium text-white/88 drop-shadow-[0_1px_7px_rgba(0,0,0,0.86)] ${styles.date}`}
+              className={`font-medium ${frontDateClass} ${styles.date}`}
             >
               {date}
             </p>
             <h3
-              className={`mt-3 font-semibold text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] ${styles.title}`}
+              className={`mt-3 font-semibold ${frontTitleClass} ${styles.title}`}
             >
               {frontText || "Untitled"}
             </h3>
             {frontComment ? (
               <p
-                className={`mt-4 whitespace-pre-line text-white/88 drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)] ${styles.comment}`}
+                className={`mt-4 whitespace-pre-line ${frontCommentClass} ${styles.comment}`}
               >
                 {frontComment}
               </p>

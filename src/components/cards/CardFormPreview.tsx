@@ -42,7 +42,21 @@ function PreviewFace({
 }: PreviewFaceProps) {
   const isBack = face === "back";
   const isBlurExtend = imageFitMode === "blurExtend";
+  const isDocumentFront = isBlurExtend && !isBack;
   const trimmedLinkUrl = linkUrl.trim();
+  const frontOverlayClass = isDocumentFront
+    ? "bg-gradient-to-t from-[#fffaf0]/76 via-[#fffaf0]/34 to-[#fffaf0]/10"
+    : "bg-gradient-to-t from-black/60 via-black/18 to-black/5";
+  const frontTopFadeClass = isDocumentFront
+    ? "bg-gradient-to-b from-[#fffaf0]/46 to-transparent"
+    : "bg-gradient-to-b from-black/32 to-transparent";
+  const frontLabelClass = isDocumentFront
+    ? "bg-white/76 text-[#5f5346] shadow-sm"
+    : "bg-black/24 text-white/78";
+  const frontContentClass = isDocumentFront ? "text-[#2f2a23]" : "text-white";
+  const frontDateClass = isDocumentFront ? "text-[#5f5346]" : "text-white/90";
+  const frontTitleClass = isDocumentFront ? "text-[#231f1a]" : "text-white";
+  const frontCommentClass = isDocumentFront ? "text-[#3b352d]" : "text-white/90";
   const backgroundStyle = {
     backgroundImage: `url(${backgroundImage})`,
   };
@@ -76,28 +90,34 @@ function PreviewFace({
       )}
       <div
         className={`absolute inset-0 z-0 ${
-          isBack
-            ? "bg-[#fff7ec]/94"
-            : "bg-gradient-to-t from-black/60 via-black/18 to-black/5"
+          isBack ? "bg-[#fff7ec]/94" : frontOverlayClass
         }`}
       />
       {!isBack ? (
-        <div className="absolute inset-x-0 top-0 z-0 h-28 bg-gradient-to-b from-black/32 to-transparent" />
+        <div className={`absolute inset-x-0 top-0 z-0 h-28 ${frontTopFadeClass}`} />
       ) : null}
 
       {!isBack ? (
         <>
-          <p className="absolute left-5 top-5 z-10 max-w-[70%] truncate rounded-full bg-black/24 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/78">
+          <p
+            className={`absolute left-5 top-5 z-10 max-w-[70%] truncate rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${frontLabelClass}`}
+          >
             {deckLabel}
           </p>
 
-          <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-6 pt-5 text-white">
-            <p className="text-xs font-medium text-white/90">{date}</p>
-            <h3 className="mt-3 line-clamp-3 text-3xl font-semibold leading-tight text-white">
+          <div
+            className={`absolute inset-x-0 bottom-0 z-10 px-5 pb-6 pt-5 ${frontContentClass}`}
+          >
+            <p className={`text-xs font-medium ${frontDateClass}`}>{date}</p>
+            <h3
+              className={`mt-3 line-clamp-3 text-3xl font-semibold leading-tight ${frontTitleClass}`}
+            >
               {frontText || "Untitled"}
             </h3>
             {frontComment ? (
-              <p className="mt-4 whitespace-pre-line text-sm leading-6 text-white/90">
+              <p
+                className={`mt-4 whitespace-pre-line text-sm leading-6 ${frontCommentClass}`}
+              >
                 {frontComment}
               </p>
             ) : null}
