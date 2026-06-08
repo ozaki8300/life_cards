@@ -4,11 +4,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import LoginButton from "@/components/auth/LoginButton";
-import CardFace from "@/components/cards/CardFace";
-import { defaultImageForCard, formatDate } from "@/components/cards/cardUiUtils";
+import { formatDate } from "@/components/cards/cardUiUtils";
 import type { ShareCardPayload } from "@/lib/shareCardPayload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CardImageFitMode } from "@/lib/types";
+
+import SharedCardPreview from "./SharedCardPreview";
 
 type Props = {
   params: Promise<{
@@ -410,7 +411,6 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
   }
 
   const { card } = shareCard.payload;
-  const backgroundImage = card.imagePath || defaultImageForCard();
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
   await incrementShareViewCount(token);
@@ -433,43 +433,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
           ) : null}
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-          <div className="mx-auto aspect-[3/4] w-full max-w-[360px] overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.26)]">
-            <div className="relative h-full w-full">
-              <CardFace
-                backgroundImage={backgroundImage}
-                backText={card.backText}
-                date={date}
-                deckLabel="Shared"
-                face="front"
-                frontComment={card.frontComment}
-                frontText={card.frontText}
-                imageFitMode={card.imageFitMode}
-                linkUrl={card.linkUrl}
-                preserve3d={false}
-                size="detail"
-              />
-            </div>
-          </div>
-
-          <div className="mx-auto aspect-[3/4] w-full max-w-[360px] overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.18)]">
-            <div className="relative h-full w-full">
-              <CardFace
-                backgroundImage={backgroundImage}
-                backText={card.backText}
-                date={date}
-                deckLabel="Shared"
-                face="back"
-                frontComment={card.frontComment}
-                frontText={card.frontText}
-                imageFitMode={card.imageFitMode}
-                linkUrl={card.linkUrl}
-                preserve3d={false}
-                size="detail"
-              />
-            </div>
-          </div>
-        </div>
+        <SharedCardPreview card={card} date={date} />
 
         <ImportPanel
           importStatus={importStatus}
