@@ -1,15 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import LoginButton from "@/components/auth/LoginButton";
 import CardFace from "@/components/cards/CardFace";
 import { defaultImageForCard, formatDate } from "@/components/cards/cardUiUtils";
 import type { ShareCardPayload } from "@/lib/shareCardPayload";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CardImageFitMode } from "@/lib/types";
 
 type Props = {
   params: Promise<{
     token: string;
+  }>;
+  searchParams: Promise<{
+    import?: string;
   }>;
 };
 
@@ -49,6 +55,14 @@ function createShareReadClient() {
       persistSession: false,
     },
   });
+}
+
+function generateImportedCardId() {
+  if (globalThis.crypto?.randomUUID) {
+    return `card_${globalThis.crypto.randomUUID()}`;
+  }
+
+  return `card_${Date.now()}`;
 }
 
 function isString(value: unknown): value is string {
@@ -146,6 +160,86 @@ async function getShareCardState(token: string): Promise<ShareCardState> {
   };
 }
 
+async function getSignedInUserId() {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function importSharedCard(formData: FormData) {
+  "use server";
+
+  const token = String(formData.get("token") ?? "");
+
+  if (!token) {
+    redirect("/cards");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/share/${token}?import=login-required`);
+  }
+
+  const shareCard = await getShareCardState(token);
+
+  if (shareCard.status !== "available") {
+    redirect(`/share/${token}?import=unavailable`);
+  }
+
+  const now = new Date().toISOString();
+  const card = shareCard.payload.card;
+  const { error: deckError } = await supabase.from("decks").upsert(
+    {
+      created_at: now,
+      id: "uncategorized",
+      is_shared: false,
+      name: "未分類",
+      sort_order: 9999,
+      updated_at: now,
+      user_id: user.id,
+    },
+    { onConflict: "user_id,id" },
+  );
+
+  if (deckError) {
+    console.warn("Life Cards shared card deck upsert failed", deckError);
+    redirect(`/share/${token}?import=failed`);
+  }
+
+  const { error: cardError } = await supabase.from("cards").insert({
+    back_text: card.backText ?? "",
+    created_at: now,
+    deck_id: "uncategorized",
+    front_comment: card.frontComment ?? "",
+    front_text: card.frontText ?? "",
+    id: generateImportedCardId(),
+    image_fit_mode: card.imageFitMode ?? "cover",
+    image_path: card.imagePath || null,
+    is_favorite: false,
+    link_url: card.linkUrl?.trim() || null,
+    updated_at: now,
+    user_id: user.id,
+  });
+
+  if (cardError) {
+    console.warn("Life Cards shared card import failed", cardError);
+    redirect(`/share/${token}?import=failed`);
+  }
+
+  redirect("/cards");
+}
+
 function formatExpiresAt(expiresAt: string) {
   const date = new Date(expiresAt);
 
@@ -178,8 +272,61 @@ function MessagePanel({ message }: { message: string }) {
   );
 }
 
-export default async function ShareCardPage({ params }: Props) {
+function ImportPanel({
+  importStatus,
+  isSignedIn,
+  token,
+}: {
+  importStatus?: string;
+  isSignedIn: boolean;
+  token: string;
+}) {
+  const statusMessage =
+    importStatus === "login-required"
+      ? "追加するにはログインしてください"
+      : importStatus === "failed"
+        ? "カードを追加できませんでした"
+        : importStatus === "unavailable"
+          ? "この共有カードは追加できません"
+          : "";
+
+  return (
+    <section className="mx-auto w-full max-w-xl rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0]/82 p-4 text-center shadow-[0_18px_54px_rgba(87,72,52,0.13)]">
+      {isSignedIn ? (
+        <form action={importSharedCard}>
+          <input type="hidden" name="token" value={token} />
+          <button
+            type="submit"
+            className="w-full rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+          >
+            Life Cardsへ追加
+          </button>
+        </form>
+      ) : (
+        <div className="grid gap-3">
+          <p className="text-sm font-semibold text-[#5f5346]">
+            追加するにはログインしてください
+          </p>
+          <div className="flex justify-center">
+            <LoginButton />
+          </div>
+        </div>
+      )}
+      {statusMessage ? (
+        <p className="mt-3 text-xs font-semibold text-[#a24d3c]">
+          {statusMessage}
+        </p>
+      ) : null}
+      <p className="mt-3 text-xs leading-5 text-[#8d7f6e]">
+        共有カードはコピーとして未分類デッキに追加されます。
+      </p>
+    </section>
+  );
+}
+
+export default async function ShareCardPage({ params, searchParams }: Props) {
   const { token } = await params;
+  const { import: importStatus } = await searchParams;
   const shareCard = await getShareCardState(token);
 
   if (shareCard.status === "expired") {
@@ -194,6 +341,7 @@ export default async function ShareCardPage({ params }: Props) {
   const backgroundImage = card.imagePath || defaultImageForCard();
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
+  const userId = await getSignedInUserId();
 
   return (
     <main className="min-h-screen bg-[#f7f3ea] px-5 py-8 text-[#2f2a23] sm:px-8 lg:px-12">
@@ -250,18 +398,11 @@ export default async function ShareCardPage({ params }: Props) {
           </div>
         </div>
 
-        <section className="mx-auto w-full max-w-xl rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0]/82 p-4 text-center shadow-[0_18px_54px_rgba(87,72,52,0.13)]">
-          <button
-            type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-full border border-[#e0d3c0] bg-white/70 px-5 py-3 text-sm font-semibold text-[#8d7f6e]"
-          >
-            Importは次フェーズで対応します
-          </button>
-          <p className="mt-3 text-xs leading-5 text-[#8d7f6e]">
-            この画面では共有カードのプレビューのみ表示しています。
-          </p>
-        </section>
+        <ImportPanel
+          importStatus={importStatus}
+          isSignedIn={Boolean(userId)}
+          token={token}
+        />
       </section>
     </main>
   );
