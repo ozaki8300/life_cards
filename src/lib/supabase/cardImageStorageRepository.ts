@@ -92,7 +92,9 @@ export const CardImageStorageRepository = {
       userId: client.userId,
     });
 
-    const { error } = await client.supabase.storage
+    console.warn("Life Cards upload path", path);
+
+    const { data, error } = await client.supabase.storage
       .from(CARD_IMAGES_BUCKET)
       .upload(path, blob, {
         contentType: blob.type || "image/webp",
@@ -108,6 +110,9 @@ export const CardImageStorageRepository = {
       });
       throw error;
     }
+
+    console.warn("Life Cards upload result", data);
+    console.warn("Life Cards upload result path", data?.path);
 
     console.warn("Life Cards Supabase image upload success", {
       bucket: CARD_IMAGES_BUCKET,
