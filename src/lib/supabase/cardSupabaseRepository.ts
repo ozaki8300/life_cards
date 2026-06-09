@@ -333,6 +333,7 @@ async function fetchCards(
   }
 
   console.warn("Life Cards Supabase cards fetch success", {
+    cardIds: (data ?? []).map((card) => card.id),
     count: data?.length ?? 0,
     userId: client.userId,
   });

@@ -81,74 +81,40 @@ export const EncounterSupabaseRepository = {
     return client ? fetchMetadataMap(client) : null;
   },
 
-  async seedMetadataIfEmpty(seedMetadataByCardId: EncounterMetadataMap) {
+  async saveMetadata(metadata: EncounterMetadata) {
     const client = await getClient();
 
     if (!client) {
       return null;
     }
 
-    const currentMetadataMap = await fetchMetadataMap(client);
+    const row = metadataToRow(metadata, client.userId);
 
-    if (Object.keys(currentMetadataMap).length > 0) {
-      return currentMetadataMap;
-    }
-
-    const rows = Object.values(seedMetadataByCardId).map((metadata) =>
-      metadataToRow(metadata, client.userId),
-    );
-
-    if (rows.length === 0) {
-      return {};
-    }
+    console.warn("Life Cards Supabase encounter upsert row", row);
 
     const { error } = await client.supabase
       .from("encounters")
-      .upsert(rows, { onConflict: "user_id,card_id" });
-
-    if (error) {
-      throw error;
-    }
-
-    return fetchMetadataMap(client);
-  },
-
-  async saveMetadata(
-    metadata: EncounterMetadata,
-    seedMetadataByCardId: EncounterMetadataMap,
-  ) {
-    const client = await getClient();
-
-    if (!client) {
-      return null;
-    }
-
-    await EncounterSupabaseRepository.seedMetadataIfEmpty(seedMetadataByCardId);
-
-    const { error } = await client.supabase
-      .from("encounters")
-      .upsert(metadataToRow(metadata, client.userId), {
+      .upsert(row, {
         onConflict: "user_id,card_id",
       });
 
     if (error) {
+      console.warn("Life Cards Supabase encounter upsert error", {
+        error,
+        row,
+      });
       throw error;
     }
 
     return fetchMetadataMap(client);
   },
 
-  async deleteMetadata(
-    cardId: string,
-    seedMetadataByCardId: EncounterMetadataMap,
-  ) {
+  async deleteMetadata(cardId: string) {
     const client = await getClient();
 
     if (!client) {
       return null;
     }
-
-    await EncounterSupabaseRepository.seedMetadataIfEmpty(seedMetadataByCardId);
 
     const { error } = await client.supabase
       .from("encounters")

@@ -98,9 +98,8 @@ export const EncounterRepository = {
   async getMetadataMapForCurrentUser() {
     try {
       return (
-        (await EncounterSupabaseRepository.seedMetadataIfEmpty(
-          readStoredMetadataMap(),
-        )) ?? EncounterRepository.getMetadataMap()
+        (await EncounterSupabaseRepository.getMetadataMap()) ??
+        EncounterRepository.getMetadataMap()
       );
     } catch (error) {
       console.warn("Life Cards Supabase encounters fetch failed", error);
@@ -129,10 +128,8 @@ export const EncounterRepository = {
 
     try {
       return (
-        (await EncounterSupabaseRepository.saveMetadata(
-          metadata,
-          readStoredMetadataMap(),
-        )) ?? EncounterRepository.getMetadataMap()
+        (await EncounterSupabaseRepository.saveMetadata(metadata)) ??
+        EncounterRepository.getMetadataMap()
       );
     } catch (error) {
       console.warn("Life Cards Supabase encounter view save failed", error);
@@ -166,10 +163,8 @@ export const EncounterRepository = {
 
     try {
       return (
-        (await EncounterSupabaseRepository.saveMetadata(
-          metadata,
-          readStoredMetadataMap(),
-        )) ?? EncounterRepository.getMetadataMap()
+        (await EncounterSupabaseRepository.saveMetadata(metadata)) ??
+        EncounterRepository.getMetadataMap()
       );
     } catch (error) {
       console.warn(
@@ -199,8 +194,7 @@ export const EncounterRepository = {
 
     try {
       return (
-        (await EncounterSupabaseRepository.deleteMetadata(cardId, nextMap)) ??
-        nextMap
+        (await EncounterSupabaseRepository.deleteMetadata(cardId)) ?? nextMap
       );
     } catch (error) {
       console.warn("Life Cards Supabase encounter delete failed", error);
