@@ -43,6 +43,7 @@ export type CardFormValues = {
   frontText: string;
   imageFitMode?: CardImageFitMode;
   imagePath: string;
+  imageStoragePath?: string;
   linkUrl: string;
 };
 
@@ -83,6 +84,9 @@ export default function CardForm({
   const [imageLabel, setImageLabel] = useState("");
   const [imageErrorMessage, setImageErrorMessage] = useState("");
   const [imagePath, setImagePath] = useState(initialValues.imagePath);
+  const [imageStoragePath, setImageStoragePath] = useState(
+    initialValues.imageStoragePath ?? "",
+  );
   const [imageFitMode, setImageFitMode] = useState<CardImageFitMode>(
     initialValues.imageFitMode ?? "cover",
   );
@@ -114,26 +118,12 @@ export default function CardForm({
       }
 
       setImageErrorMessage("");
-      console.warn("Life Cards image selected", {
-        label,
-        size: file.size,
-        type: file.type || "unknown",
-      });
 
       try {
         const result = await compressImage(file);
 
-        console.warn("Life Cards image compressed", {
-          blobSize: result.blob.size,
-          compressedSize: result.compressedSize,
-          contentType: result.blob.type || "unknown",
-          height: result.height,
-          label,
-          originalSize: result.originalSize,
-          type: result.blob.type || "unknown",
-          width: result.width,
-        });
         setImagePath(result.dataUrl);
+        setImageStoragePath("");
         setImageLabel(label);
       } catch (error) {
         console.warn("Life Cards image compression failed", error);
@@ -332,15 +322,9 @@ export default function CardForm({
       frontText,
       imageFitMode,
       imagePath,
+      imageStoragePath,
       linkUrl: linkUrl.trim(),
     };
-
-    console.log("Life Cards form submit values", {
-      cardId,
-      deckId: values.deckId,
-      deckName: selectedDeck.name,
-      imageFitMode: values.imageFitMode,
-    });
 
     try {
       await onSubmit(values, {

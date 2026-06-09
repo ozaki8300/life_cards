@@ -102,11 +102,6 @@ export const CardRepository = {
     seed: Card[] = seedCards,
     options: CardSaveOptions = {},
   ) {
-    console.log("Life Cards repository save card", {
-      id: card.id,
-      imageFitMode: card.imageFitMode,
-    });
-
     try {
       const savedCards = await CardSupabaseRepository.saveCard(card);
 
@@ -152,11 +147,6 @@ export const CardRepository = {
     seed: Card[] = seedCards,
     options: CardSaveOptions = {},
   ) {
-    console.log("Life Cards repository update card", {
-      id: card.id,
-      imageFitMode: card.imageFitMode,
-    });
-
     try {
       const savedCards = await CardSupabaseRepository.updateCard(card);
 

@@ -90,8 +90,6 @@ export const EncounterSupabaseRepository = {
 
     const row = metadataToRow(metadata, client.userId);
 
-    console.warn("Life Cards Supabase encounter upsert row", row);
-
     const { error } = await client.supabase
       .from("encounters")
       .upsert(row, {

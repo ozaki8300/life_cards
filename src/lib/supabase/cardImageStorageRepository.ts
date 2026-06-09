@@ -12,7 +12,6 @@ type SignedImageUrlCacheEntry = {
 };
 
 const signedImageUrlCache = new Map<string, SignedImageUrlCacheEntry>();
-const expectedPolicyPathPrefix = "users/{userId}/cards/{cardId}/front.webp";
 
 function isDataUrl(value: string) {
   return value.startsWith("data:");
@@ -67,34 +66,13 @@ export const CardImageStorageRepository = {
     const client = await getClient();
 
     if (!client) {
-      console.warn("Life Cards Supabase image upload skipped", {
-        cardId,
-        reason: "missing-session",
-      });
       return null;
     }
 
     const blob = imageBodyToBlob(image);
     const path = cardImagePath(client.userId, cardId);
-    const bucketDiagnostic = await client.supabase.storage.listBuckets();
 
-    console.warn("Life Cards Supabase image upload start", {
-      blobSize: blob.size,
-      bucket: CARD_IMAGES_BUCKET,
-      bucketCheckError: supabaseErrorLog(bucketDiagnostic.error),
-      bucketExists: bucketDiagnostic.data?.some(
-        (bucket) => bucket.name === CARD_IMAGES_BUCKET,
-      ),
-      cardId,
-      contentType: blob.type || "image/webp",
-      path,
-      policyExpectedPathExample: expectedPolicyPathPrefix,
-      userId: client.userId,
-    });
-
-    console.warn("Life Cards upload path", path);
-
-    const { data, error } = await client.supabase.storage
+    const { error } = await client.supabase.storage
       .from(CARD_IMAGES_BUCKET)
       .upload(path, blob, {
         contentType: blob.type || "image/webp",
@@ -110,15 +88,6 @@ export const CardImageStorageRepository = {
       });
       throw error;
     }
-
-    console.warn("Life Cards upload result", data);
-    console.warn("Life Cards upload result path", data?.path);
-
-    console.warn("Life Cards Supabase image upload success", {
-      bucket: CARD_IMAGES_BUCKET,
-      cardId,
-      path,
-    });
 
     return path;
   },

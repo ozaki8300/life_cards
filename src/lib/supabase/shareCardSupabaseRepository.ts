@@ -102,12 +102,6 @@ export async function createShareCardForCurrentUser(
   const now = new Date();
   const nowIso = now.toISOString();
 
-  console.log("Life Cards share creation started", {
-    creatorLabel,
-    shareType,
-    userId: user.id,
-  });
-
   const { data: reusableShare, error: reusableShareError } = await supabase
     .from("share_cards")
     .select("token, expires_at")
@@ -132,13 +126,6 @@ export async function createShareCardForCurrentUser(
   }
 
   if (reusableShare?.token && reusableShare.expires_at) {
-    console.log("Life Cards share_cards reusable row found", {
-      expires_at: reusableShare.expires_at,
-      share_type: shareType,
-      source_card_id: card.id,
-      token: reusableShare.token,
-    });
-
     return {
       expiresAt: reusableShare.expires_at,
       shareUrl: `${origin}/share/${reusableShare.token}`,
@@ -159,19 +146,6 @@ export async function createShareCardForCurrentUser(
     source_card_id: card.id,
     token,
   };
-
-  console.log("Life Cards share_cards insert payload", {
-    card_payload: {
-      hasImagePath: Boolean(payload.card.imagePath),
-      schemaVersion: payload.schemaVersion,
-    },
-    creator_label: row.creator_label,
-    creator_user_id: row.creator_user_id,
-    expires_at: row.expires_at,
-    share_type: row.share_type,
-    source_card_id: row.source_card_id,
-    token: row.token,
-  });
 
   const { error } = await supabase.from("share_cards").insert(row);
 

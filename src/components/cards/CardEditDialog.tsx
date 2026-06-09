@@ -24,6 +24,10 @@ export default function CardEditDialog({
   onSaved?: (card: Card) => void;
 }) {
   useEscapeKey(onClose);
+  const persistedImageStoragePath =
+    card.imageStoragePath ??
+    currentCards.find((item) => item.id === card.id)?.imageStoragePath ??
+    "";
 
   async function handleSubmit(
     values: CardFormValues,
@@ -34,6 +38,7 @@ export default function CardEditDialog({
       deckId: values.deckId,
       imageFitMode: values.imageFitMode,
       imagePath: values.imagePath,
+      imageStoragePath: values.imageStoragePath,
       linkUrl: values.linkUrl,
       frontText: values.frontText,
       frontComment: values.frontComment,
@@ -41,11 +46,6 @@ export default function CardEditDialog({
       createdAt: values.cardDate,
       updatedAt: todayInputValue(),
     };
-
-    console.log("Life Cards edit card payload", {
-      id: nextCard.id,
-      imageFitMode: nextCard.imageFitMode,
-    });
 
     const nextCards = await CardRepository.updateCardForCurrentUser(
       nextCard,
@@ -55,7 +55,6 @@ export default function CardEditDialog({
       },
     );
     onSaved?.(nextCards.find((item) => item.id === nextCard.id) ?? nextCard);
-    console.log("Life Cards edit saved", nextCard);
     alert("編集内容を保存しました。");
     onClose();
   }
@@ -84,6 +83,7 @@ export default function CardEditDialog({
           frontText: card.frontText ?? "",
           imageFitMode: card.imageFitMode ?? "cover",
           imagePath: card.imagePath ?? "",
+          imageStoragePath: persistedImageStoragePath,
           linkUrl: card.linkUrl ?? "",
         }}
         mode="edit"

@@ -151,11 +151,6 @@ async function resolveImagePathForSave(
 
   if (isDataUrl(imagePath)) {
     try {
-      console.warn("Life Cards Supabase image resolve upload start", {
-        cardId: card.id,
-        imagePathKind: imagePathKind(imagePath),
-      });
-
       const uploadedPath = await CardImageStorageRepository.uploadCardImage(
         card.id,
         imagePath,
@@ -190,17 +185,7 @@ async function cardToRow(
   card: Card,
   client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
 ) {
-  const imagePath = (card.imagePath ?? "").trim();
-  const imageStoragePath = (card.imageStoragePath ?? "").trim();
   const resolvedImagePath = await resolveImagePathForSave(card, client);
-
-  console.warn("Life Cards Supabase card row prepared", {
-    cardId: card.id,
-    imagePathKind: imagePathKind(imagePath),
-    imageStoragePathKind: imagePathKind(imageStoragePath),
-    resolvedImagePathKind: imagePathKind(resolvedImagePath),
-    resolvedImagePath,
-  });
 
   const row = {
     back_text: card.backText ?? "",
@@ -217,13 +202,6 @@ async function cardToRow(
     user_id: client.userId,
   };
 
-  console.warn("Life Cards Supabase card FK row prepared", {
-    front_text: row.front_text,
-    id: row.id,
-    deck_id: row.deck_id,
-    user_id: row.user_id,
-  });
-
   return row;
 }
 
@@ -232,12 +210,6 @@ async function persistImageFitMode(
   cardId: string,
   imageFitMode: CardImageFitMode,
 ) {
-  console.warn("Life Cards Supabase image_fit_mode persist start", {
-    cardId,
-    imageFitMode,
-    userId: client.userId,
-  });
-
   const { error } = await client.supabase
     .from("cards")
     .update({
@@ -255,43 +227,6 @@ async function persistImageFitMode(
     });
     throw error;
   }
-
-  console.warn("Life Cards Supabase image_fit_mode persist success", {
-    cardId,
-    imageFitMode,
-    userId: client.userId,
-  });
-}
-
-async function verifyImageFitMode(
-  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
-  cardId: string,
-) {
-  console.warn("Life Cards Supabase image_fit_mode verify start", {
-    cardId,
-    userId: client.userId,
-  });
-
-  const { data, error } = await client.supabase
-    .from("cards")
-    .select("image_fit_mode")
-    .eq("user_id", client.userId)
-    .eq("id", cardId)
-    .maybeSingle();
-
-  if (error) {
-    console.warn("Life Cards Supabase image_fit_mode verify error", {
-      cardId,
-      error: supabaseErrorLog(error),
-      userId: client.userId,
-    });
-    throw error;
-  }
-
-  return (
-    (data as Pick<SupabaseCardRow, "image_fit_mode"> | null)?.image_fit_mode ??
-    null
-  );
 }
 
 async function getClient() {
@@ -301,21 +236,12 @@ async function getClient() {
   } = await supabase.auth.getSession();
   const userId = session?.user.id;
 
-  console.warn("Life Cards Supabase card client session", {
-    hasSession: Boolean(session),
-    hasUserId: Boolean(userId),
-  });
-
   return userId ? { supabase, userId } : null;
 }
 
 async function fetchCards(
   client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
 ) {
-  console.warn("Life Cards Supabase cards fetch start", {
-    userId: client.userId,
-  });
-
   const { data, error } = await client.supabase
     .from("cards")
     .select(
@@ -331,12 +257,6 @@ async function fetchCards(
     });
     throw error;
   }
-
-  console.warn("Life Cards Supabase cards fetch success", {
-    cardIds: (data ?? []).map((card) => card.id),
-    count: data?.length ?? 0,
-    userId: client.userId,
-  });
 
   return ((data ?? []) as SupabaseCardRow[]).map(rowToCard);
 }
@@ -357,39 +277,6 @@ export const CardSupabaseRepository = {
 
     const row = await cardToRow(card, client);
 
-    console.log("Life Cards Supabase card upsert payload", {
-      id: row.id,
-      deck_id: row.deck_id,
-      imageFitMode: card.imageFitMode,
-      image_fit_mode: row.image_fit_mode,
-      image_path: row.image_path,
-      image_path_kind: imagePathKind(row.image_path),
-      user_id: row.user_id,
-    });
-
-    console.warn("Life Cards Supabase card upsert row", {
-      mutation: "upsert",
-      onConflict: cardsUpsertOnConflict,
-      row,
-      table: cardsTableName,
-    });
-    console.warn(
-      "Life Cards Supabase card upsert row json",
-      JSON.stringify(row),
-    );
-
-    console.warn("Life Cards Supabase card upsert start", {
-      cardId: row.id,
-      deck_id: row.deck_id,
-      imagePathKind: imagePathKind(row.image_path),
-      mutation: "upsert",
-      onConflict: cardsUpsertOnConflict,
-      row_id: row.id,
-      row_user_id: row.user_id,
-      table: cardsTableName,
-      userId: client.userId,
-    });
-
     const { error } = await client.supabase
       .from(cardsTableName)
       .upsert(row, {
@@ -397,42 +284,15 @@ export const CardSupabaseRepository = {
       });
 
     if (error) {
-      const errorDetails = supabaseErrorLog(error);
-
       console.warn("Life Cards Supabase card upsert error", {
         cardId: row.id,
-        error: errorDetails,
+        error: supabaseErrorLog(error),
         imagePathKind: imagePathKind(row.image_path),
-        mutation: "upsert",
-        onConflict: cardsUpsertOnConflict,
-        table: cardsTableName,
-        userId: client.userId,
       });
-      console.warn("Life Cards Supabase card upsert error details", {
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-        message: error.message,
-      });
-      console.warn(
-        "Life Cards Supabase card upsert error json",
-        JSON.stringify(errorDetails),
-      );
       throw error;
     }
 
-    console.warn("Life Cards Supabase card upsert success", {
-      cardId: row.id,
-      imagePathKind: imagePathKind(row.image_path),
-      userId: client.userId,
-    });
-
     await persistImageFitMode(client, row.id, row.image_fit_mode);
-
-    console.log("Life Cards Supabase card image_fit_mode saved", {
-      id: row.id,
-      image_fit_mode: await verifyImageFitMode(client, row.id),
-    });
 
     return fetchCards(client);
   },
