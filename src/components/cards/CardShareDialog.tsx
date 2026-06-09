@@ -72,8 +72,14 @@ export default function CardShareDialog({
       throw new Error("共有するにはログインしてください");
     }
 
-    const profile = await getProfileForCurrentUser();
-    const profileDisplayName = profile?.displayName.trim();
+    let profileDisplayName = "";
+
+    try {
+      const profile = await getProfileForCurrentUser();
+      profileDisplayName = profile?.displayName.trim() ?? "";
+    } catch (error) {
+      console.warn("Life Cards share profile load failed", error);
+    }
 
     if (profileDisplayName) {
       return profileDisplayName;

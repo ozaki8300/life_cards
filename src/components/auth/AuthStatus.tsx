@@ -8,6 +8,7 @@ import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseReposito
 
 import LoginButton from "./LoginButton";
 import { useLogout } from "./LogoutButton";
+import ProfileSetupModal from "./ProfileSetupModal";
 
 type AuthState =
   | { status: "loading" }
@@ -18,6 +19,7 @@ type AuthState =
 export default function AuthStatus() {
   const [authState, setAuthState] = useState<AuthState>({ status: "loading" });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { isLoading: isLoggingOut, logout } = useLogout(() => {
     setAuthState({ status: "signed-out" });
@@ -192,6 +194,16 @@ export default function AuthStatus() {
             </div>
             <button
               type="button"
+              onClick={() => {
+                setIsDropdownOpen(false);
+                setIsProfileModalOpen(true);
+              }}
+              className="flex w-full items-center px-3 py-2 text-left text-sm font-semibold transition hover:bg-white focus:bg-white focus:outline-none"
+            >
+              username変更
+            </button>
+            <button
+              type="button"
               onClick={logout}
               disabled={isLoggingOut}
               className="flex w-full items-center px-3 py-2 text-left text-sm font-semibold transition hover:bg-white focus:bg-white focus:outline-none disabled:opacity-60"
@@ -199,6 +211,19 @@ export default function AuthStatus() {
               {isLoggingOut ? "Logout..." : "Logout"}
             </button>
           </div>
+        ) : null}
+        {isProfileModalOpen ? (
+          <ProfileSetupModal
+            initialDisplayName={displayName}
+            onClose={() => setIsProfileModalOpen(false)}
+            onSaved={(nextDisplayName) => {
+              setAuthState({
+                displayName: nextDisplayName,
+                status: "signed-in",
+              });
+              setIsProfileModalOpen(false);
+            }}
+          />
         ) : null}
       </div>
     );
