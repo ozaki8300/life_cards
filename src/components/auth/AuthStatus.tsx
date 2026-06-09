@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
@@ -20,13 +21,24 @@ export default function AuthStatus() {
   useEffect(() => {
     let isActive = true;
 
-    async function setSignedInState() {
+    function fallbackDisplayNameFor(user: User) {
+      const metadataName = user.user_metadata.name;
+
+      if (typeof metadataName === "string" && metadataName.trim()) {
+        return metadataName.trim();
+      }
+
+      return user.email?.split("@")[0]?.trim() || "Life Cards User";
+    }
+
+    async function setSignedInState(user: User) {
       try {
         const profile = await getProfileForCurrentUser();
+        const profileDisplayName = profile?.displayName.trim();
 
         if (isActive) {
           setAuthState({
-            displayName: profile?.displayName.trim() || undefined,
+            displayName: profileDisplayName || fallbackDisplayNameFor(user),
             status: "signed-in",
           });
         }
@@ -34,7 +46,10 @@ export default function AuthStatus() {
         console.warn("Life Cards auth profile load failed", error);
 
         if (isActive) {
-          setAuthState({ status: "signed-in" });
+          setAuthState({
+            displayName: fallbackDisplayNameFor(user),
+            status: "signed-in",
+          });
         }
       }
     }
@@ -50,7 +65,7 @@ export default function AuthStatus() {
         const user = data.session?.user;
 
         if (user) {
-          setSignedInState();
+          setSignedInState(user);
           return;
         }
 
@@ -63,7 +78,7 @@ export default function AuthStatus() {
         const user = session?.user;
 
         if (user) {
-          setSignedInState();
+          setSignedInState(user);
           return;
         }
 
