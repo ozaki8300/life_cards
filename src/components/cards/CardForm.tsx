@@ -90,6 +90,7 @@ export default function CardForm({
   const [previewFace, setPreviewFace] = useState<"front" | "back">("front");
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
   const [availableDecks, setAvailableDecks] = useState(deckOptions);
+  const [isDecksResolved, setIsDecksResolved] = useState(false);
   const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
   const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -188,11 +189,21 @@ export default function CardForm({
     let isActive = true;
 
     queueMicrotask(async () => {
+      if (isActive) {
+        setIsDecksResolved(false);
+      }
+
       const repositoryDecks =
         await DeckRepository.getDecksForCurrentUser(deckOptions);
 
       if (isActive) {
         setAvailableDecks(repositoryDecks);
+        setSelectedDeckId((currentDeckId) =>
+          repositoryDecks.some((deck) => deck.id === currentDeckId)
+            ? currentDeckId
+            : (repositoryDecks[0]?.id ?? ""),
+        );
+        setIsDecksResolved(true);
       }
     });
 
@@ -302,6 +313,20 @@ export default function CardForm({
       return;
     }
 
+    if (!isDecksResolved) {
+      setSaveErrorMessage("保存先のデッキを確認中です。少し待ってからもう一度お試しください。");
+      return;
+    }
+
+    const selectedDeck = availableDecks.find(
+      (deck) => deck.id === selectedDeckId,
+    );
+
+    if (!selectedDeck) {
+      setSaveErrorMessage("保存先のデッキを確認できませんでした。デッキを選び直してください。");
+      return;
+    }
+
     const values: CardFormValues = {
       backText,
       cardDate,
@@ -316,7 +341,7 @@ export default function CardForm({
     console.log("Life Cards form submit values", {
       cardId,
       deckId: values.deckId,
-      deckName: selectedDeckName,
+      deckName: selectedDeck.name,
       imageFitMode: values.imageFitMode,
     });
 
@@ -365,7 +390,7 @@ export default function CardForm({
           <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
             <div className="grid gap-2">
               <p className="text-xs font-semibold text-[#8d7f6e]">
-                {!isAuthResolved
+                {!isAuthResolved || !isDecksResolved
                   ? "保存先を確認中"
                   : isSignedIn
                     ? "クラウド同期中"
@@ -537,7 +562,7 @@ export default function CardForm({
           <div className="sticky bottom-[env(safe-area-inset-bottom)] z-10 -mx-4 -mb-4 grid gap-2 border-t border-[#eadfce] bg-[#fffaf0]/92 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:bottom-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 sm:pb-4">
             <button
               type="submit"
-              disabled={!isAuthResolved}
+              disabled={!isAuthResolved || !isDecksResolved}
               className="rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none"
             >
               {saveLabel}
