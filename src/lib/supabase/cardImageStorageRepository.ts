@@ -12,9 +12,28 @@ type SignedImageUrlCacheEntry = {
 };
 
 const signedImageUrlCache = new Map<string, SignedImageUrlCacheEntry>();
+const expectedPolicyPathPrefix = "users/{userId}/cards/{cardId}/front.webp";
 
 function isDataUrl(value: string) {
   return value.startsWith("data:");
+}
+
+function supabaseErrorLog(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return error;
+  }
+
+  const errorRecord = error as Record<string, unknown>;
+
+  return {
+    code: errorRecord.code,
+    details: errorRecord.details,
+    hint: errorRecord.hint,
+    message: errorRecord.message,
+    name: errorRecord.name,
+    status: errorRecord.status,
+    statusCode: errorRecord.statusCode,
+  };
 }
 
 async function getClient() {
@@ -28,7 +47,7 @@ async function getClient() {
 }
 
 function cardImagePath(userId: string, cardId: string) {
-  return `${userId}/cards/${cardId}/front.webp`;
+  return `users/${userId}/cards/${cardId}/front.webp`;
 }
 
 function imageBodyToBlob(image: Blob | string) {
@@ -48,11 +67,31 @@ export const CardImageStorageRepository = {
     const client = await getClient();
 
     if (!client) {
+      console.warn("Life Cards Supabase image upload skipped", {
+        cardId,
+        reason: "missing-session",
+      });
       return null;
     }
 
     const blob = imageBodyToBlob(image);
     const path = cardImagePath(client.userId, cardId);
+    const bucketDiagnostic = await client.supabase.storage.listBuckets();
+
+    console.warn("Life Cards Supabase image upload start", {
+      blobSize: blob.size,
+      bucket: CARD_IMAGES_BUCKET,
+      bucketCheckError: supabaseErrorLog(bucketDiagnostic.error),
+      bucketExists: bucketDiagnostic.data?.some(
+        (bucket) => bucket.name === CARD_IMAGES_BUCKET,
+      ),
+      cardId,
+      contentType: blob.type || "image/webp",
+      path,
+      policyExpectedPathExample: expectedPolicyPathPrefix,
+      userId: client.userId,
+    });
+
     const { error } = await client.supabase.storage
       .from(CARD_IMAGES_BUCKET)
       .upload(path, blob, {
@@ -61,8 +100,20 @@ export const CardImageStorageRepository = {
       });
 
     if (error) {
+      console.warn("Life Cards Supabase image upload error", {
+        bucket: CARD_IMAGES_BUCKET,
+        cardId,
+        error: supabaseErrorLog(error),
+        path,
+      });
       throw error;
     }
+
+    console.warn("Life Cards Supabase image upload success", {
+      bucket: CARD_IMAGES_BUCKET,
+      cardId,
+      path,
+    });
 
     return path;
   },

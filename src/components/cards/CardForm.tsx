@@ -123,7 +123,9 @@ export default function CardForm({
         const result = await compressImage(file);
 
         console.warn("Life Cards image compressed", {
+          blobSize: result.blob.size,
           compressedSize: result.compressedSize,
+          contentType: result.blob.type || "unknown",
           height: result.height,
           label,
           originalSize: result.originalSize,

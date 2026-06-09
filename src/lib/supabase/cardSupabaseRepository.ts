@@ -43,6 +43,40 @@ function isDisplayOnlyImagePath(value: string) {
   return value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/");
 }
 
+function supabaseErrorLog(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return error;
+  }
+
+  const errorRecord = error as Record<string, unknown>;
+
+  return {
+    code: errorRecord.code,
+    details: errorRecord.details,
+    hint: errorRecord.hint,
+    message: errorRecord.message,
+    name: errorRecord.name,
+    status: errorRecord.status,
+    statusCode: errorRecord.statusCode,
+  };
+}
+
+function imagePathKind(value: string) {
+  if (!value) {
+    return "empty";
+  }
+
+  if (isDataUrl(value)) {
+    return "data-url";
+  }
+
+  if (isDisplayOnlyImagePath(value)) {
+    return "display-url";
+  }
+
+  return "storage-path";
+}
+
 function rowToCard(row: SupabaseCardRow): Card {
   const storedImagePath = row.image_path ?? "";
   const imagePath = isDisplayOnlyImagePath(storedImagePath) || isDataUrl(storedImagePath)
@@ -114,6 +148,11 @@ async function resolveImagePathForSave(
 
   if (isDataUrl(imagePath)) {
     try {
+      console.warn("Life Cards Supabase image resolve upload start", {
+        cardId: card.id,
+        imagePathKind: imagePathKind(imagePath),
+      });
+
       const uploadedPath = await CardImageStorageRepository.uploadCardImage(
         card.id,
         imagePath,
@@ -125,7 +164,10 @@ async function resolveImagePathForSave(
 
       return uploadedPath;
     } catch (error) {
-      console.warn("Life Cards Supabase image upload failed", error);
+      console.warn("Life Cards Supabase image upload failed", {
+        cardId: card.id,
+        error: supabaseErrorLog(error),
+      });
       throw new CardSaveError(
         "image-upload-failed",
         "Card image upload failed.",
@@ -145,6 +187,18 @@ async function cardToRow(
   card: Card,
   client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
 ) {
+  const imagePath = (card.imagePath ?? "").trim();
+  const imageStoragePath = (card.imageStoragePath ?? "").trim();
+  const resolvedImagePath = await resolveImagePathForSave(card, client);
+
+  console.warn("Life Cards Supabase card row prepared", {
+    cardId: card.id,
+    imagePathKind: imagePathKind(imagePath),
+    imageStoragePathKind: imagePathKind(imageStoragePath),
+    resolvedImagePathKind: imagePathKind(resolvedImagePath),
+    resolvedImagePath,
+  });
+
   return {
     back_text: card.backText ?? "",
     created_at: card.createdAt,
@@ -153,7 +207,7 @@ async function cardToRow(
     front_text: card.frontText ?? "",
     id: card.id,
     image_fit_mode: cardImageFitModeToRow(card),
-    image_path: await resolveImagePathForSave(card, client),
+    image_path: resolvedImagePath,
     is_favorite: Boolean(card.isFavorite),
     link_url: card.linkUrl?.trim() || null,
     updated_at: card.updatedAt,
@@ -166,6 +220,12 @@ async function persistImageFitMode(
   cardId: string,
   imageFitMode: CardImageFitMode,
 ) {
+  console.warn("Life Cards Supabase image_fit_mode persist start", {
+    cardId,
+    imageFitMode,
+    userId: client.userId,
+  });
+
   const { error } = await client.supabase
     .from("cards")
     .update({
@@ -175,14 +235,31 @@ async function persistImageFitMode(
     .eq("id", cardId);
 
   if (error) {
+    console.warn("Life Cards Supabase image_fit_mode persist error", {
+      cardId,
+      error: supabaseErrorLog(error),
+      imageFitMode,
+      userId: client.userId,
+    });
     throw error;
   }
+
+  console.warn("Life Cards Supabase image_fit_mode persist success", {
+    cardId,
+    imageFitMode,
+    userId: client.userId,
+  });
 }
 
 async function verifyImageFitMode(
   client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
   cardId: string,
 ) {
+  console.warn("Life Cards Supabase image_fit_mode verify start", {
+    cardId,
+    userId: client.userId,
+  });
+
   const { data, error } = await client.supabase
     .from("cards")
     .select("image_fit_mode")
@@ -191,6 +268,11 @@ async function verifyImageFitMode(
     .maybeSingle();
 
   if (error) {
+    console.warn("Life Cards Supabase image_fit_mode verify error", {
+      cardId,
+      error: supabaseErrorLog(error),
+      userId: client.userId,
+    });
     throw error;
   }
 
@@ -207,12 +289,21 @@ async function getClient() {
   } = await supabase.auth.getSession();
   const userId = session?.user.id;
 
+  console.warn("Life Cards Supabase card client session", {
+    hasSession: Boolean(session),
+    hasUserId: Boolean(userId),
+  });
+
   return userId ? { supabase, userId } : null;
 }
 
 async function fetchCards(
   client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
 ) {
+  console.warn("Life Cards Supabase cards fetch start", {
+    userId: client.userId,
+  });
+
   const { data, error } = await client.supabase
     .from("cards")
     .select(
@@ -222,8 +313,17 @@ async function fetchCards(
     .order("created_at", { ascending: false });
 
   if (error) {
+    console.warn("Life Cards Supabase cards fetch error", {
+      error: supabaseErrorLog(error),
+      userId: client.userId,
+    });
     throw error;
   }
+
+  console.warn("Life Cards Supabase cards fetch success", {
+    count: data?.length ?? 0,
+    userId: client.userId,
+  });
 
   return ((data ?? []) as SupabaseCardRow[]).map(rowToCard);
 }
@@ -239,12 +339,26 @@ export const CardSupabaseRepository = {
     const client = await getClient();
 
     if (!client) {
+      console.warn("Life Cards Supabase seed cards skipped", {
+        reason: "missing-session",
+        seedCount: seedCards.length,
+      });
       return null;
     }
+
+    console.warn("Life Cards Supabase seed cards check start", {
+      seedCount: seedCards.length,
+      userId: client.userId,
+    });
 
     const currentCards = await fetchCards(client);
 
     if (currentCards.length > 0) {
+      console.warn("Life Cards Supabase seed cards skipped", {
+        currentCount: currentCards.length,
+        reason: "already-has-cards",
+        userId: client.userId,
+      });
       return currentCards;
     }
 
@@ -253,16 +367,34 @@ export const CardSupabaseRepository = {
     );
 
     if (rows.length === 0) {
+      console.warn("Life Cards Supabase seed cards empty", {
+        userId: client.userId,
+      });
       return [];
     }
+
+    console.warn("Life Cards Supabase seed cards upsert start", {
+      rowCount: rows.length,
+      userId: client.userId,
+    });
 
     const { error } = await client.supabase
       .from("cards")
       .upsert(rows, { onConflict: "user_id,id" });
 
     if (error) {
+      console.warn("Life Cards Supabase seed cards upsert error", {
+        error: supabaseErrorLog(error),
+        rowCount: rows.length,
+        userId: client.userId,
+      });
       throw error;
     }
+
+    console.warn("Life Cards Supabase seed cards upsert success", {
+      rowCount: rows.length,
+      userId: client.userId,
+    });
 
     return fetchCards(client);
   },
@@ -282,6 +414,15 @@ export const CardSupabaseRepository = {
       id: row.id,
       imageFitMode: card.imageFitMode,
       image_fit_mode: row.image_fit_mode,
+      image_path: row.image_path,
+      image_path_kind: imagePathKind(row.image_path),
+      user_id: row.user_id,
+    });
+
+    console.warn("Life Cards Supabase card upsert start", {
+      cardId: row.id,
+      imagePathKind: imagePathKind(row.image_path),
+      userId: client.userId,
     });
 
     const { error } = await client.supabase
@@ -291,8 +432,20 @@ export const CardSupabaseRepository = {
       });
 
     if (error) {
+      console.warn("Life Cards Supabase card upsert error", {
+        cardId: row.id,
+        error: supabaseErrorLog(error),
+        imagePathKind: imagePathKind(row.image_path),
+        userId: client.userId,
+      });
       throw error;
     }
+
+    console.warn("Life Cards Supabase card upsert success", {
+      cardId: row.id,
+      imagePathKind: imagePathKind(row.image_path),
+      userId: client.userId,
+    });
 
     await persistImageFitMode(client, row.id, row.image_fit_mode);
 

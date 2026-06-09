@@ -39,7 +39,23 @@ function writeStoredCards(cards: Card[]) {
     return;
   }
 
+  assertNoLocalDataUrlImages(cards);
   window.localStorage.setItem(STORAGE_KEYS.cards, JSON.stringify(cards));
+}
+
+function isDataUrl(value: string | null | undefined) {
+  return value?.trim().startsWith("data:") ?? false;
+}
+
+function assertNoLocalDataUrlImages(cards: Card[]) {
+  const cardWithLocalImage = cards.find((card) => isDataUrl(card.imagePath));
+
+  if (cardWithLocalImage) {
+    throw new CardSaveError(
+      "local-image-not-allowed",
+      "localStorage card saves cannot include data URL images.",
+    );
+  }
 }
 
 function todayInputValue() {

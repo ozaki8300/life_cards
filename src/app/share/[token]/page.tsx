@@ -74,7 +74,7 @@ function generateImportedCardId() {
 }
 
 function importedCardImagePath(userId: string, cardId: string) {
-  return `${userId}/cards/${cardId}/front.webp`;
+  return `users/${userId}/cards/${cardId}/front.webp`;
 }
 
 async function copySharedImageToRecipientStorage({
