@@ -6,6 +6,13 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 const CARD_IMAGES_BUCKET = "card-images";
 const SIGNED_URL_EXPIRES_IN_SECONDS = 60 * 60 * 24;
 
+type SignedImageUrlCacheEntry = {
+  expiresAt: number;
+  signedUrl: string;
+};
+
+const signedImageUrlCache = new Map<string, SignedImageUrlCacheEntry>();
+
 function isDataUrl(value: string) {
   return value.startsWith("data:");
 }
@@ -76,6 +83,25 @@ export const CardImageStorageRepository = {
     }
 
     return data.signedUrl;
+  },
+
+  async getCachedSignedImageUrl(path: string) {
+    const cachedEntry = signedImageUrlCache.get(path);
+
+    if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
+      return cachedEntry.signedUrl;
+    }
+
+    const signedUrl = await CardImageStorageRepository.getSignedImageUrl(path);
+
+    if (signedUrl) {
+      signedImageUrlCache.set(path, {
+        expiresAt: Date.now() + SIGNED_URL_EXPIRES_IN_SECONDS * 1000,
+        signedUrl,
+      });
+    }
+
+    return signedUrl;
   },
 
   async removeCardImage(path: string) {

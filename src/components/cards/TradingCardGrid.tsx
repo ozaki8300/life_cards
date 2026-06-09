@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card, Deck } from "@/lib/types";
 
 import CardDetailModal from "./CardDetailModal";
@@ -25,6 +26,11 @@ type Props = {
 type VisibleLimitState = {
   limit: number;
   signature: string;
+};
+
+type SignedImageUrlState = {
+  signature: string;
+  urlsByPath: Record<string, string>;
 };
 
 const GRID_CLASS =
@@ -66,6 +72,11 @@ export default function TradingCardGrid({
       limit: GRID_PAGE_SIZE,
       signature: "",
     });
+  const [signedImageUrlState, setSignedImageUrlState] =
+    useState<SignedImageUrlState>({
+      signature: "",
+      urlsByPath: {},
+    });
   const [localFavoriteIds, setLocalFavoriteIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -92,9 +103,39 @@ export default function TradingCardGrid({
   const activeFavoriteIds = favoriteIds
     ? new Set(favoriteIds)
     : localFavoriteIds;
-  const displayCards = useMemo(
+  const rawDisplayCards = useMemo(
     () => visibleSourceCards.map((card) => updatedCardsById.get(card.id) ?? card),
     [updatedCardsById, visibleSourceCards],
+  );
+  const displayImageStoragePaths = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          rawDisplayCards
+            .map((card) => card.imageStoragePath?.trim() ?? "")
+            .filter(Boolean),
+        ),
+      ),
+    [rawDisplayCards],
+  );
+  const displayImageStorageSignature = displayImageStoragePaths.join("|");
+  const displayCards = useMemo(
+    () =>
+      rawDisplayCards.map((card) => {
+        const imageStoragePath = card.imageStoragePath?.trim();
+        const signedImagePath = imageStoragePath
+          ? signedImageUrlState.urlsByPath[imageStoragePath]
+          : "";
+
+        return imageStoragePath
+          ? {
+              ...card,
+              imagePath: signedImagePath || card.imagePath,
+              imageStoragePath: undefined,
+            }
+          : card;
+      }),
+    [rawDisplayCards, signedImageUrlState.urlsByPath],
   );
   const currentCardsForEdit = useMemo(
     () =>
@@ -203,6 +244,56 @@ export default function TradingCardGrid({
 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isEditing, isSharing, selectedIndex, showNext, showPrevious]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function resolveVisibleImageUrls() {
+      const unresolvedPaths = displayImageStoragePaths.filter(
+        (path) => !signedImageUrlState.urlsByPath[path],
+      );
+
+      if (unresolvedPaths.length === 0) {
+        return;
+      }
+
+      const entries = await Promise.all(
+        unresolvedPaths.map(async (path) => {
+          try {
+            return [
+              path,
+              (await CardImageStorageRepository.getCachedSignedImageUrl(path)) ?? "",
+            ] as const;
+          } catch (error) {
+            console.warn("Life Cards card image signed URL failed", error);
+            return [path, ""] as const;
+          }
+        }),
+      );
+
+      if (!isActive) {
+        return;
+      }
+
+      setSignedImageUrlState((current) => ({
+        signature: displayImageStorageSignature,
+        urlsByPath: {
+          ...current.urlsByPath,
+          ...Object.fromEntries(entries.filter(([, signedUrl]) => signedUrl)),
+        },
+      }));
+    }
+
+    resolveVisibleImageUrls();
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    displayImageStoragePaths,
+    displayImageStorageSignature,
+    signedImageUrlState.urlsByPath,
+  ]);
 
   useEffect(() => {
     if (!shouldShowCarouselIndicator) {

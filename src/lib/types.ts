@@ -14,6 +14,8 @@ export type Card = {
 
   imagePath?: string;
 
+  imageStoragePath?: string;
+
   imageFitMode?: CardImageFitMode;
 
   linkUrl?: string;

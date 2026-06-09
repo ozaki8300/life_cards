@@ -42,17 +42,11 @@ function isDisplayOnlyImagePath(value: string) {
   return value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/");
 }
 
-async function rowToCard(row: SupabaseCardRow): Promise<Card> {
-  let imagePath = "";
-
-  if (row.image_path) {
-    try {
-      imagePath =
-        (await CardImageStorageRepository.getSignedImageUrl(row.image_path)) ?? "";
-    } catch (error) {
-      console.warn("Life Cards Supabase image signed URL failed", error);
-    }
-  }
+function rowToCard(row: SupabaseCardRow): Card {
+  const storedImagePath = row.image_path ?? "";
+  const imagePath = isDisplayOnlyImagePath(storedImagePath) || isDataUrl(storedImagePath)
+    ? storedImagePath
+    : "";
 
   return {
     backText: row.back_text ?? "",
@@ -63,6 +57,7 @@ async function rowToCard(row: SupabaseCardRow): Promise<Card> {
     id: row.id,
     imageFitMode: rowImageFitModeToCard(row.image_fit_mode),
     imagePath,
+    imageStoragePath: imagePath ? "" : storedImagePath,
     isFavorite: row.is_favorite,
     linkUrl: row.link_url ?? "",
     updatedAt: row.updated_at,
@@ -100,8 +95,13 @@ async function resolveImagePathForSave(
   client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
 ) {
   const imagePath = (card.imagePath ?? "").trim();
+  const imageStoragePath = (card.imageStoragePath ?? "").trim();
 
   if (!imagePath) {
+    if (imageStoragePath) {
+      return imageStoragePath;
+    }
+
     const storedPath = await getStoredImagePath(client, card.id);
 
     if (storedPath) {
@@ -124,7 +124,7 @@ async function resolveImagePathForSave(
   }
 
   if (isDisplayOnlyImagePath(imagePath)) {
-    return getStoredImagePath(client, card.id);
+    return imageStoragePath || getStoredImagePath(client, card.id);
   }
 
   return imagePath;
@@ -214,7 +214,7 @@ async function fetchCards(
     throw error;
   }
 
-  return Promise.all(((data ?? []) as SupabaseCardRow[]).map(rowToCard));
+  return ((data ?? []) as SupabaseCardRow[]).map(rowToCard);
 }
 
 export const CardSupabaseRepository = {
