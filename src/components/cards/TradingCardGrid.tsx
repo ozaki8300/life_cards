@@ -22,6 +22,11 @@ type Props = {
   showCarouselIndicator?: boolean;
 };
 
+type VisibleLimitState = {
+  limit: number;
+  signature: string;
+};
+
 const GRID_CLASS =
   "grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-3 sm:justify-items-stretch lg:grid-cols-4";
 const RAIL_OUTER_CLASS =
@@ -30,6 +35,7 @@ const RAIL_INNER_CLASS =
   "flex min-w-full snap-x snap-mandatory flex-nowrap gap-4 sm:gap-5";
 const RAIL_ITEM_CLASS =
   "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-hidden rounded-[18px] [contain:paint] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
+const GRID_PAGE_SIZE = 60;
 
 export default function TradingCardGrid({
   cards,
@@ -55,18 +61,40 @@ export default function TradingCardGrid({
     new Map(),
   );
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [visibleLimitState, setVisibleLimitState] =
+    useState<VisibleLimitState>({
+      limit: GRID_PAGE_SIZE,
+      signature: "",
+    });
   const [localFavoriteIds, setLocalFavoriteIds] = useState<Set<string>>(
     () =>
       new Set(
         cards.filter((card) => card.isFavorite).map((card) => card.id),
       ),
   );
+  const cardsSignature = useMemo(
+    () => cards.map((card) => card.id).join("|"),
+    [cards],
+  );
+  const shouldLimitCards = layout === "grid";
+  const visibleLimit =
+    visibleLimitState.signature === cardsSignature
+      ? visibleLimitState.limit
+      : GRID_PAGE_SIZE;
+  const visibleCount = shouldLimitCards
+    ? Math.min(visibleLimit, cards.length)
+    : cards.length;
+  const visibleSourceCards = useMemo(
+    () => cards.slice(0, visibleCount),
+    [cards, visibleCount],
+  );
+  const hasMoreCards = shouldLimitCards && visibleCount < cards.length;
   const activeFavoriteIds = favoriteIds
     ? new Set(favoriteIds)
     : localFavoriteIds;
   const displayCards = useMemo(
-    () => cards.map((card) => updatedCardsById.get(card.id) ?? card),
-    [cards, updatedCardsById],
+    () => visibleSourceCards.map((card) => updatedCardsById.get(card.id) ?? card),
+    [updatedCardsById, visibleSourceCards],
   );
   const currentCardsForEdit = useMemo(
     () =>
@@ -76,10 +104,10 @@ export default function TradingCardGrid({
     [cards, editSeedCards, updatedCardsById],
   );
   const selectedCard =
-    selectedIndex === null ? null : displayCards[selectedIndex];
-  const hasMultipleCards = cards.length > 1;
+    selectedIndex === null ? null : displayCards[selectedIndex] ?? null;
+  const hasMultipleCards = displayCards.length > 1;
   const shouldShowCarouselIndicator =
-    layout === "rail" && showCarouselIndicator && hasMultipleCards;
+    layout === "rail" && showCarouselIndicator && cards.length > 1;
 
   function deckLabelFor(card: Card) {
     return decks.find((deck) => deck.id === card.deckId)?.name ?? "Deck";
@@ -245,6 +273,9 @@ export default function TradingCardGrid({
 
   function openCard(index: number) {
     setSelectedIndex(index);
+    setIsEditing(false);
+    setIsSharing(false);
+    setIsDetailPhotoMode(false);
     onCardViewed?.(displayCards[index].id);
   }
 
@@ -283,6 +314,18 @@ export default function TradingCardGrid({
     }
 
     setTouchStartX(null);
+  }
+
+  function showMoreCards() {
+    setVisibleLimitState((current) => {
+      const currentLimit =
+        current.signature === cardsSignature ? current.limit : GRID_PAGE_SIZE;
+
+      return {
+        limit: Math.min(currentLimit + GRID_PAGE_SIZE, cards.length),
+        signature: cardsSignature,
+      };
+    });
   }
 
   if (cards.length === 0) {
@@ -369,7 +412,25 @@ export default function TradingCardGrid({
           ) : null}
         </div>
       ) : (
-        <div className={GRID_CLASS}>{cardTiles}</div>
+        <>
+          <div className={GRID_CLASS}>{cardTiles}</div>
+          {shouldLimitCards && cards.length > GRID_PAGE_SIZE ? (
+            <div className="mt-6 flex flex-col items-center gap-3 text-center">
+              <p className="text-xs font-semibold text-[#8d7f6e]">
+                {visibleCount} / {cards.length} cards 表示中
+              </p>
+              {hasMoreCards ? (
+                <button
+                  type="button"
+                  onClick={showMoreCards}
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 px-5 text-sm font-semibold text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
+                >
+                  もっと見る
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </>
       )}
 
       {selectedCard && selectedIndex !== null ? (
