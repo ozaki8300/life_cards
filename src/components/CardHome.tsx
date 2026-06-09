@@ -7,7 +7,6 @@ import type { Card, Deck } from "@/lib/types";
 import { CardRepository } from "@/lib/cardRepository";
 import { DeckRepository } from "@/lib/deckRepository";
 import { EncounterRepository } from "@/lib/encounterRepository";
-import { ReencounterEngine } from "@/domain/reencounter/engine";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 
@@ -19,6 +18,7 @@ import TradingCardGrid from "./cards/TradingCardGrid";
 import {
   cardSearchText,
   keywordsFor,
+  pickReencounterCards,
   sortCardsByNewest,
 } from "./cards/cardHomeUtils";
 
@@ -228,20 +228,16 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
 
   const activeFavoriteIds = Array.from(favoriteIds);
   const today = new Date().toISOString().slice(0, 10);
-  const todayCards = useMemo(() => {
-    const seedFavoriteIds = new Set(
-      scopedCards
-        .filter((card) => card.isFavorite)
-        .map((card) => card.id),
-    );
-
-    return ReencounterEngine.pick({
-      cards: scopedCards,
-      favoriteIds: seedFavoriteIds,
-      metadataByCardId: encounterMetadataByCardId,
-      today,
-    });
-  }, [encounterMetadataByCardId, scopedCards, today]);
+  const todayCards = useMemo(
+    () =>
+      pickReencounterCards({
+        cards: scopedCards,
+        favoriteIds,
+        metadataByCardId: encounterMetadataByCardId,
+        today,
+      }),
+    [encounterMetadataByCardId, favoriteIds, scopedCards, today],
+  );
 
   return (
     <>

@@ -1,9 +1,11 @@
 import type { ReencounterScoreInput } from "./types";
 
-const UNVIEWED_CARD_SCORE = 100;
-const FAVORITE_CARD_BONUS = 20;
-const REENCOUNTERED_TODAY_PENALTY = 1000;
-const FUTURE_REENCOUNTER_PENALTY = 500;
+export const REENCOUNTER_SCORE_V1 = {
+  favoriteBonus: 20,
+  futureReencounterPenalty: 500,
+  reencounteredTodayPenalty: 1000,
+  unviewedCardScore: 100,
+} as const;
 
 function datePart(value: string) {
   return value.slice(0, 10);
@@ -48,18 +50,18 @@ export function calculateReencounterScore({
   let score =
     lastViewedDate && today
       ? daysBetween(lastViewedDate, today)
-      : UNVIEWED_CARD_SCORE;
+      : REENCOUNTER_SCORE_V1.unviewedCardScore;
 
   if (isFavorite) {
-    score += FAVORITE_CARD_BONUS;
+    score += REENCOUNTER_SCORE_V1.favoriteBonus;
   }
 
   if (today && lastReencounterDate === today) {
-    score -= REENCOUNTERED_TODAY_PENALTY;
+    score -= REENCOUNTER_SCORE_V1.reencounteredTodayPenalty;
   }
 
   if (today && nextReencounterDate && isAfterDate(nextReencounterDate, today)) {
-    score -= FUTURE_REENCOUNTER_PENALTY;
+    score -= REENCOUNTER_SCORE_V1.futureReencounterPenalty;
   }
 
   return score;

@@ -1,4 +1,5 @@
 import type { Card, Deck } from "@/lib/types";
+import type { EncounterMetadata } from "@/domain/reencounter/types";
 import { ReencounterEngine } from "@/domain/reencounter/engine";
 
 export function keywordsFor(query: string) {
@@ -36,6 +37,21 @@ export function sortCardsByNewest(cards: Card[]) {
     .map(({ card }) => card);
 }
 
-export function pickReencounterCards(cards: Card[], favoriteIds: Set<string>) {
-  return ReencounterEngine.pick({ cards, favoriteIds });
+export function pickReencounterCards({
+  cards,
+  favoriteIds,
+  metadataByCardId,
+  today,
+}: {
+  cards: Card[];
+  favoriteIds: ReadonlySet<string>;
+  metadataByCardId: Record<string, EncounterMetadata>;
+  today: string;
+}) {
+  return ReencounterEngine.pick({
+    cards,
+    favoriteIds,
+    metadataByCardId,
+    today,
+  });
 }
