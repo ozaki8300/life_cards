@@ -2,7 +2,12 @@ import { cards as seedCards } from "@/data/cards/cards";
 import { CardSupabaseRepository } from "@/lib/supabase/cardSupabaseRepository";
 import type { Card } from "@/lib/types";
 
+import { CardSaveError } from "./cardSaveErrors";
 import { STORAGE_KEYS } from "./storageKeys";
+
+type CardSaveOptions = {
+  expectsCloudSave?: boolean;
+};
 
 function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
@@ -69,22 +74,45 @@ export const CardRepository = {
     return nextCards;
   },
 
-  async saveCardForCurrentUser(card: Card, seed: Card[] = seedCards) {
+  async saveCardForCurrentUser(
+    card: Card,
+    seed: Card[] = seedCards,
+    options: CardSaveOptions = {},
+  ) {
     console.log("Life Cards repository save card", {
       id: card.id,
       imageFitMode: card.imageFitMode,
     });
 
     try {
-      return (
-        (await CardSupabaseRepository.saveCard(
-          card,
-          CardRepository.getCards(seed),
-        )) ?? CardRepository.saveCard(card, seed)
+      const savedCards = await CardSupabaseRepository.saveCard(
+        card,
+        CardRepository.getCards(seed),
       );
+
+      if (savedCards) {
+        return savedCards;
+      }
+
+      if (options.expectsCloudSave) {
+        throw new CardSaveError(
+          "cloud-save-failed",
+          "Cloud card save requires an active Supabase session.",
+        );
+      }
+
+      return CardRepository.saveCard(card, seed);
     } catch (error) {
       console.warn("Life Cards Supabase card save failed", error);
-      return CardRepository.saveCard(card, seed);
+
+      if (error instanceof CardSaveError) {
+        throw error;
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Supabase card save failed.";
+
+      throw new CardSaveError("cloud-save-failed", message, error);
     }
   },
 
@@ -96,22 +124,45 @@ export const CardRepository = {
     return nextCards;
   },
 
-  async updateCardForCurrentUser(card: Card, seed: Card[] = seedCards) {
+  async updateCardForCurrentUser(
+    card: Card,
+    seed: Card[] = seedCards,
+    options: CardSaveOptions = {},
+  ) {
     console.log("Life Cards repository update card", {
       id: card.id,
       imageFitMode: card.imageFitMode,
     });
 
     try {
-      return (
-        (await CardSupabaseRepository.updateCard(
-          card,
-          CardRepository.getCards(seed),
-        )) ?? CardRepository.updateCard(card, seed)
+      const savedCards = await CardSupabaseRepository.updateCard(
+        card,
+        CardRepository.getCards(seed),
       );
+
+      if (savedCards) {
+        return savedCards;
+      }
+
+      if (options.expectsCloudSave) {
+        throw new CardSaveError(
+          "cloud-save-failed",
+          "Cloud card update requires an active Supabase session.",
+        );
+      }
+
+      return CardRepository.updateCard(card, seed);
     } catch (error) {
       console.warn("Life Cards Supabase card update failed", error);
-      return CardRepository.updateCard(card, seed);
+
+      if (error instanceof CardSaveError) {
+        throw error;
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Supabase card update failed.";
+
+      throw new CardSaveError("cloud-save-failed", message, error);
     }
   },
 

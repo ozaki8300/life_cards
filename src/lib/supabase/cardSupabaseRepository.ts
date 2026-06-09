@@ -1,5 +1,6 @@
 "use client";
 
+import { CardSaveError } from "@/lib/cardSaveErrors";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card, CardImageFitMode } from "@/lib/types";
@@ -113,13 +114,23 @@ async function resolveImagePathForSave(
 
   if (isDataUrl(imagePath)) {
     try {
-      return (await CardImageStorageRepository.uploadCardImage(
+      const uploadedPath = await CardImageStorageRepository.uploadCardImage(
         card.id,
         imagePath,
-      )) ?? "";
+      );
+
+      if (!uploadedPath) {
+        throw new Error("Card image upload requires an active Supabase session.");
+      }
+
+      return uploadedPath;
     } catch (error) {
       console.warn("Life Cards Supabase image upload failed", error);
-      return "";
+      throw new CardSaveError(
+        "image-upload-failed",
+        "Card image upload failed.",
+        error,
+      );
     }
   }
 

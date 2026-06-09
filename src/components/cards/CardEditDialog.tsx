@@ -4,7 +4,10 @@ import { CardRepository } from "@/lib/cardRepository";
 import type { Card, Deck } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
-import CardForm, { type CardFormValues } from "./CardForm";
+import CardForm, {
+  type CardFormSubmitContext,
+  type CardFormValues,
+} from "./CardForm";
 import { todayInputValue } from "./cardFormUtils";
 
 export default function CardEditDialog({
@@ -22,7 +25,10 @@ export default function CardEditDialog({
 }) {
   useEscapeKey(onClose);
 
-  async function handleSubmit(values: CardFormValues) {
+  async function handleSubmit(
+    values: CardFormValues,
+    context: CardFormSubmitContext,
+  ) {
     const nextCard: Card = {
       ...card,
       deckId: values.deckId,
@@ -44,6 +50,9 @@ export default function CardEditDialog({
     const nextCards = await CardRepository.updateCardForCurrentUser(
       nextCard,
       currentCards,
+      {
+        expectsCloudSave: context.expectsCloudSave,
+      },
     );
     onSaved?.(nextCards.find((item) => item.id === nextCard.id) ?? nextCard);
     console.log("Life Cards edit saved", nextCard);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 import { DeckRepository } from "@/lib/deckRepository";
+import { cardSaveErrorMessage } from "@/lib/cardSaveErrors";
 import { compressImage } from "@/lib/imageCompression";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { CardImageFitMode, Deck } from "@/lib/types";
@@ -45,13 +46,20 @@ export type CardFormValues = {
   linkUrl: string;
 };
 
+export type CardFormSubmitContext = {
+  expectsCloudSave: boolean;
+};
+
 type Props = {
   cardId: string;
   deckOptions: Deck[];
   initialValues: CardFormValues;
   mode: "new" | "edit";
   onCancel?: () => void;
-  onSubmit: (values: CardFormValues) => Promise<void> | void;
+  onSubmit: (
+    values: CardFormValues,
+    context: CardFormSubmitContext,
+  ) => Promise<void> | void;
   saveLabel?: string;
 };
 
@@ -83,7 +91,9 @@ export default function CardForm({
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
   const [availableDecks, setAvailableDecks] = useState(deckOptions);
   const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
+  const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
@@ -143,6 +153,7 @@ export default function CardForm({
       supabase.auth.getSession().then(({ data }) => {
         if (isActive) {
           setIsSignedIn(Boolean(data.session?.user));
+          setIsAuthResolved(true);
         }
       });
 
@@ -150,6 +161,7 @@ export default function CardForm({
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         setIsSignedIn(Boolean(session?.user));
+        setIsAuthResolved(true);
       });
 
       return () => {
@@ -160,6 +172,7 @@ export default function CardForm({
       queueMicrotask(() => {
         if (isActive) {
           setIsSignedIn(false);
+          setIsAuthResolved(true);
         }
       });
     }
@@ -280,6 +293,12 @@ export default function CardForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSaveErrorMessage("");
+
+    if (!isAuthResolved) {
+      setSaveErrorMessage("保存先を確認中です。少し待ってからもう一度お試しください。");
+      return;
+    }
 
     const values: CardFormValues = {
       backText,
@@ -296,7 +315,14 @@ export default function CardForm({
       imageFitMode: values.imageFitMode,
     });
 
-    await onSubmit(values);
+    try {
+      await onSubmit(values, {
+        expectsCloudSave: isSignedIn,
+      });
+    } catch (error) {
+      console.warn("Life Cards form save failed", error);
+      setSaveErrorMessage(cardSaveErrorMessage(error));
+    }
   }
 
   return (
@@ -325,10 +351,20 @@ export default function CardForm({
         />
 
         <section className="grid min-w-0 gap-4 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5">
+          {saveErrorMessage ? (
+            <p className="rounded-[14px] border border-[#e7b8a9] bg-[#fff2ee] px-4 py-3 text-sm font-semibold text-[#a24d3c]">
+              {saveErrorMessage}
+            </p>
+          ) : null}
+
           <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
             <div className="grid gap-2">
               <p className="text-xs font-semibold text-[#8d7f6e]">
-                {isSignedIn ? "クラウド同期中" : "この端末にテキスト保存中"}
+                {!isAuthResolved
+                  ? "保存先を確認中"
+                  : isSignedIn
+                    ? "クラウド同期中"
+                    : "この端末にテキスト保存中"}
               </p>
               {!isSignedIn ? (
                 <p className="text-xs leading-5 text-[#7d705f]">
@@ -496,7 +532,8 @@ export default function CardForm({
           <div className="sticky bottom-[env(safe-area-inset-bottom)] z-10 -mx-4 -mb-4 grid gap-2 border-t border-[#eadfce] bg-[#fffaf0]/92 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:bottom-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 sm:pb-4">
             <button
               type="submit"
-              className="rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+              disabled={!isAuthResolved}
+              className="rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none"
             >
               {saveLabel}
             </button>
