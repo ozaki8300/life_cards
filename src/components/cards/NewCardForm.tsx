@@ -45,7 +45,12 @@ export default function NewCardForm({
       isFavorite: false,
     };
 
+    const selectedDeckName =
+      deckOptions.find((deck) => deck.id === nextCard.deckId)?.name ?? "";
+
     console.log("Life Cards new card payload", {
+      deckId: nextCard.deckId,
+      deckName: selectedDeckName,
       id: nextCard.id,
       imageFitMode: nextCard.imageFitMode,
     });

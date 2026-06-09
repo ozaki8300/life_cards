@@ -199,7 +199,7 @@ async function cardToRow(
     resolvedImagePath,
   });
 
-  return {
+  const row = {
     back_text: card.backText ?? "",
     created_at: card.createdAt,
     deck_id: card.deckId,
@@ -213,6 +213,15 @@ async function cardToRow(
     updated_at: card.updatedAt,
     user_id: client.userId,
   };
+
+  console.warn("Life Cards Supabase card FK row prepared", {
+    front_text: row.front_text,
+    id: row.id,
+    deck_id: row.deck_id,
+    user_id: row.user_id,
+  });
+
+  return row;
 }
 
 async function persistImageFitMode(
@@ -412,6 +421,7 @@ export const CardSupabaseRepository = {
 
     console.log("Life Cards Supabase card upsert payload", {
       id: row.id,
+      deck_id: row.deck_id,
       imageFitMode: card.imageFitMode,
       image_fit_mode: row.image_fit_mode,
       image_path: row.image_path,
@@ -421,7 +431,11 @@ export const CardSupabaseRepository = {
 
     console.warn("Life Cards Supabase card upsert start", {
       cardId: row.id,
+      deck_id: row.deck_id,
       imagePathKind: imagePathKind(row.image_path),
+      onConflict: "user_id,id",
+      row_id: row.id,
+      row_user_id: row.user_id,
       userId: client.userId,
     });
 

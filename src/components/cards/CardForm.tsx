@@ -314,6 +314,9 @@ export default function CardForm({
     };
 
     console.log("Life Cards form submit values", {
+      cardId,
+      deckId: values.deckId,
+      deckName: selectedDeckName,
       imageFitMode: values.imageFitMode,
     });
 
