@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 
 import LoginButton from "./LoginButton";
 import LogoutButton from "./LogoutButton";
@@ -10,7 +11,7 @@ import LogoutButton from "./LogoutButton";
 type AuthState =
   | { status: "loading" }
   | { status: "signed-out" }
-  | { email?: string; status: "signed-in" }
+  | { displayName?: string; status: "signed-in" }
   | { status: "unavailable" };
 
 export default function AuthStatus() {
@@ -18,6 +19,25 @@ export default function AuthStatus() {
 
   useEffect(() => {
     let isActive = true;
+
+    async function setSignedInState() {
+      try {
+        const profile = await getProfileForCurrentUser();
+
+        if (isActive) {
+          setAuthState({
+            displayName: profile?.displayName.trim() || undefined,
+            status: "signed-in",
+          });
+        }
+      } catch (error) {
+        console.warn("Life Cards auth profile load failed", error);
+
+        if (isActive) {
+          setAuthState({ status: "signed-in" });
+        }
+      }
+    }
 
     try {
       const supabase = createSupabaseBrowserClient();
@@ -29,11 +49,12 @@ export default function AuthStatus() {
 
         const user = data.session?.user;
 
-        setAuthState(
-          user
-            ? { email: user.email ?? undefined, status: "signed-in" }
-            : { status: "signed-out" },
-        );
+        if (user) {
+          setSignedInState();
+          return;
+        }
+
+        setAuthState({ status: "signed-out" });
       });
 
       const {
@@ -41,15 +62,36 @@ export default function AuthStatus() {
       } = supabase.auth.onAuthStateChange((_event, session) => {
         const user = session?.user;
 
-        setAuthState(
-          user
-            ? { email: user.email ?? undefined, status: "signed-in" }
-            : { status: "signed-out" },
-        );
+        if (user) {
+          setSignedInState();
+          return;
+        }
+
+        setAuthState({ status: "signed-out" });
       });
+      function handleProfileUpdated(event: Event) {
+        const displayName =
+          event instanceof CustomEvent &&
+          typeof event.detail?.displayName === "string"
+            ? event.detail.displayName.trim()
+            : "";
+
+        if (displayName) {
+          setAuthState({ displayName, status: "signed-in" });
+        }
+      }
+
+      window.addEventListener(
+        "life-cards-profile-updated",
+        handleProfileUpdated,
+      );
 
       return () => {
         isActive = false;
+        window.removeEventListener(
+          "life-cards-profile-updated",
+          handleProfileUpdated,
+        );
         subscription.unsubscribe();
       };
     } catch {
@@ -80,14 +122,10 @@ export default function AuthStatus() {
   if (authState.status === "signed-in") {
     return (
       <span className="inline-flex items-center gap-2">
-        {authState.email ? (
-          <span className="hidden max-w-[180px] truncate rounded-full border border-[#e0d3c0] bg-[#fffaf0]/70 px-3 py-2 text-xs font-semibold text-[#7d705f] shadow-sm backdrop-blur lg:inline">
-            {authState.email}
-          </span>
-        ) : null}
-        <LogoutButton
-          onSignedOut={() => setAuthState({ status: "signed-out" })}
-        />
+        <span className="hidden max-w-[180px] truncate rounded-full border border-[#e0d3c0] bg-[#fffaf0]/70 px-3 py-2 text-xs font-semibold text-[#7d705f] shadow-sm backdrop-blur lg:inline">
+          {authState.displayName ?? "username未設定"}
+        </span>
+        <LogoutButton onSignedOut={() => setAuthState({ status: "signed-out" })} />
       </span>
     );
   }

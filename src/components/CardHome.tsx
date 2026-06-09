@@ -8,8 +8,11 @@ import { CardRepository } from "@/lib/cardRepository";
 import { DeckRepository } from "@/lib/deckRepository";
 import { EncounterRepository } from "@/lib/encounterRepository";
 import { ReencounterEngine } from "@/domain/reencounter/engine";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 
 import CardFirstNav from "./CardFirstNav";
+import ProfileSetupModal from "./auth/ProfileSetupModal";
 import CardsPageHeader from "./cards/CardsPageHeader";
 import ReencounterSection from "./cards/ReencounterSection";
 import TradingCardGrid from "./cards/TradingCardGrid";
@@ -33,6 +36,8 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
   const [encounterMetadataByCardId, setEncounterMetadataByCardId] = useState<
     Record<string, EncounterMetadata>
   >({});
+  const [isProfileSetupOpen, setIsProfileSetupOpen] = useState(false);
+  const [profileDisplayName, setProfileDisplayName] = useState("");
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(
     () =>
       new Set(
@@ -81,6 +86,39 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
       isActive = false;
     };
   }, [cards, decks]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    queueMicrotask(async () => {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!isActive || !session?.user) {
+          return;
+        }
+
+        const profile = await getProfileForCurrentUser();
+        const displayName = profile?.displayName.trim() ?? "";
+
+        if (!isActive) {
+          return;
+        }
+
+        setProfileDisplayName(displayName);
+        setIsProfileSetupOpen(!displayName);
+      } catch (error) {
+        console.warn("Life Cards profile load failed", error);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const visibleCards = useMemo(() => {
     const keywords = keywordsFor(searchQuery);
@@ -251,6 +289,16 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
           </section>
         </CardFirstNav>
       </div>
+
+      {isProfileSetupOpen ? (
+        <ProfileSetupModal
+          initialDisplayName={profileDisplayName}
+          onSaved={(displayName) => {
+            setProfileDisplayName(displayName);
+            setIsProfileSetupOpen(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }

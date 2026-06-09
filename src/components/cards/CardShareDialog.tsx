@@ -5,6 +5,7 @@ import QRCode from "react-qr-code";
 
 import { createShareCardForCurrentUser } from "@/lib/supabase/shareCardSupabaseRepository";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
@@ -71,6 +72,13 @@ export default function CardShareDialog({
       throw new Error("共有するにはログインしてください");
     }
 
+    const profile = await getProfileForCurrentUser();
+    const profileDisplayName = profile?.displayName.trim();
+
+    if (profileDisplayName) {
+      return profileDisplayName;
+    }
+
     const metadataName = user.user_metadata.name;
 
     if (typeof metadataName === "string" && metadataName.trim()) {
@@ -79,7 +87,7 @@ export default function CardShareDialog({
 
     const emailPrefix = user.email?.split("@")[0]?.trim();
 
-    return emailPrefix || "Life Cards user";
+    return emailPrefix || "Life Cards User";
   }
 
   async function createShareUrl() {

@@ -13,6 +13,7 @@ import { useEscapeKey } from "@/lib/useEscapeKey";
 
 import AboutLifeCardsModal from "./AboutLifeCardsModal";
 import AuthStatus from "./auth/AuthStatus";
+import ProfileSetupModal from "./auth/ProfileSetupModal";
 import DeckCreateModal from "./cards/DeckCreateModal";
 import { todayInputValue } from "./cards/cardFormUtils";
 
@@ -50,6 +51,7 @@ export default function CardFirstNav({
   const [isDeckPanelOpen, setIsDeckPanelOpen] = useState(false);
   const [deckDeleteTarget, setDeckDeleteTarget] = useState<Deck | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const uncategorizedDeck = decks.find((deck) => deck.id === "uncategorized");
   const shouldShowUncategorizedDeck = Boolean(
     uncategorizedDeck &&
@@ -230,6 +232,10 @@ export default function CardFirstNav({
   });
   useEscapeKey(() => setIsMenuOpen(false), {
     enabled: isMenuOpen,
+    ignoreEditable: false,
+  });
+  useEscapeKey(() => setIsProfileModalOpen(false), {
+    enabled: isProfileModalOpen,
     ignoreEditable: false,
   });
 
@@ -434,6 +440,16 @@ export default function CardFirstNav({
                   type="button"
                   onClick={() => {
                     setIsMenuOpen(false);
+                    setIsProfileModalOpen(true);
+                  }}
+                  className="mb-2 w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-4 py-3 text-left text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                >
+                  usernameを変更
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
                     setIsAboutOpen(true);
                   }}
                   className="w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-4 py-3 text-left text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
@@ -494,6 +510,13 @@ export default function CardFirstNav({
 
       {isAboutOpen ? (
         <AboutLifeCardsModal onClose={() => setIsAboutOpen(false)} />
+      ) : null}
+
+      {isProfileModalOpen ? (
+        <ProfileSetupModal
+          onClose={() => setIsProfileModalOpen(false)}
+          onSaved={() => setIsProfileModalOpen(false)}
+        />
       ) : null}
 
       {isDeckCreateOpen ? (
