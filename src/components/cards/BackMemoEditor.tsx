@@ -19,7 +19,7 @@ export default function BackMemoEditor({
 }: Props) {
   return (
     <section
-      className="rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/25"
+      className="min-w-0 rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/25"
       onFocusCapture={onFocus}
     >
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
@@ -57,12 +57,12 @@ export default function BackMemoEditor({
           value={backText}
           onChange={(event) => onBackTextChange(event.target.value)}
           placeholder="裏面メモを書く（Markdown対応）"
-          className="min-h-[280px] w-full cursor-text resize-y rounded-[16px] border border-[#d8c8aa] bg-white px-4 py-4 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/35 outline-none placeholder:text-[#9d917f] focus:border-[#c5ad8d] focus:ring-2 focus:ring-[#e0d3c0] lg:min-h-[360px] xl:min-h-[400px]"
+          className="box-border block min-h-[280px] w-full min-w-0 max-w-full cursor-text resize-y rounded-[16px] border border-[#d8c8aa] bg-white px-4 py-4 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/35 outline-none placeholder:text-[#9d917f] focus:border-[#c5ad8d] focus:ring-2 focus:ring-[#e0d3c0] lg:min-h-[360px] xl:min-h-[400px]"
         />
       ) : (
         <>
           <input type="hidden" name="backText" value={backText} />
-          <div className="min-h-[280px] overflow-y-auto rounded-[16px] border border-[#d8c8aa] bg-white px-4 py-4 shadow-inner shadow-[#d9cdbb]/35 lg:min-h-[360px] xl:min-h-[400px]">
+          <div className="box-border min-h-[280px] w-full min-w-0 max-w-full overflow-y-auto rounded-[16px] border border-[#d8c8aa] bg-white px-4 py-4 shadow-inner shadow-[#d9cdbb]/35 lg:min-h-[360px] xl:min-h-[400px]">
             <MarkdownMemo emptyText="裏面メモを書く（Markdown対応）">
               {backText}
             </MarkdownMemo>

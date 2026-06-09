@@ -303,7 +303,7 @@ export default function CardForm({
     <>
       <form
         onSubmit={handleSubmit}
-        className="grid gap-5 pb-[calc(env(safe-area-inset-bottom)+7rem)] lg:grid-cols-[minmax(280px,0.42fr)_minmax(0,0.58fr)] lg:items-start"
+        className="grid min-w-0 gap-5 pb-[calc(env(safe-area-inset-bottom)+7rem)] lg:grid-cols-[minmax(280px,0.42fr)_minmax(0,0.58fr)] lg:items-start"
       >
         <input type="hidden" name="deckId" value={selectedDeckId} />
         <input type="hidden" name="imageAction" value={imageLabel} />
@@ -415,7 +415,7 @@ export default function CardForm({
                 aria-label="Deck"
                 value={selectedDeckId}
                 onChange={(event) => setSelectedDeckId(event.target.value)}
-                className="w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+                className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
               >
                 {availableDecks.map((deck) => (
                   <option key={deck.id} value={deck.id}>
@@ -438,11 +438,11 @@ export default function CardForm({
               aria-label="Date"
               value={cardDate}
               onChange={(event) => setCardDate(event.target.value)}
-              className="box-border w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+              className="box-border block w-full min-w-0 max-w-full appearance-none rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </section>
 
-          <label>
+          <label className="block min-w-0">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
               表面タイトル
             </span>
@@ -452,11 +452,11 @@ export default function CardForm({
               onChange={(event) => setFrontText(event.target.value)}
               onFocus={() => requestPreviewFace("front")}
               placeholder="表面タイトル"
-              className="mt-2 w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base font-semibold leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+              className="mt-2 box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base font-semibold leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </label>
 
-          <label>
+          <label className="block min-w-0">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
               表面コメント
             </span>
@@ -467,7 +467,7 @@ export default function CardForm({
               onFocus={() => requestPreviewFace("front")}
               rows={3}
               placeholder="表面に添える数行コメント"
-              className="mt-2 w-full resize-none rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+              className="mt-2 box-border block w-full min-w-0 max-w-full resize-none rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </label>
 
@@ -479,7 +479,7 @@ export default function CardForm({
             onFocus={() => requestPreviewFace("back")}
           />
 
-          <label>
+          <label className="block min-w-0">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
               Link
             </span>
@@ -489,7 +489,7 @@ export default function CardForm({
               value={linkUrl}
               onChange={(event) => setLinkUrl(event.target.value)}
               placeholder="https://example.com"
-              className="mt-2 w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+              className="mt-2 box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </label>
 
