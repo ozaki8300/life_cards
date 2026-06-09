@@ -123,10 +123,7 @@ export default function CardFirstNav({
       isShared: false,
       createdAt: todayInputValue(),
     };
-    const nextDecks = await DeckRepository.saveDeckForCurrentUser(
-      nextDeck,
-      decks,
-    );
+    const nextDecks = await DeckRepository.saveDeckForCurrentUser(nextDeck);
 
     onDecksChange?.(nextDecks);
     setDeckSearchQuery("");
@@ -142,29 +139,23 @@ export default function CardFirstNav({
       return deckList;
     }
 
-    return DeckRepository.saveDeckForCurrentUser(
-      {
-        id: "uncategorized",
-        name: "未分類",
-        cardCount: 0,
-        isShared: false,
-        createdAt: todayInputValue(),
-      },
-      deckList,
-    );
+    return DeckRepository.saveDeckForCurrentUser({
+      id: "uncategorized",
+      name: "未分類",
+      cardCount: 0,
+      isShared: false,
+      createdAt: todayInputValue(),
+    });
   }
 
   async function deleteDeckMovingCards(deck: Deck) {
-    const decksWithUncategorized = await ensureUncategorizedDeck(decks);
+    await ensureUncategorizedDeck(decks);
     const nextCards = await CardRepository.moveCardsToDeckForCurrentUser(
       deck.id,
       "uncategorized",
       cards,
     );
-    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(
-      deck.id,
-      decksWithUncategorized,
-    );
+    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(deck.id);
 
     onDecksChange?.(nextDecks);
     onCardsChange?.(nextCards);
@@ -183,10 +174,7 @@ export default function CardFirstNav({
       await EncounterRepository.deleteMetadataForCurrentUser(card.id);
     }
 
-    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(
-      deck.id,
-      decks,
-    );
+    const nextDecks = await DeckRepository.deleteDeckForCurrentUser(deck.id);
 
     onDecksChange?.(nextDecks);
     onCardsChange?.(nextCards);

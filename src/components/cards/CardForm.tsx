@@ -272,10 +272,7 @@ export default function CardForm({
       createdAt: todayInputValue(),
       cardCount: 0,
     };
-    const nextDecks = await DeckRepository.saveDeckForCurrentUser(
-      nextDeck,
-      availableDecks,
-    );
+    const nextDecks = await DeckRepository.saveDeckForCurrentUser(nextDeck);
 
     setAvailableDecks(nextDecks);
     setSelectedDeckId(nextDeck.id);

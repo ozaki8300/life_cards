@@ -11,6 +11,13 @@ type SupabaseDeckRow = {
   sort_order: number;
 };
 
+const uncategorizedDeck = {
+  createdAt: "2026-06-06",
+  id: "uncategorized",
+  isShared: false,
+  name: "未分類",
+} satisfies Deck;
+
 function rowToDeck(row: SupabaseDeckRow): Deck {
   return {
     createdAt: row.created_at,
@@ -18,6 +25,20 @@ function rowToDeck(row: SupabaseDeckRow): Deck {
     isShared: row.is_shared,
     name: row.name,
   };
+}
+
+async function ensureUncategorizedDeck(
+  client: NonNullable<Awaited<ReturnType<typeof getClient>>>,
+) {
+  const { error } = await client.supabase
+    .from("decks")
+    .upsert(deckToRow(uncategorizedDeck, client.userId, 9999), {
+      onConflict: "user_id,id",
+    });
+
+  if (error) {
+    throw error;
+  }
 }
 
 function deckToRow(deck: Deck, userId: string, sortOrder: number) {
@@ -65,7 +86,7 @@ export const DeckSupabaseRepository = {
     return client ? fetchDecks(client) : null;
   },
 
-  async seedDecksIfEmpty(seedDecks: Deck[]) {
+  async seedDecksIfEmpty() {
     const client = await getClient();
 
     if (!client) {
@@ -78,26 +99,12 @@ export const DeckSupabaseRepository = {
       return currentDecks;
     }
 
-    const rows = seedDecks.map((deck, index) =>
-      deckToRow(deck, client.userId, index),
-    );
-
-    if (rows.length === 0) {
-      return [];
-    }
-
-    const { error } = await client.supabase
-      .from("decks")
-      .upsert(rows, { onConflict: "user_id,id" });
-
-    if (error) {
-      throw error;
-    }
+    await ensureUncategorizedDeck(client);
 
     return fetchDecks(client);
   },
 
-  async saveDeck(deck: Deck, seedDecks: Deck[]) {
+  async saveDeck(deck: Deck) {
     const client = await getClient();
 
     if (!client) {
@@ -105,7 +112,7 @@ export const DeckSupabaseRepository = {
     }
 
     const currentDecks =
-      (await DeckSupabaseRepository.seedDecksIfEmpty(seedDecks)) ?? [];
+      (await DeckSupabaseRepository.seedDecksIfEmpty()) ?? [];
     const existingIndex = currentDecks.findIndex((item) => item.id === deck.id);
     const sortOrder = existingIndex >= 0 ? existingIndex : currentDecks.length;
 
@@ -122,14 +129,14 @@ export const DeckSupabaseRepository = {
     return fetchDecks(client);
   },
 
-  async deleteDeck(deckId: string, seedDecks: Deck[]) {
+  async deleteDeck(deckId: string) {
     const client = await getClient();
 
     if (!client) {
       return null;
     }
 
-    await DeckSupabaseRepository.seedDecksIfEmpty(seedDecks);
+    await DeckSupabaseRepository.seedDecksIfEmpty();
 
     const { error } = await client.supabase
       .from("decks")

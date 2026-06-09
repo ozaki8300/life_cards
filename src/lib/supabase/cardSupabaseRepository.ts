@@ -344,78 +344,12 @@ export const CardSupabaseRepository = {
     return client ? fetchCards(client) : null;
   },
 
-  async seedCardsIfEmpty(seedCards: Card[]) {
-    const client = await getClient();
-
-    if (!client) {
-      console.warn("Life Cards Supabase seed cards skipped", {
-        reason: "missing-session",
-        seedCount: seedCards.length,
-      });
-      return null;
-    }
-
-    console.warn("Life Cards Supabase seed cards check start", {
-      seedCount: seedCards.length,
-      userId: client.userId,
-    });
-
-    const currentCards = await fetchCards(client);
-
-    if (currentCards.length > 0) {
-      console.warn("Life Cards Supabase seed cards skipped", {
-        currentCount: currentCards.length,
-        reason: "already-has-cards",
-        userId: client.userId,
-      });
-      return currentCards;
-    }
-
-    const rows = await Promise.all(
-      seedCards.map((card) => cardToRow(card, client)),
-    );
-
-    if (rows.length === 0) {
-      console.warn("Life Cards Supabase seed cards empty", {
-        userId: client.userId,
-      });
-      return [];
-    }
-
-    console.warn("Life Cards Supabase seed cards upsert start", {
-      rowCount: rows.length,
-      userId: client.userId,
-    });
-
-    const { error } = await client.supabase
-      .from("cards")
-      .upsert(rows, { onConflict: "user_id,id" });
-
-    if (error) {
-      console.warn("Life Cards Supabase seed cards upsert error", {
-        error: supabaseErrorLog(error),
-        rowCount: rows.length,
-        userId: client.userId,
-      });
-      throw error;
-    }
-
-    console.warn("Life Cards Supabase seed cards upsert success", {
-      rowCount: rows.length,
-      userId: client.userId,
-    });
-
-    return fetchCards(client);
-  },
-
-  async saveCard(card: Card, seedCards: Card[]) {
+  async saveCard(card: Card) {
     const client = await getClient();
 
     if (!client) {
       return null;
     }
-
-    await CardSupabaseRepository.seedCardsIfEmpty(seedCards);
 
     const row = await cardToRow(card, client);
 
@@ -483,18 +417,16 @@ export const CardSupabaseRepository = {
     return fetchCards(client);
   },
 
-  async updateCard(card: Card, seedCards: Card[]) {
-    return CardSupabaseRepository.saveCard(card, seedCards);
+  async updateCard(card: Card) {
+    return CardSupabaseRepository.saveCard(card);
   },
 
-  async deleteCard(cardId: string, seedCards: Card[]) {
+  async deleteCard(cardId: string) {
     const client = await getClient();
 
     if (!client) {
       return null;
     }
-
-    await CardSupabaseRepository.seedCardsIfEmpty(seedCards);
 
     const storedPath = await getStoredImagePath(client, cardId);
 
@@ -515,14 +447,12 @@ export const CardSupabaseRepository = {
     return fetchCards(client);
   },
 
-  async moveCardsToDeck(fromDeckId: string, toDeckId: string, seedCards: Card[]) {
+  async moveCardsToDeck(fromDeckId: string, toDeckId: string) {
     const client = await getClient();
 
     if (!client) {
       return null;
     }
-
-    await CardSupabaseRepository.seedCardsIfEmpty(seedCards);
 
     const updatedAt = new Date().toISOString().slice(0, 10);
     const { error } = await client.supabase

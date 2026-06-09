@@ -53,9 +53,8 @@ export const DeckRepository = {
   async getDecksForCurrentUser(seed: Deck[] = seedDecks) {
     try {
       return (
-        (await DeckSupabaseRepository.seedDecksIfEmpty(
-          localOrSeedDecks(seed),
-        )) ?? DeckRepository.getDecks(seed)
+        (await DeckSupabaseRepository.seedDecksIfEmpty()) ??
+        DeckRepository.getDecks(seed)
       );
     } catch (error) {
       console.warn("Life Cards Supabase decks fetch failed", error);
@@ -73,13 +72,11 @@ export const DeckRepository = {
     return nextDecks;
   },
 
-  async saveDeckForCurrentUser(deck: Deck, seed: Deck[] = seedDecks) {
+  async saveDeckForCurrentUser(deck: Deck) {
     try {
       return (
-        (await DeckSupabaseRepository.saveDeck(
-          deck,
-          localOrSeedDecks(seed),
-        )) ?? DeckRepository.saveDeck(deck)
+        (await DeckSupabaseRepository.saveDeck(deck)) ??
+        DeckRepository.saveDeck(deck)
       );
     } catch (error) {
       console.warn("Life Cards Supabase deck save failed", error);
@@ -95,13 +92,11 @@ export const DeckRepository = {
     return nextDecks;
   },
 
-  async deleteDeckForCurrentUser(deckId: string, seed: Deck[] = seedDecks) {
+  async deleteDeckForCurrentUser(deckId: string) {
     try {
       return (
-        (await DeckSupabaseRepository.deleteDeck(
-          deckId,
-          localOrSeedDecks(seed),
-        )) ?? DeckRepository.deleteDeck(deckId)
+        (await DeckSupabaseRepository.deleteDeck(deckId)) ??
+        DeckRepository.deleteDeck(deckId)
       );
     } catch (error) {
       console.warn("Life Cards Supabase deck delete failed", error);

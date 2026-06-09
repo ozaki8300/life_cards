@@ -78,9 +78,8 @@ export const CardRepository = {
   async getCardsForCurrentUser(seed: Card[] = seedCards) {
     try {
       return (
-        (await CardSupabaseRepository.seedCardsIfEmpty(
-          CardRepository.getCards(seed),
-        )) ?? CardRepository.getCards(seed)
+        (await CardSupabaseRepository.getCards()) ??
+        CardRepository.getCards(seed)
       );
     } catch (error) {
       console.warn("Life Cards Supabase cards fetch failed", error);
@@ -109,10 +108,7 @@ export const CardRepository = {
     });
 
     try {
-      const savedCards = await CardSupabaseRepository.saveCard(
-        card,
-        CardRepository.getCards(seed),
-      );
+      const savedCards = await CardSupabaseRepository.saveCard(card);
 
       if (savedCards) {
         return savedCards;
@@ -162,10 +158,7 @@ export const CardRepository = {
     });
 
     try {
-      const savedCards = await CardSupabaseRepository.updateCard(
-        card,
-        CardRepository.getCards(seed),
-      );
+      const savedCards = await CardSupabaseRepository.updateCard(card);
 
       if (savedCards) {
         return savedCards;
@@ -209,7 +202,6 @@ export const CardRepository = {
       return (
         (await CardSupabaseRepository.deleteCard(
           cardId,
-          CardRepository.getCards(seed),
         )) ?? CardRepository.deleteCard(cardId, seed)
       );
     } catch (error) {
@@ -249,7 +241,6 @@ export const CardRepository = {
         (await CardSupabaseRepository.moveCardsToDeck(
           fromDeckId,
           toDeckId,
-          CardRepository.getCards(seed),
         )) ?? CardRepository.moveCardsToDeck(fromDeckId, toDeckId, seed)
       );
     } catch (error) {
