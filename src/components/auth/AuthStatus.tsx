@@ -137,7 +137,7 @@ export default function AuthStatus() {
   if (authState.status === "signed-in") {
     return (
       <span className="inline-flex items-center gap-2">
-        <span className="hidden max-w-[180px] truncate rounded-full border border-[#e0d3c0] bg-[#fffaf0]/70 px-3 py-2 text-xs font-semibold text-[#7d705f] shadow-sm backdrop-blur lg:inline">
+        <span className="inline-flex max-w-[4.5rem] truncate rounded-full border border-[#e0d3c0] bg-[#fffaf0]/70 px-2.5 py-2 text-xs font-semibold text-[#7d705f] shadow-sm backdrop-blur sm:max-w-[7rem] sm:px-3 md:max-w-[10rem] lg:max-w-[180px]">
           {authState.displayName ?? "username未設定"}
         </span>
         <LogoutButton onSignedOut={() => setAuthState({ status: "signed-out" })} />
