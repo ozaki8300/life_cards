@@ -98,10 +98,10 @@ export default function CardTile({
           event.stopPropagation();
           onToggleFavorite();
         }}
-        className={`absolute bottom-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-lg leading-none shadow-sm backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
+        className={`absolute bottom-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-lg leading-none shadow-[0_4px_14px_rgba(87,72,52,0.14)] backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
           isFavorite
-            ? "border-[#ffe28a]/70 bg-[#fff4c7]/95 text-[#8a6410] hover:bg-[#ffef9c]"
-            : "border-white/25 bg-black/35 text-white/85 hover:bg-black/50 hover:text-white"
+            ? "border-[#d8c8aa]/70 bg-[#fff4c7]/82 text-[#8a6410] hover:bg-[#fff0b5]"
+            : "border-[#d8c8aa]/60 bg-[#fffaf0]/64 text-[#6f6253]/82 hover:bg-[#fffaf0]/82 hover:text-[#5f5346]"
         }`}
       >
         {isFavorite ? "★" : "☆"}
