@@ -19,6 +19,9 @@ type SupabaseCardRow = {
   updated_at: string;
 };
 
+const cardsTableName = "cards";
+const cardsUpsertOnConflict = "user_id,id";
+
 function normalizeImageFitMode(value: string | null | undefined): CardImageFitMode {
   if (value === "blurExtend" || value === "blur_extend") {
     return "blurExtend";
@@ -363,20 +366,33 @@ export const CardSupabaseRepository = {
       user_id: row.user_id,
     });
 
+    console.warn("Life Cards Supabase card upsert row", {
+      mutation: "upsert",
+      onConflict: cardsUpsertOnConflict,
+      row,
+      table: cardsTableName,
+    });
+    console.warn(
+      "Life Cards Supabase card upsert row json",
+      JSON.stringify(row),
+    );
+
     console.warn("Life Cards Supabase card upsert start", {
       cardId: row.id,
       deck_id: row.deck_id,
       imagePathKind: imagePathKind(row.image_path),
-      onConflict: "user_id,id",
+      mutation: "upsert",
+      onConflict: cardsUpsertOnConflict,
       row_id: row.id,
       row_user_id: row.user_id,
+      table: cardsTableName,
       userId: client.userId,
     });
 
     const { error } = await client.supabase
-      .from("cards")
+      .from(cardsTableName)
       .upsert(row, {
-        onConflict: "user_id,id",
+        onConflict: cardsUpsertOnConflict,
       });
 
     if (error) {
@@ -386,6 +402,9 @@ export const CardSupabaseRepository = {
         cardId: row.id,
         error: errorDetails,
         imagePathKind: imagePathKind(row.image_path),
+        mutation: "upsert",
+        onConflict: cardsUpsertOnConflict,
+        table: cardsTableName,
         userId: client.userId,
       });
       console.warn("Life Cards Supabase card upsert error details", {
