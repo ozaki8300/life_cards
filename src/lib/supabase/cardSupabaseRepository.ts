@@ -432,12 +432,24 @@ export const CardSupabaseRepository = {
       });
 
     if (error) {
+      const errorDetails = supabaseErrorLog(error);
+
       console.warn("Life Cards Supabase card upsert error", {
         cardId: row.id,
-        error: supabaseErrorLog(error),
+        error: errorDetails,
         imagePathKind: imagePathKind(row.image_path),
         userId: client.userId,
       });
+      console.warn("Life Cards Supabase card upsert error details", {
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        message: error.message,
+      });
+      console.warn(
+        "Life Cards Supabase card upsert error json",
+        JSON.stringify(errorDetails),
+      );
       throw error;
     }
 

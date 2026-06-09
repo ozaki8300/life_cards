@@ -9,6 +9,14 @@ type CardSaveOptions = {
   expectsCloudSave?: boolean;
 };
 
+function errorCauseLog(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return undefined;
+  }
+
+  return (error as { cause?: unknown }).cause;
+}
+
 function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
@@ -119,7 +127,10 @@ export const CardRepository = {
 
       return CardRepository.saveCard(card, seed);
     } catch (error) {
-      console.warn("Life Cards Supabase card save failed", error);
+      console.warn("Life Cards Supabase card save failed", {
+        cause: errorCauseLog(error),
+        error,
+      });
 
       if (error instanceof CardSaveError) {
         throw error;
@@ -169,7 +180,10 @@ export const CardRepository = {
 
       return CardRepository.updateCard(card, seed);
     } catch (error) {
-      console.warn("Life Cards Supabase card update failed", error);
+      console.warn("Life Cards Supabase card update failed", {
+        cause: errorCauseLog(error),
+        error,
+      });
 
       if (error instanceof CardSaveError) {
         throw error;
