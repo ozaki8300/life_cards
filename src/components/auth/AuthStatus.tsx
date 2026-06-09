@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 
 import LoginButton from "./LoginButton";
-import LogoutButton from "./LogoutButton";
+import { useLogout } from "./LogoutButton";
 
 type AuthState =
   | { status: "loading" }
@@ -17,6 +17,12 @@ type AuthState =
 
 export default function AuthStatus() {
   const [authState, setAuthState] = useState<AuthState>({ status: "loading" });
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const { isLoading: isLoggingOut, logout } = useLogout(() => {
+    setAuthState({ status: "signed-out" });
+    setIsDropdownOpen(false);
+  });
 
   useEffect(() => {
     let isActive = true;
@@ -122,6 +128,35 @@ export default function AuthStatus() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isDropdownOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isDropdownOpen]);
+
   if (authState.status === "unavailable") {
     return null;
   }
@@ -135,13 +170,37 @@ export default function AuthStatus() {
   }
 
   if (authState.status === "signed-in") {
+    const displayName = authState.displayName ?? "username未設定";
+
     return (
-      <span className="inline-flex items-center gap-2">
-        <span className="inline-flex max-w-[4.5rem] truncate rounded-full border border-[#e0d3c0] bg-[#fffaf0]/70 px-2.5 py-2 text-xs font-semibold text-[#7d705f] shadow-sm backdrop-blur sm:max-w-[7rem] sm:px-3 md:max-w-[10rem] lg:max-w-[180px]">
-          {authState.displayName ?? "username未設定"}
-        </span>
-        <LogoutButton onSignedOut={() => setAuthState({ status: "signed-out" })} />
-      </span>
+      <div ref={dropdownRef} className="relative inline-flex">
+        <button
+          type="button"
+          onClick={() => setIsDropdownOpen((isOpen) => !isOpen)}
+          aria-label="Open account menu"
+          aria-expanded={isDropdownOpen}
+          className="inline-flex h-10 min-w-10 max-w-[4.5rem] items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 px-3 text-xs font-semibold text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:h-11 sm:max-w-[7rem] sm:px-4 sm:text-sm md:max-w-[10rem] lg:max-w-[180px]"
+          title={displayName}
+        >
+          <span className="block truncate">{displayName}</span>
+        </button>
+
+        {isDropdownOpen ? (
+          <div className="absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-lg border border-[#e0d3c0] bg-[#fffaf0]/95 py-1.5 text-sm text-[#5f5346] shadow-lg backdrop-blur">
+            <div className="truncate border-b border-[#eadfcc] px-3 py-2 text-xs font-semibold text-[#7d705f]">
+              {displayName}
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              disabled={isLoggingOut}
+              className="flex w-full items-center px-3 py-2 text-left text-sm font-semibold transition hover:bg-white focus:bg-white focus:outline-none disabled:opacity-60"
+            >
+              {isLoggingOut ? "Logout..." : "Logout"}
+            </button>
+          </div>
+        ) : null}
+      </div>
     );
   }
 
