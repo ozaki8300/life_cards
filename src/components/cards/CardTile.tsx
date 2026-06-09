@@ -85,7 +85,7 @@ export default function CardTile({
           event.stopPropagation();
           onOpen();
         }}
-        className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/35 text-lg font-semibold leading-none text-white shadow-sm backdrop-blur-md transition hover:bg-black/50 focus:outline-none focus:ring-2 focus:ring-white/70"
+        className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#d8c8aa]/60 bg-[#fffaf0]/70 text-lg font-semibold leading-none text-[#5f5346] shadow-[0_4px_14px_rgba(87,72,52,0.14)] backdrop-blur-md transition hover:bg-[#fffaf0]/86 hover:text-[#4a4034] focus:outline-none focus:ring-2 focus:ring-white/70"
       >
         ...
       </button>
