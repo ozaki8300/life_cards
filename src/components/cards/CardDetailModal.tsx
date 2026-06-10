@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, TouchEvent } from "react";
 
+import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
@@ -46,11 +47,21 @@ export default function CardDetailModal({
   const touchStartX = useRef<number | null>(null);
   const shouldSkipNextClick = useRef(false);
   const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
-  const backgroundImage = card.imagePath || defaultImageForCard(card.id);
+  const [resolvedStorageImage, setResolvedStorageImage] = useState<{
+    signedUrl: string;
+    storagePath: string;
+  } | null>(null);
+  const imageStoragePath = card.imageStoragePath?.trim() ?? "";
+  const displayImagePath =
+    card.imagePath?.trim() ||
+    (resolvedStorageImage?.storagePath === imageStoragePath
+      ? resolvedStorageImage.signedUrl
+      : "");
+  const backgroundImage = displayImagePath || defaultImageForCard(card.id);
   const hasAttachedImage = Boolean(
-    card.imagePath?.trim() || card.imageStoragePath?.trim(),
+    card.imagePath?.trim() || imageStoragePath,
   );
-  const canOpenFullscreen = Boolean(card.imagePath?.trim());
+  const canOpenFullscreen = Boolean(displayImagePath);
   const date = formatDate(card.createdAt);
   const {
     viewMode,
@@ -63,6 +74,39 @@ export default function CardDetailModal({
   useEscapeKey(() => {
     onClose();
   });
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (card.imagePath?.trim() || !imageStoragePath) {
+      return () => {
+        isActive = false;
+      };
+    }
+
+    CardImageStorageRepository.getCachedSignedImageUrl(imageStoragePath)
+      .then((signedUrl) => {
+        if (isActive) {
+          setResolvedStorageImage({
+            signedUrl: signedUrl ?? "",
+            storagePath: imageStoragePath,
+          });
+        }
+      })
+      .catch((error) => {
+        console.warn("Life Cards detail image signed URL failed", error);
+        if (isActive) {
+          setResolvedStorageImage({
+            signedUrl: "",
+            storagePath: imageStoragePath,
+          });
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [card.imagePath, imageStoragePath]);
 
   function showPreviousPhoto() {
     onPrevious();
@@ -241,7 +285,7 @@ export default function CardDetailModal({
 
       {isFullscreenPhotoOpen ? (
         <FullscreenImageViewer
-          imageSrc={backgroundImage}
+          imageSrc={displayImagePath}
           onClose={() => setIsFullscreenPhotoOpen(false)}
         />
       ) : null}
