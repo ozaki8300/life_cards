@@ -47,8 +47,12 @@ export function getCopyForAiLocalOverride() {
   }
 }
 
+export function resolveCopyForAiFeatureFlag(localOverride: boolean | null) {
+  return localOverride ?? ENABLE_COPY_FOR_AI;
+}
+
 export function isCopyForAiEnabled() {
-  return getCopyForAiLocalOverride() ?? ENABLE_COPY_FOR_AI;
+  return resolveCopyForAiFeatureFlag(getCopyForAiLocalOverride());
 }
 
 export function useCopyForAiFeatureFlag() {
