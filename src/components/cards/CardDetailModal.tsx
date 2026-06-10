@@ -49,7 +49,9 @@ export default function CardDetailModal({
   onDelete: () => void;
   onEdit: () => void;
   onNext: () => void;
-  onNextFullscreenImage?: () => Promise<string | null>;
+  onNextFullscreenImage?: (
+    currentCardId: string,
+  ) => Promise<{ cardId: string; imageUrl: string } | null>;
   onPrevious: () => void;
   onShare: () => void;
   onToggleFavorite: () => void;
@@ -57,6 +59,7 @@ export default function CardDetailModal({
   const touchStartX = useRef<number | null>(null);
   const shouldSkipNextClick = useRef(false);
   const [fullscreenImagePath, setFullscreenImagePath] = useState("");
+  const [fullscreenImageCardId, setFullscreenImageCardId] = useState("");
   const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
   const [isResolvingNextFullscreenImage, setIsResolvingNextFullscreenImage] =
     useState(false);
@@ -233,12 +236,14 @@ export default function CardDetailModal({
 
     if (directImagePath) {
       setFullscreenImagePath(directImagePath);
+      setFullscreenImageCardId(card.id);
       setIsFullscreenPhotoOpen(true);
       return;
     }
 
     if (displayImagePath) {
       setFullscreenImagePath(displayImagePath);
+      setFullscreenImageCardId(card.id);
       setIsFullscreenPhotoOpen(true);
       return;
     }
@@ -274,6 +279,7 @@ export default function CardDetailModal({
 
       if (signedUrl) {
         setFullscreenImagePath(signedUrl);
+        setFullscreenImageCardId(card.id);
         setIsFullscreenPhotoOpen(true);
       }
     } catch (error) {
@@ -301,10 +307,13 @@ export default function CardDetailModal({
     setIsResolvingNextFullscreenImage(true);
 
     try {
-      const nextImagePath = await onNextFullscreenImage();
+      const nextImage = await onNextFullscreenImage(
+        fullscreenImageCardId || card.id,
+      );
 
-      if (nextImagePath) {
-        setFullscreenImagePath(nextImagePath);
+      if (nextImage) {
+        setFullscreenImagePath(nextImage.imageUrl);
+        setFullscreenImageCardId(nextImage.cardId);
       }
     } finally {
       setIsResolvingNextFullscreenImage(false);

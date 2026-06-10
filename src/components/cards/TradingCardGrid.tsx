@@ -44,6 +44,12 @@ const RAIL_ITEM_CLASS =
   "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-hidden rounded-[18px] [contain:paint] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
 const GRID_PAGE_SIZE = 60;
 
+function debugFullscreenImageLoop(payload: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "production") {
+    console.debug("[Life Cards fullscreen image loop]", payload);
+  }
+}
+
 export default function TradingCardGrid({
   cards,
   decks = [],
@@ -403,35 +409,65 @@ export default function TradingCardGrid({
     return signedUrl ?? null;
   }
 
-  async function showNextFullscreenImage() {
-    if (selectedIndex === null || fullscreenImageIndexes.length < 2) {
+  async function showNextFullscreenImage(currentCardId: string) {
+    const currentFullscreenIndex = displayCards.findIndex(
+      (card) => card.id === currentCardId,
+    );
+    const currentIndex =
+      currentFullscreenIndex >= 0 ? currentFullscreenIndex : selectedIndex;
+    const currentImagePosition =
+      currentIndex === null ? -1 : fullscreenImageIndexes.indexOf(currentIndex);
+
+    if (currentIndex === null || fullscreenImageIndexes.length < 2) {
+      debugFullscreenImageLoop({
+        currentCardId,
+        currentFullscreenIndex,
+        currentImagePosition,
+        displayCardsLength: displayCards.length,
+        imageIndexes: fullscreenImageIndexes,
+        nextIndex: null,
+        selectedIndex,
+      });
+
       return null;
     }
 
-    const nextCandidateIndexes = [
-      ...fullscreenImageIndexes.filter((index) => index > selectedIndex),
-      ...fullscreenImageIndexes.filter((index) => index < selectedIndex),
-    ];
+    const nextIndex =
+      fullscreenImageIndexes[
+        ((currentImagePosition >= 0 ? currentImagePosition : 0) + 1) %
+          fullscreenImageIndexes.length
+      ];
 
-    for (const index of nextCandidateIndexes) {
-      const card = displayCards[index];
+    debugFullscreenImageLoop({
+      currentCardId,
+      currentFullscreenIndex,
+      currentImagePosition,
+      displayCardsLength: displayCards.length,
+      imageIndexes: fullscreenImageIndexes,
+      nextIndex,
+      selectedIndex,
+    });
 
-      try {
-        const imageUrl = await imageUrlForFullscreen(card);
+    const card = displayCards[nextIndex];
 
-        if (!imageUrl) {
-          continue;
-        }
+    try {
+      const imageUrl = await imageUrlForFullscreen(card);
 
-        setSelectedIndex(index);
-        setIsEditing(false);
-        setIsSharing(false);
-        onCardViewed?.(card.id);
-
-        return imageUrl;
-      } catch (error) {
-        console.warn("Life Cards next fullscreen image failed", error);
+      if (!imageUrl) {
+        return null;
       }
+
+      setSelectedIndex(nextIndex);
+      setIsEditing(false);
+      setIsSharing(false);
+      onCardViewed?.(card.id);
+
+      return {
+        cardId: card.id,
+        imageUrl,
+      };
+    } catch (error) {
+      console.warn("Life Cards next fullscreen image failed", error);
     }
 
     return null;
