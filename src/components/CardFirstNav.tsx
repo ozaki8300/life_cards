@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 
 import { CardRepository } from "@/lib/cardRepository";
 import { DeckRepository } from "@/lib/deckRepository";
@@ -25,6 +25,7 @@ type Props = {
   decks: Deck[];
   isDataReady?: boolean;
   searchQuery?: string;
+  header?: ReactNode;
   onCardsChange?: (cards: Card[]) => void;
   onDecksChange?: (decks: Deck[]) => void;
   onTabChange?: (tab: string) => void;
@@ -39,6 +40,7 @@ export default function CardFirstNav({
   decks,
   isDataReady = true,
   searchQuery = "",
+  header,
   onCardsChange,
   onDecksChange,
   onTabChange,
@@ -222,27 +224,38 @@ export default function CardFirstNav({
     enabled: isMenuOpen,
     ignoreEditable: false,
   });
+  const navActions = (
+    <div className="relative z-40 flex max-w-full shrink-0 items-center justify-end gap-1.5 sm:gap-2 lg:fixed lg:right-12 lg:top-8 lg:max-w-[calc(100vw-1.5rem)] xl:right-[calc((100vw-72rem)/2+3rem)]">
+      <AuthStatus />
+      <button
+        type="button"
+        onClick={() => setIsDeckPanelOpen(true)}
+        aria-label="Open decks"
+        className="inline-flex h-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 px-3 text-xs font-semibold text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:h-11 sm:px-4 sm:text-sm"
+      >
+        Decks
+      </button>
+      <button
+        type="button"
+        onClick={() => setIsMenuOpen(true)}
+        aria-label="Open menu"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 text-xl leading-none text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:h-11 sm:w-11 sm:text-2xl"
+      >
+        ☰
+      </button>
+    </div>
+  );
+
   return (
     <>
-      <div className="fixed right-3 top-[calc(env(safe-area-inset-top)+1rem)] z-40 flex max-w-[calc(100vw-1.5rem)] items-center justify-end gap-1.5 sm:right-8 sm:top-8 sm:gap-2 lg:right-12 xl:right-[calc((100vw-72rem)/2+3rem)]">
-        <AuthStatus />
-        <button
-          type="button"
-          onClick={() => setIsDeckPanelOpen(true)}
-          aria-label="Open decks"
-          className="inline-flex h-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 px-3 text-xs font-semibold text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:h-11 sm:px-4 sm:text-sm"
-        >
-          Decks
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsMenuOpen(true)}
-          aria-label="Open menu"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 text-xl leading-none text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:h-11 sm:w-11 sm:text-2xl"
-        >
-          ☰
-        </button>
-      </div>
+      {header ? (
+        <div className="mb-7 flex items-start justify-between gap-3 lg:block">
+          <div className="min-w-0 flex-1">{header}</div>
+          {navActions}
+        </div>
+      ) : (
+        <div className="mb-7 flex justify-end lg:mb-0">{navActions}</div>
+      )}
 
       {children}
 

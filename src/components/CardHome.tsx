@@ -266,40 +266,41 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
 
   return (
     <>
-      <CardsPageHeader
-        cardCount={
-          activeDeckId && isDataReady ? scopedCards.length : undefined
+      <CardFirstNav
+        activeDeckId={activeDeckId}
+        activeTab={activeTab}
+        cards={allCards}
+        decks={allDecks}
+        header={
+          <CardsPageHeader
+            cardCount={
+              activeDeckId && isDataReady ? scopedCards.length : undefined
+            }
+            deckName={activeDeckName}
+          />
         }
-        deckName={activeDeckName}
-      />
+        isDataReady={isDataReady}
+        searchQuery={searchQuery}
+        onCardsChange={setAllCards}
+        onDecksChange={setAllDecks}
+        onTabChange={setActiveTab}
+        onSearchChange={setSearchQuery}
+      >
+        <div className="space-y-6">
+          <ReencounterSection
+            title="今日の再会"
+            subtitle="久しぶりに見たいカード"
+            cards={todayCards}
+            decks={allDecks}
+            editSeedCards={allCards}
+            favoriteIds={activeFavoriteIds}
+            onCardViewed={recordCardReencounter}
+            onDecksChange={setAllDecks}
+            onDeleteCard={handleDeleteCard}
+            onUpdateCard={handleUpdateCard}
+            onToggleFavorite={toggleFavorite}
+          />
 
-      <div className="space-y-6">
-        <ReencounterSection
-          title="今日の再会"
-          subtitle="久しぶりに見たいカード"
-          cards={todayCards}
-          decks={allDecks}
-          editSeedCards={allCards}
-          favoriteIds={activeFavoriteIds}
-          onCardViewed={recordCardReencounter}
-          onDecksChange={setAllDecks}
-          onDeleteCard={handleDeleteCard}
-          onUpdateCard={handleUpdateCard}
-          onToggleFavorite={toggleFavorite}
-        />
-
-        <CardFirstNav
-          activeDeckId={activeDeckId}
-          activeTab={activeTab}
-          cards={allCards}
-          decks={allDecks}
-          isDataReady={isDataReady}
-          searchQuery={searchQuery}
-          onCardsChange={setAllCards}
-          onDecksChange={setAllDecks}
-          onTabChange={setActiveTab}
-          onSearchChange={setSearchQuery}
-        >
           <section>
             {viewStatus === "loading" ? (
               <CardHomeStatus isLoading message="カードを読み込んでいます" />
@@ -327,8 +328,8 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
               />
             ) : null}
           </section>
-        </CardFirstNav>
-      </div>
+        </div>
+      </CardFirstNav>
 
       {isProfileSetupOpen ? (
         <ProfileSetupModal

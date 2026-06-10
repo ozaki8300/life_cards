@@ -9,10 +9,10 @@ export default function CardsPageHeader({ cardCount, deckName }: Props) {
   const isDeckPage = Boolean(deckName);
 
   return (
-    <header className="mb-7">
+    <header>
       <div>
         <Link href="/" className="inline-block transition hover:opacity-75">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">
             Life Cards
           </h1>
         </Link>
