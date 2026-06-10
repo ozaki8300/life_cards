@@ -23,11 +23,11 @@ export default function Home() {
             <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <Link
                 href="/cards"
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#2f2a23] px-7 text-base font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
+                className="inline-flex h-12 w-40 items-center justify-center rounded-full bg-[#2f2a23] px-6 text-base font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
               >
                 はじめる
               </Link>
-              <LoginButton className="h-10 bg-[#fffaf0]/62 px-4 text-sm" />
+              <LoginButton className="!h-12 !w-40 bg-[#fffaf0]/62 px-6 text-sm" />
             </div>
           </div>
 
