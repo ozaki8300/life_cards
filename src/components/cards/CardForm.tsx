@@ -409,13 +409,6 @@ export default function CardForm({
 
           <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
             <div className="grid gap-2">
-              <p className="text-xs font-semibold text-[#8d7f6e]">
-                {!isAuthResolved || !isDecksResolved
-                  ? "保存先を確認中"
-                  : isSignedIn
-                    ? "クラウド同期中"
-                    : "この端末にテキスト保存中"}
-              </p>
               {!isSignedIn ? (
                 <p className="text-xs leading-5 text-[#7d705f]">
                   {imageLoginMessage}
