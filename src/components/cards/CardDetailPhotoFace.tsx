@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { PointerEventHandler } from "react";
+import type { KeyboardEventHandler, MouseEventHandler } from "react";
 
 type PhotoOffset = {
   x: number;
@@ -11,6 +12,7 @@ type Props = {
   isDragging: boolean;
   offset: PhotoOffset;
   photoZoom: number;
+  onOpenFullscreen: MouseEventHandler<HTMLDivElement>;
   onPointerCancel: PointerEventHandler<HTMLDivElement>;
   onPointerDown: PointerEventHandler<HTMLDivElement>;
   onPointerMove: PointerEventHandler<HTMLDivElement>;
@@ -22,15 +24,30 @@ export default function CardDetailPhotoFace({
   isDragging,
   offset,
   photoZoom,
+  onOpenFullscreen,
   onPointerCancel,
   onPointerDown,
   onPointerMove,
   onPointerUp,
 }: Props) {
+  const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.click();
+  };
+
   return (
     <section className="absolute inset-0 overflow-hidden rounded-[24px] border border-white/25 bg-black/88">
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="画像を全画面で開く"
         className="absolute inset-0 overflow-hidden"
+        onClick={onOpenFullscreen}
+        onKeyDown={handleKeyDown}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, TouchEvent } from "react";
 
 import type { Card } from "@/lib/types";
@@ -9,6 +9,7 @@ import { useEscapeKey } from "@/lib/useEscapeKey";
 import CardFace from "./CardFace";
 import CardDetailActionBar from "./CardDetailActionBar";
 import CardDetailPhotoFace from "./CardDetailPhotoFace";
+import FullscreenImageViewer from "./FullscreenImageViewer";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 import useCardDetailViewCycle from "./useCardDetailViewCycle";
 import usePhotoPanZoom from "./usePhotoPanZoom";
@@ -50,6 +51,7 @@ export default function CardDetailModal({
 }) {
   const touchStartX = useRef<number | null>(null);
   const shouldSkipNextClick = useRef(false);
+  const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
   const backgroundImage = card.imagePath || defaultImageForCard(card.id);
   const date = formatDate(card.createdAt);
   const {
@@ -141,6 +143,17 @@ export default function CardDetailModal({
     cycleViewMode();
   }
 
+  function openFullscreenPhoto(event: MouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
+
+    if (shouldSkipNextClick.current) {
+      shouldSkipNextClick.current = false;
+      return;
+    }
+
+    setIsFullscreenPhotoOpen(true);
+  }
+
   const previousNavPositionClass =
     viewMode === "photo"
       ? "left-2 sm:left-4"
@@ -195,6 +208,7 @@ export default function CardDetailModal({
               isDragging={isPhotoDragging}
               offset={photoOffset}
               photoZoom={photoZoom}
+              onOpenFullscreen={openFullscreenPhoto}
               onPointerCancel={handlePhotoPointerEnd}
               onPointerDown={handlePhotoPointerDown}
               onPointerMove={handlePhotoPointerMove}
@@ -339,6 +353,13 @@ export default function CardDetailModal({
             <span className="h-[54px] w-[54px] rounded-full border-[5px] border-[#fefbf4] bg-[#f0e4d2] shadow-inner shadow-white/80 sm:h-[60px] sm:w-[60px]" />
           </button>
         </div>
+      ) : null}
+
+      {isFullscreenPhotoOpen ? (
+        <FullscreenImageViewer
+          imageSrc={backgroundImage}
+          onClose={() => setIsFullscreenPhotoOpen(false)}
+        />
       ) : null}
     </div>
   );
