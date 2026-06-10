@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MouseEvent, TouchEvent } from "react";
+import type { MouseEvent, PointerEvent, TouchEvent } from "react";
 
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -50,6 +50,7 @@ export default function CardDetailModal({
   onPhotoModeChange?: (isPhotoMode: boolean) => void;
 }) {
   const touchStartX = useRef<number | null>(null);
+  const photoPointerStart = useRef<{ x: number; y: number } | null>(null);
   const shouldSkipNextClick = useRef(false);
   const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
   const backgroundImage = card.imagePath || defaultImageForCard(card.id);
@@ -154,6 +155,40 @@ export default function CardDetailModal({
     setIsFullscreenPhotoOpen(true);
   }
 
+  function handlePhotoPointerDownForFullscreen(event: PointerEvent<HTMLDivElement>) {
+    shouldSkipNextClick.current = false;
+    photoPointerStart.current = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+    handlePhotoPointerDown(event);
+  }
+
+  function handlePhotoPointerCancelForFullscreen(event: PointerEvent<HTMLDivElement>) {
+    photoPointerStart.current = null;
+    handlePhotoPointerEnd(event);
+  }
+
+  function handlePhotoPointerUpForFullscreen(event: PointerEvent<HTMLDivElement>) {
+    handlePhotoPointerEnd(event);
+    event.stopPropagation();
+
+    const start = photoPointerStart.current;
+    photoPointerStart.current = null;
+
+    if (!start || shouldSkipNextClick.current) {
+      return;
+    }
+
+    const travel = Math.hypot(event.clientX - start.x, event.clientY - start.y);
+
+    if (travel > 8) {
+      return;
+    }
+
+    setIsFullscreenPhotoOpen(true);
+  }
+
   const previousNavPositionClass =
     viewMode === "photo"
       ? "left-2 sm:left-4"
@@ -209,10 +244,10 @@ export default function CardDetailModal({
               offset={photoOffset}
               photoZoom={photoZoom}
               onOpenFullscreen={openFullscreenPhoto}
-              onPointerCancel={handlePhotoPointerEnd}
-              onPointerDown={handlePhotoPointerDown}
+              onPointerCancel={handlePhotoPointerCancelForFullscreen}
+              onPointerDown={handlePhotoPointerDownForFullscreen}
               onPointerMove={handlePhotoPointerMove}
-              onPointerUp={handlePhotoPointerEnd}
+              onPointerUp={handlePhotoPointerUpForFullscreen}
             />
           ) : (
             <div
