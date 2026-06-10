@@ -225,7 +225,7 @@ export default function CardFirstNav({
     ignoreEditable: false,
   });
   const navActions = (
-    <div className="relative z-40 flex max-w-full shrink-0 items-center justify-end gap-1.5 sm:gap-2 lg:fixed lg:right-12 lg:top-8 lg:max-w-[calc(100vw-1.5rem)] xl:right-[calc((100vw-72rem)/2+3rem)]">
+    <div className="static flex max-w-full shrink-0 items-center justify-end gap-1.5 sm:gap-2 lg:fixed lg:right-12 lg:top-8 lg:z-40 lg:max-w-[calc(100vw-1.5rem)] xl:right-[calc((100vw-72rem)/2+3rem)]">
       <AuthStatus />
       <button
         type="button"
