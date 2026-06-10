@@ -184,6 +184,7 @@ create table if not exists public.cards (
   back_text text,
   image_path text,
   image_fit_mode text,
+  default_image_key text,
   is_favorite boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -194,6 +195,9 @@ create table if not exists public.cards (
 
 alter table public.cards
   add column if not exists image_fit_mode text;
+
+alter table public.cards
+  add column if not exists default_image_key text;
 
 create table if not exists public.encounters (
   user_id uuid not null references auth.users(id) on delete cascade,

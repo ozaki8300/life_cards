@@ -92,6 +92,7 @@ create table if not exists public.cards (
   back_text text,
   image_path text,
   image_fit_mode text,
+  default_image_key text,
   is_favorite boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -105,6 +106,7 @@ create table if not exists public.cards (
 
 - `deck_id` は現行 `Card.deckId` と対応する。
 - `image_path` は Storage path または adapter が解決できる画像参照を保存する。
+- `default_image_key` は画像なしカードの placeholder 画像選択を保存する。
 - 画像本体は Database に入れない。
 - `deleted_at` は将来拡張として残すが、初期実装では使わない。
 - 初期削除方針はまず物理削除を推奨する。物理削除なら `encounters` の cascade cleanup と整合しやすい。

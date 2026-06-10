@@ -3,12 +3,13 @@
 import { CardSaveError } from "@/lib/cardSaveErrors";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
-import type { Card, CardImageFitMode } from "@/lib/types";
+import type { Card, CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
 
 type SupabaseCardRow = {
   back_text: string | null;
   created_at: string;
   deck_id: string;
+  default_image_key: string | null;
   front_comment: string | null;
   front_text: string | null;
   id: string;
@@ -21,6 +22,20 @@ type SupabaseCardRow = {
 
 const cardsTableName = "cards";
 const cardsUpsertOnConflict = "user_id,id";
+const defaultImageKeys = new Set<DefaultCardImageKey>([
+  "night",
+  "sea",
+  "mountain",
+  "library",
+]);
+
+function rowDefaultImageKeyToCard(
+  value: string | null | undefined,
+): DefaultCardImageKey | undefined {
+  return defaultImageKeys.has(value as DefaultCardImageKey)
+    ? (value as DefaultCardImageKey)
+    : undefined;
+}
 
 function normalizeImageFitMode(value: string | null | undefined): CardImageFitMode {
   if (value === "blurExtend" || value === "blur_extend") {
@@ -90,6 +105,7 @@ function rowToCard(row: SupabaseCardRow): Card {
     backText: row.back_text ?? "",
     createdAt: row.created_at,
     deckId: row.deck_id,
+    defaultImageKey: rowDefaultImageKeyToCard(row.default_image_key),
     frontComment: row.front_comment ?? "",
     frontText: row.front_text ?? "",
     id: row.id,
@@ -191,6 +207,7 @@ async function cardToRow(
     back_text: card.backText ?? "",
     created_at: card.createdAt,
     deck_id: card.deckId,
+    default_image_key: card.defaultImageKey ?? null,
     front_comment: card.frontComment ?? "",
     front_text: card.frontText ?? "",
     id: card.id,
@@ -245,7 +262,7 @@ async function fetchCards(
   const { data, error } = await client.supabase
     .from("cards")
     .select(
-      "id,deck_id,front_text,front_comment,back_text,image_path,image_fit_mode,is_favorite,link_url,created_at,updated_at",
+      "id,deck_id,front_text,front_comment,back_text,image_path,image_fit_mode,default_image_key,is_favorite,link_url,created_at,updated_at",
     )
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: false });

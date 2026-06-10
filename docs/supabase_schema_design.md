@@ -67,6 +67,7 @@ cards
 - `back_text text`
 - `image_path text`
 - `image_fit_mode text`
+- `default_image_key text`
 - `is_favorite boolean not null default false`
 - `created_at timestamptz not null`
 - `updated_at timestamptz not null`
@@ -79,6 +80,7 @@ cards
 - `deck_id` も現行の seed / localStorage deck id と互換を保つため、まずは `text` とする。
 - `image_path` は画像本体ではなく Supabase Storage path または adapter が解決できる参照を保存する。
 - `image_fit_mode` は `cover` / `blurExtend` を保存する。`null` は互換性のため `cover` 扱い。
+- `default_image_key` は画像なしカードの placeholder 画像選択を保存する。候補は `night` / `sea` / `mountain` / `library`。`null` は互換性のため app 側 fallback に任せる。
 - `deleted_at` は今回は optional。最小実装では物理削除でもよいが、端末間 sync の競合を考えると soft delete 余地を残す。
 
 Card 型との対応:
@@ -88,6 +90,7 @@ Card 型との対応:
 - `back_text` -> `Card.backText`
 - `image_path` -> `Card.imagePath`
 - `image_fit_mode` -> `Card.imageFitMode`
+- `default_image_key` -> `Card.defaultImageKey`
 - `is_favorite` -> `Card.isFavorite`
 - `created_at` / `updated_at` -> `Card.createdAt` / `Card.updatedAt`
 
