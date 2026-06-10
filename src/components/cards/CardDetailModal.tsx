@@ -403,16 +403,14 @@ export default function CardDetailModal({
 
   const previousNavPositionClass = "left-[-1.25rem] sm:left-[-3.5rem]";
   const nextNavPositionClass = "right-[-1.25rem] sm:right-[-3.5rem]";
-  const copyForAiStatusMessage =
+  const copyForAiToastMessage =
     copyForAiStatus === "copied"
-      ? "AIに渡す文章をコピーしました\nChatGPTやClaudeに貼り付けてください"
+      ? "プロンプトをコピーしました"
       : copyForAiStatus === "shared"
         ? "AIに渡す文章を共有しました"
         : copyForAiStatus === "failed"
           ? "コピーできませんでした"
-          : copyForAiStatus === "working"
-            ? "AIに渡す文章を準備しています"
-            : "AIとは通信しません。カード内容をAI向け文章としてコピーします。";
+          : null;
 
   return (
     <div className="pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-4">
@@ -514,7 +512,7 @@ export default function CardDetailModal({
         ) : null}
       </div>
 
-      <div className="pointer-events-auto">
+      <div className="pointer-events-auto relative">
         <CardDetailActionBar
           copyForAiStatus={copyForAiStatus}
           hasImage={actionBarHasImage}
@@ -526,12 +524,12 @@ export default function CardDetailModal({
           onShare={onShare}
           showCopyForAi={isCopyForAiVisible}
         />
-        {isCopyForAiVisible ? (
+        {copyForAiToastMessage ? (
           <p
             aria-live="polite"
-            className="mx-auto mt-2 max-w-[min(390px,calc(100vw-2rem))] whitespace-pre-line text-center text-xs leading-relaxed text-[#6f6253]/82 sm:max-w-[460px]"
+            className="absolute bottom-[calc(100%+0.5rem)] left-1/2 z-40 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-[#d8c8aa] bg-[#fffaf0]/95 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-[#4f4437] shadow-[0_10px_26px_rgba(87,72,52,0.18)] backdrop-blur-md"
           >
-            {copyForAiStatusMessage}
+            {copyForAiToastMessage}
           </p>
         ) : null}
       </div>

@@ -1,13 +1,13 @@
 const actionButtonBaseClass =
-  "flex h-11 w-11 items-center justify-center rounded-full border text-base font-semibold shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:w-14 sm:text-lg";
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:w-14 sm:text-lg";
 const actionButtonClass =
   `${actionButtonBaseClass} border-[#e0d3c0] bg-white/70 text-[#6f6253] hover:bg-white`;
 const copyForAiActionButtonClass =
-  "flex h-11 min-w-[5.25rem] items-center justify-center rounded-full border border-[#d9c9b2] bg-white/70 px-3 text-sm font-semibold text-[#6f6253] shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:min-w-[6rem] sm:px-4 sm:text-base";
+  `${actionButtonBaseClass} border-[#d9c9b2] bg-white/70 text-[#6f6253] hover:bg-white`;
 const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
 const actionBarClass =
-  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-2rem))] flex-wrap items-center justify-center gap-1.5 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:max-w-[460px] sm:gap-2";
+  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-1rem))] flex-nowrap items-center justify-center gap-1 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-1.5 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:max-w-[460px] sm:gap-2 sm:p-2";
 
 type IconProps = {
   className?: string;
@@ -154,7 +154,7 @@ export default function CardDetailActionBar({
           disabled={copyForAiStatus === "working"}
           className={copyForAiActionButtonClass}
         >
-          AIへ渡す
+          AI
         </button>
       ) : null}
       <button
