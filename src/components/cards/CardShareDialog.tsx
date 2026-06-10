@@ -191,29 +191,27 @@ export default function CardShareDialog({
         <div className="mt-5 grid gap-4">
           {!shareUrl ? (
             <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] p-3">
-              <div className="rounded-[14px] border border-[#e0d3c0] bg-[#fffaf0] p-3 shadow-sm">
-                <div className="relative mx-auto h-[316.8px] w-[237.6px] overflow-visible sm:h-[345.6px] sm:w-[259.2px]">
-                  <div
-                    className="absolute left-1/2 top-1/2 origin-center -translate-x-1/2 -translate-y-1/2 scale-[0.66] overflow-hidden rounded-[22px] shadow-[0_18px_42px_rgba(32,24,16,0.18)] sm:scale-[0.72]"
-                    style={{
-                      height: SHARE_PREVIEW_BASE_HEIGHT,
-                      width: SHARE_PREVIEW_BASE_WIDTH,
-                    }}
-                  >
-                    <CardFace
-                      backgroundImage={previewBackground}
-                      backText={card.backText}
-                      date={formatDate(card.createdAt)}
-                      deckLabel={deckLabel}
-                      face="front"
-                      frontComment={card.frontComment}
-                      frontText={card.frontText}
-                      imageFitMode={card.imageFitMode}
-                      linkUrl={card.linkUrl}
-                      preserve3d={false}
-                      size="preview"
-                    />
-                  </div>
+              <div className="relative mx-auto h-[316.8px] w-[237.6px] overflow-visible sm:h-[345.6px] sm:w-[259.2px]">
+                <div
+                  className="absolute left-1/2 top-1/2 origin-center -translate-x-1/2 -translate-y-1/2 scale-[0.66] overflow-hidden rounded-[22px] shadow-[0_18px_42px_rgba(32,24,16,0.18)] sm:scale-[0.72]"
+                  style={{
+                    height: SHARE_PREVIEW_BASE_HEIGHT,
+                    width: SHARE_PREVIEW_BASE_WIDTH,
+                  }}
+                >
+                  <CardFace
+                    backgroundImage={previewBackground}
+                    backText={card.backText}
+                    date={formatDate(card.createdAt)}
+                    deckLabel={deckLabel}
+                    face="front"
+                    frontComment={card.frontComment}
+                    frontText={card.frontText}
+                    imageFitMode={card.imageFitMode}
+                    linkUrl={card.linkUrl}
+                    preserve3d={false}
+                    size="preview"
+                  />
                 </div>
               </div>
 
