@@ -54,6 +54,7 @@ export default function useFullscreenImagePanZoom() {
   const touchHadMultipleTouchesRef = useRef(false);
   const lastTapAtRef = useRef(0);
   const lastTapPointRef = useRef<PointerPosition | null>(null);
+  const lastMousePointerZoomAtRef = useRef(0);
   const movedDuringGestureRef = useRef(false);
 
   const clampOffset = useCallback((nextOffset: Offset, nextScale: number) => {
@@ -76,6 +77,7 @@ export default function useFullscreenImagePanZoom() {
     movedDuringGestureRef.current = false;
     lastTapAtRef.current = 0;
     lastTapPointRef.current = null;
+    lastMousePointerZoomAtRef.current = 0;
     setScale(1);
     setOffset({ x: 0, y: 0 });
     setIsDragging(false);
@@ -264,12 +266,17 @@ export default function useFullscreenImagePanZoom() {
       return;
     }
 
-    if (event.pointerType !== "touch" && event.pointerType !== "mouse") {
-      handleDoubleTapCandidate(event.currentTarget, {
-        x: event.clientX,
-        y: event.clientY,
-      });
+    if (event.pointerType === "touch") {
       return;
+    }
+
+    const wasDoubleTap = handleDoubleTapCandidate(event.currentTarget, {
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    if (event.pointerType === "mouse" && wasDoubleTap) {
+      lastMousePointerZoomAtRef.current = Date.now();
     }
   }
 
@@ -342,6 +349,11 @@ export default function useFullscreenImagePanZoom() {
   function handleDoubleClick(event: MouseEvent<HTMLElement>) {
     event.preventDefault();
     event.stopPropagation();
+
+    if (Date.now() - lastMousePointerZoomAtRef.current <= 350) {
+      return;
+    }
+
     zoomAtPoint(event.currentTarget, {
       x: event.clientX,
       y: event.clientY,

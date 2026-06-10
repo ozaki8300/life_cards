@@ -57,7 +57,7 @@ export default function FullscreenImageViewer({
       role="dialog"
       aria-modal="true"
       aria-label="画像ビューア"
-      className="fixed inset-0 z-[80] h-[100dvh] w-screen overflow-hidden bg-[#050505] text-white"
+      className="pointer-events-auto fixed inset-0 z-[80] h-[100dvh] w-screen overflow-hidden bg-[#050505] text-white"
     >
       <div
         className={`relative h-full w-full touch-none select-none overflow-hidden ${
