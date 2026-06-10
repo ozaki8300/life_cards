@@ -17,8 +17,19 @@ export const metadata: Metadata = {
   title: "Life Cards",
   description: "写真・スクショ・言葉をカードにして、デッキで育てる知的チェキアプリ。",
   icons: {
-    icon: "/icon.png",
-    apple: "/apple-icon.png",
+    icon: [
+      {
+        url: "/icon.png",
+        type: "image/png",
+        sizes: "1024x1024",
+      },
+    ],
+    apple: [
+      {
+        url: "/apple-icon.png",
+        sizes: "1024x1024",
+      },
+    ],
   },
 };
 
