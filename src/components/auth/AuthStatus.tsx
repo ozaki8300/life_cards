@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 
+import AccountDeletionDialog from "./AccountDeletionDialog";
 import LoginButton from "./LoginButton";
 import { useLogout } from "./LogoutButton";
 import ProfileSetupModal from "./ProfileSetupModal";
@@ -19,6 +20,7 @@ type AuthState =
 export default function AuthStatus() {
   const [authState, setAuthState] = useState<AuthState>({ status: "loading" });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isAccountDeletionOpen, setIsAccountDeletionOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { isLoading: isLoggingOut, logout } = useLogout(() => {
@@ -210,7 +212,28 @@ export default function AuthStatus() {
             >
               {isLoggingOut ? "Logout..." : "Logout"}
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsDropdownOpen(false);
+                setIsAccountDeletionOpen(true);
+              }}
+              className="flex w-full items-center border-t border-[#eadfcc] px-3 py-2 text-left text-sm font-semibold text-[#9b4b35] transition hover:bg-[#fff4ef] focus:bg-[#fff4ef] focus:outline-none"
+            >
+              アカウント削除
+            </button>
           </div>
+        ) : null}
+        {isAccountDeletionOpen ? (
+          <AccountDeletionDialog
+            onClose={() => setIsAccountDeletionOpen(false)}
+            onDeleted={() => {
+              setAuthState({ status: "signed-out" });
+              setIsAccountDeletionOpen(false);
+              setIsDropdownOpen(false);
+              setIsProfileModalOpen(false);
+            }}
+          />
         ) : null}
         {isProfileModalOpen ? (
           <ProfileSetupModal
