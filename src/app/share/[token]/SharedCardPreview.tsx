@@ -59,7 +59,8 @@ function SharedCardFacePreview({
 }
 
 export default function SharedCardPreview({ card, date }: Props) {
-  const backgroundImage = card.imagePath || defaultImageForCard();
+  const defaultImageSeed = `${card.createdAt}:${card.frontText ?? ""}`;
+  const backgroundImage = card.imagePath || defaultImageForCard(defaultImageSeed);
 
   return (
     <div className="grid gap-5 lg:grid-cols-2 lg:items-start">

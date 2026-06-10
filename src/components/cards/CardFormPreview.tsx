@@ -7,6 +7,7 @@ type Props = {
   backText: string;
   cardDate: string;
   cardId: string;
+  defaultImageSeed?: string;
   frontComment: string;
   frontText: string;
   imageFitMode?: CardImageFitMode;
@@ -154,6 +155,7 @@ export default function CardFormPreview({
   backText,
   cardDate,
   cardId,
+  defaultImageSeed,
   frontComment,
   frontText,
   imageFitMode = "cover",
@@ -163,7 +165,8 @@ export default function CardFormPreview({
   previewFace,
   selectedDeckName,
 }: Props) {
-  const previewBackground = imagePath || defaultImageForCard(cardId);
+  const previewBackground =
+    imagePath || defaultImageForCard(defaultImageSeed ?? cardId);
   const date = formatDate(cardDate);
   const isBack = previewFace === "back";
 

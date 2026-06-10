@@ -382,6 +382,7 @@ export default function CardForm({
           backText={backText}
           cardDate={cardDate}
           cardId={cardId}
+          defaultImageSeed={`${selectedDeckId || "deck"}:${cardId}`}
           frontComment={frontComment}
           frontText={frontText}
           imageFitMode={imageFitMode}
