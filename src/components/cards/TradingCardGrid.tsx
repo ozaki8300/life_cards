@@ -5,10 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card, Deck } from "@/lib/types";
 
-import CardDetailModal from "./CardDetailModal";
-import CardEditDialog from "./CardEditDialog";
-import CardShareDialog from "./CardShareDialog";
-import CardTile from "./CardTile";
+import CardGridDialogs from "./CardGridDialogs";
+import CardTileList from "./CardTileList";
+import useCardSelectionNavigation from "./useCardSelectionNavigation";
 
 type Props = {
   cards: Card[];
@@ -40,8 +39,6 @@ const RAIL_OUTER_CLASS =
   "w-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-3";
 const RAIL_INNER_CLASS =
   "flex min-w-full snap-x snap-mandatory flex-nowrap gap-4 sm:gap-5";
-const RAIL_ITEM_CLASS =
-  "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-hidden rounded-[18px] [contain:paint] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
 const GRID_PAGE_SIZE = 60;
 
 function debugFullscreenImageLoop(payload: Record<string, unknown>) {
@@ -64,7 +61,6 @@ export default function TradingCardGrid({
   showCarouselIndicator = false,
 }: Props) {
   const railRef = useRef<HTMLDivElement | null>(null);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -72,7 +68,6 @@ export default function TradingCardGrid({
   const [updatedCardsById, setUpdatedCardsById] = useState<Map<string, Card>>(
     new Map(),
   );
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [visibleLimitState, setVisibleLimitState] =
     useState<VisibleLimitState>({
       limit: GRID_PAGE_SIZE,
@@ -149,9 +144,29 @@ export default function TradingCardGrid({
       ),
     [cards, editSeedCards, updatedCardsById],
   );
-  const selectedCard =
-    selectedIndex === null ? null : displayCards[selectedIndex] ?? null;
-  const hasMultipleCards = displayCards.length > 1;
+  const resetPreviewMode = useCallback(() => {
+    setIsEditing(false);
+    setIsSharing(false);
+  }, []);
+  const {
+    closePreview,
+    handlePreviewBackdropClick,
+    handlePreviewTouchEnd,
+    handlePreviewTouchStart,
+    hasMultipleCards,
+    openCard,
+    selectedCard,
+    selectedIndex,
+    selectCardIndex,
+    showNext,
+    showPrevious,
+  } = useCardSelectionNavigation({
+    cards: displayCards,
+    isEditing,
+    isSharing,
+    onCardViewed,
+    onPreviewModeReset: resetPreviewMode,
+  });
   const fullscreenImageIndexes = displayCards
     .map((card, index) =>
       card.imagePath?.trim() || card.imageStoragePath?.trim() ? index : -1,
@@ -164,40 +179,6 @@ export default function TradingCardGrid({
   function deckLabelFor(card: Card) {
     return decks.find((deck) => deck.id === card.deckId)?.name ?? "Deck";
   }
-
-  const showCard = useCallback(
-    (nextIndex: number) => {
-      const boundedIndex =
-        (nextIndex + displayCards.length) % displayCards.length;
-      setSelectedIndex(boundedIndex);
-      setIsEditing(false);
-      setIsSharing(false);
-      onCardViewed?.(displayCards[boundedIndex].id);
-    },
-    [displayCards, onCardViewed],
-  );
-
-  const showPrevious = useCallback(() => {
-    if (hasMultipleCards && selectedIndex !== null) {
-      showCard(selectedIndex - 1);
-    }
-  }, [hasMultipleCards, selectedIndex, showCard]);
-
-  const showNext = useCallback(() => {
-    if (hasMultipleCards && selectedIndex !== null) {
-      showCard(selectedIndex + 1);
-    }
-  }, [hasMultipleCards, selectedIndex, showCard]);
-
-  const closePreview = useCallback(() => {
-    setSelectedIndex(null);
-    setIsEditing(false);
-    setIsSharing(false);
-  }, []);
-
-  const handlePreviewBackdropClick = useCallback(() => {
-    closePreview();
-  }, [closePreview]);
 
   const updateActiveRailIndex = useCallback(() => {
     const rail = railRef.current;
@@ -223,32 +204,6 @@ export default function TradingCardGrid({
 
     setActiveRailIndex(nextIndex);
   }, []);
-
-  useEffect(() => {
-    if (selectedIndex === null) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (isEditing || isSharing) {
-        return;
-      }
-
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        showPrevious();
-      }
-
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        showNext();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing, isSharing, selectedIndex, showNext, showPrevious]);
 
   useEffect(() => {
     let isActive = true;
@@ -367,13 +322,6 @@ export default function TradingCardGrid({
     });
   }
 
-  function openCard(index: number) {
-    setSelectedIndex(index);
-    setIsEditing(false);
-    setIsSharing(false);
-    onCardViewed?.(displayCards[index].id);
-  }
-
   async function imageUrlForFullscreen(card: Card) {
     const directImagePath = card.imagePath?.trim();
 
@@ -457,10 +405,7 @@ export default function TradingCardGrid({
         return null;
       }
 
-      setSelectedIndex(nextIndex);
-      setIsEditing(false);
-      setIsSharing(false);
-      onCardViewed?.(card.id);
+      selectCardIndex(nextIndex);
 
       return {
         cardId: card.id,
@@ -489,27 +434,6 @@ export default function TradingCardGrid({
     }
   }
 
-  function handleTouchEnd(touchEndX: number) {
-    if (touchStartX === null || isEditing || isSharing) {
-      return;
-    }
-
-    const deltaX = touchEndX - touchStartX;
-
-    if (Math.abs(deltaX) < 50) {
-      setTouchStartX(null);
-      return;
-    }
-
-    if (deltaX < 0) {
-      showNext();
-    } else {
-      showPrevious();
-    }
-
-    setTouchStartX(null);
-  }
-
   function showMoreCards() {
     setVisibleLimitState((current) => {
       const currentLimit =
@@ -530,26 +454,18 @@ export default function TradingCardGrid({
     );
   }
 
-  const cardTiles = displayCards.map((card, index) => (
-    <div
-      key={card.id}
-      className={`card-enter ${
-        layout === "rail" ? RAIL_ITEM_CLASS : "w-full max-w-[22rem] sm:max-w-none"
-      }`}
-      style={{ animationDelay: `${Math.min(index * 45, 360)}ms` }}
-    >
-      <CardTile
-        card={card}
-        deckLabel={deckLabelFor(card)}
-        isBack={flippedIds.has(card.id)}
-        isFavorite={activeFavoriteIds.has(card.id)}
-        layout={layout}
-        onFlip={() => toggleCard(card.id)}
-        onOpen={() => openCard(index)}
-        onToggleFavorite={() => toggleFavorite(card.id)}
-      />
-    </div>
-  ));
+  const cardTiles = (
+    <CardTileList
+      activeFavoriteIds={activeFavoriteIds}
+      cards={displayCards}
+      deckLabelFor={deckLabelFor}
+      flippedIds={flippedIds}
+      layout={layout}
+      onFlip={toggleCard}
+      onOpen={openCard}
+      onToggleFavorite={toggleFavorite}
+    />
+  );
 
   return (
     <>
@@ -627,60 +543,39 @@ export default function TradingCardGrid({
         </>
       )}
 
-      {selectedCard && selectedIndex !== null ? (
-        <div
-          className="fixed inset-0 z-50 overflow-y-auto bg-[#3b3126]/45 px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-5 backdrop-blur-md sm:px-6 sm:py-6"
-          onTouchStart={(event) => setTouchStartX(event.changedTouches[0].clientX)}
-          onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0].clientX)}
-        >
-          <button
-            type="button"
-            aria-label="Close card preview"
-            className="fixed inset-0 z-0 cursor-default"
-            onClick={handlePreviewBackdropClick}
-          />
-
-          <div className="relative z-10 mx-auto flex min-h-full max-w-6xl items-center">
-            <div className="relative w-full">
-              {isEditing ? (
-                <CardEditDialog
-                  card={selectedCard}
-                  currentCards={currentCardsForEdit}
-                  decks={decks}
-                  onClose={() => setIsEditing(false)}
-                  onDecksChange={onDecksChange}
-                  onSaved={handleCardSaved}
-                />
-              ) : (
-                <CardDetailModal
-                  card={selectedCard}
-                  canGoNextFullscreenImage={canGoNextFullscreenImage}
-                  deckLabel={deckLabelFor(selectedCard)}
-                  index={selectedIndex}
-                  isFavorite={activeFavoriteIds.has(selectedCard.id)}
-                  hasMultipleCards={hasMultipleCards}
-                  onClose={closePreview}
-                  onDelete={() => deleteCard(selectedCard)}
-                  onEdit={() => setIsEditing(true)}
-                  onNext={showNext}
-                  onNextFullscreenImage={showNextFullscreenImage}
-                  onPrevious={showPrevious}
-                  onShare={() => setIsSharing(true)}
-                  onToggleFavorite={() => toggleFavorite(selectedCard.id)}
-                />
-              )}
-            </div>
-          </div>
-
-          {isSharing ? (
-            <CardShareDialog
-              card={selectedCard}
-              deckLabel={deckLabelFor(selectedCard)}
-              onClose={() => setIsSharing(false)}
-            />
-          ) : null}
-        </div>
-      ) : null}
+      <CardGridDialogs
+        canGoNextFullscreenImage={canGoNextFullscreenImage}
+        card={selectedCard}
+        currentCardsForEdit={currentCardsForEdit}
+        deckLabel={selectedCard ? deckLabelFor(selectedCard) : ""}
+        decks={decks}
+        hasMultipleCards={hasMultipleCards}
+        index={selectedIndex}
+        isEditing={isEditing}
+        isFavorite={
+          selectedCard ? activeFavoriteIds.has(selectedCard.id) : false
+        }
+        isSharing={isSharing}
+        onBackdropClick={handlePreviewBackdropClick}
+        onDecksChange={onDecksChange}
+        onDelete={deleteCard}
+        onDetailClose={closePreview}
+        onEdit={() => setIsEditing(true)}
+        onEditClose={() => setIsEditing(false)}
+        onNext={showNext}
+        onNextFullscreenImage={showNextFullscreenImage}
+        onPrevious={showPrevious}
+        onSaved={handleCardSaved}
+        onShare={() => setIsSharing(true)}
+        onShareClose={() => setIsSharing(false)}
+        onToggleFavorite={() => {
+          if (selectedCard) {
+            toggleFavorite(selectedCard.id);
+          }
+        }}
+        onTouchEnd={handlePreviewTouchEnd}
+        onTouchStart={handlePreviewTouchStart}
+      />
     </>
   );
 }
