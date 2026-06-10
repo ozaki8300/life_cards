@@ -18,6 +18,12 @@ const sideNavButtonClass =
 const shutterButtonClass =
   "relative flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
 
+function debugImageState(message: string, payload: Record<string, unknown>) {
+  if (process.env.NODE_ENV !== "production") {
+    console.debug(`[Life Cards image detail] ${message}`, payload);
+  }
+}
+
 export default function CardDetailModal({
   card,
   deckLabel,
@@ -46,15 +52,21 @@ export default function CardDetailModal({
 }) {
   const touchStartX = useRef<number | null>(null);
   const shouldSkipNextClick = useRef(false);
+  const [fullscreenImagePath, setFullscreenImagePath] = useState("");
   const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
+  const [isResolvingFullscreenImage, setIsResolvingFullscreenImage] =
+    useState(false);
   const [resolvedStorageImage, setResolvedStorageImage] = useState<{
     signedUrl: string;
+    status: "error" | "resolved";
     storagePath: string;
   } | null>(null);
   const imageStoragePath = card.imageStoragePath?.trim() ?? "";
+  const storageResolutionMatches =
+    resolvedStorageImage?.storagePath === imageStoragePath;
   const displayImagePath =
     card.imagePath?.trim() ||
-    (resolvedStorageImage?.storagePath === imageStoragePath
+    (storageResolutionMatches && resolvedStorageImage.status === "resolved"
       ? resolvedStorageImage.signedUrl
       : "");
   const backgroundImage = displayImagePath || defaultImageForCard(card.id);
@@ -62,6 +74,10 @@ export default function CardDetailModal({
     card.imagePath?.trim() || imageStoragePath,
   );
   const canOpenFullscreen = Boolean(displayImagePath);
+  const imageResolveFailed =
+    storageResolutionMatches && resolvedStorageImage.status === "error";
+  const canRequestFullscreen =
+    hasAttachedImage && !imageResolveFailed && !isResolvingFullscreenImage;
   const date = formatDate(card.createdAt);
   const {
     viewMode,
@@ -76,28 +92,81 @@ export default function CardDetailModal({
   });
 
   useEffect(() => {
+    debugImageState("render values", {
+      actionBarHasImage: canRequestFullscreen,
+      canOpenFullscreen,
+      cardId: card.id,
+      cardImagePath: card.imagePath,
+      cardImageStoragePath: card.imageStoragePath,
+      displayImagePath,
+      hasAttachedImage,
+      imageResolveFailed,
+      imageStoragePath,
+      isResolvingFullscreenImage,
+      resolvedStorageImage,
+    });
+  }, [
+    canOpenFullscreen,
+    canRequestFullscreen,
+    card.id,
+    card.imagePath,
+    card.imageStoragePath,
+    displayImagePath,
+    hasAttachedImage,
+    imageResolveFailed,
+    imageStoragePath,
+    isResolvingFullscreenImage,
+    resolvedStorageImage,
+  ]);
+
+  useEffect(() => {
     let isActive = true;
 
     if (card.imagePath?.trim() || !imageStoragePath) {
+      debugImageState("skip signed URL prefetch", {
+        cardId: card.id,
+        cardImagePath: card.imagePath,
+        imageStoragePath,
+      });
+
       return () => {
         isActive = false;
       };
     }
 
+    debugImageState("signed URL prefetch start", {
+      cardId: card.id,
+      path: imageStoragePath,
+    });
+
     CardImageStorageRepository.getCachedSignedImageUrl(imageStoragePath)
       .then((signedUrl) => {
+        debugImageState("signed URL prefetch result", {
+          cardId: card.id,
+          hasSignedUrl: Boolean(signedUrl),
+          path: imageStoragePath,
+        });
+
         if (isActive) {
           setResolvedStorageImage({
             signedUrl: signedUrl ?? "",
+            status: signedUrl ? "resolved" : "error",
             storagePath: imageStoragePath,
           });
         }
       })
       .catch((error) => {
         console.warn("Life Cards detail image signed URL failed", error);
+        debugImageState("signed URL prefetch failed", {
+          cardId: card.id,
+          error,
+          path: imageStoragePath,
+        });
+
         if (isActive) {
           setResolvedStorageImage({
             signedUrl: "",
+            status: "error",
             storagePath: imageStoragePath,
           });
         }
@@ -106,7 +175,7 @@ export default function CardDetailModal({
     return () => {
       isActive = false;
     };
-  }, [card.imagePath, imageStoragePath]);
+  }, [card.id, card.imagePath, imageStoragePath]);
 
   function showPreviousPhoto() {
     onPrevious();
@@ -145,12 +214,78 @@ export default function CardDetailModal({
     cycleViewMode();
   }
 
-  function openFullscreenPhoto() {
-    if (!canOpenFullscreen) {
+  async function openFullscreenPhoto() {
+    const directImagePath = card.imagePath?.trim();
+
+    debugImageState("open requested", {
+      canOpenFullscreen,
+      canRequestFullscreen,
+      cardId: card.id,
+      directImagePath,
+      displayImagePath,
+      imageStoragePath,
+    });
+
+    if (directImagePath) {
+      setFullscreenImagePath(directImagePath);
+      setIsFullscreenPhotoOpen(true);
       return;
     }
 
-    setIsFullscreenPhotoOpen(true);
+    if (displayImagePath) {
+      setFullscreenImagePath(displayImagePath);
+      setIsFullscreenPhotoOpen(true);
+      return;
+    }
+
+    if (!imageStoragePath || imageResolveFailed) {
+      return;
+    }
+
+    setIsResolvingFullscreenImage(true);
+
+    try {
+      debugImageState("signed URL resolve on click start", {
+        cardId: card.id,
+        path: imageStoragePath,
+      });
+
+      const signedUrl =
+        await CardImageStorageRepository.getCachedSignedImageUrl(
+          imageStoragePath,
+        );
+
+      debugImageState("signed URL resolve on click result", {
+        cardId: card.id,
+        hasSignedUrl: Boolean(signedUrl),
+        path: imageStoragePath,
+      });
+
+      setResolvedStorageImage({
+        signedUrl: signedUrl ?? "",
+        status: signedUrl ? "resolved" : "error",
+        storagePath: imageStoragePath,
+      });
+
+      if (signedUrl) {
+        setFullscreenImagePath(signedUrl);
+        setIsFullscreenPhotoOpen(true);
+      }
+    } catch (error) {
+      console.warn("Life Cards fullscreen image signed URL failed", error);
+      debugImageState("signed URL resolve on click failed", {
+        cardId: card.id,
+        error,
+        path: imageStoragePath,
+      });
+      setResolvedStorageImage({
+        signedUrl: "",
+        status: "error",
+        storagePath: imageStoragePath,
+      });
+    } finally {
+      setIsResolvingFullscreenImage(false);
+    }
   }
 
   const previousNavPositionClass = "left-[-1.25rem] sm:left-[-3.5rem]";
@@ -258,7 +393,7 @@ export default function CardDetailModal({
 
       <div className="pointer-events-auto">
         <CardDetailActionBar
-          hasImage={hasAttachedImage && canOpenFullscreen}
+          hasImage={canRequestFullscreen}
           onClose={onClose}
           onDelete={onDelete}
           onEdit={onEdit}
@@ -285,7 +420,7 @@ export default function CardDetailModal({
 
       {isFullscreenPhotoOpen ? (
         <FullscreenImageViewer
-          imageSrc={displayImagePath}
+          imageSrc={fullscreenImagePath}
           onClose={() => setIsFullscreenPhotoOpen(false)}
         />
       ) : null}
