@@ -1,36 +1,61 @@
+import type { Card, DefaultCardImageKey } from "@/lib/types";
+
 const gradients = [
   "linear-gradient(145deg, #fffaf0 0%, #f3eadc 100%)",
   "linear-gradient(145deg, #fff8ea 0%, #edf4eb 100%)",
   "linear-gradient(145deg, #fff7ec 0%, #f4eddf 100%)",
 ];
 
-const defaultCardImages = [
-  "/card-images/default-library.webp",
-  "/card-images/default-night.webp",
-  "/card-images/default-mountain.webp",
-  "/card-images/default-sea.webp",
+export const DEFAULT_CARD_IMAGE_KEY = "night";
+export const DEFAULT_CARD_IMAGE_OPTIONS = [
+  {
+    key: "night",
+    label: "Night",
+    path: "/card-images/default-night.webp",
+  },
+  {
+    key: "sea",
+    label: "Sea",
+    path: "/card-images/default-sea.webp",
+  },
+  {
+    key: "mountain",
+    label: "Mountain",
+    path: "/card-images/default-mountain.webp",
+  },
+  {
+    key: "library",
+    label: "Library",
+    path: "/card-images/default-library.webp",
+  },
 ] as const;
 
-function stableImageIndex(seed: string) {
-  let hash = 5381;
-
-  for (let index = 0; index < seed.length; index += 1) {
-    hash = (hash * 33) ^ seed.charCodeAt(index);
-  }
-
-  return (hash >>> 0) % defaultCardImages.length;
+export function isDefaultCardImageKey(
+  value: string | null | undefined,
+): value is DefaultCardImageKey {
+  return DEFAULT_CARD_IMAGE_OPTIONS.some((option) => option.key === value);
 }
 
 export function gradientFor(index: number) {
   return gradients[index % gradients.length];
 }
 
-export function defaultImageForCard(cardId: string): string;
-export function defaultImageForCard(): string;
-export function defaultImageForCard(cardId = "life-cards-default") {
-  const seed = cardId.trim() || "life-cards-default";
+export function normalizeDefaultImageKey(
+  key: string | null | undefined,
+): DefaultCardImageKey {
+  return isDefaultCardImageKey(key) ? key : DEFAULT_CARD_IMAGE_KEY;
+}
 
-  return defaultCardImages[stableImageIndex(seed)];
+export function defaultImageForKey(key?: DefaultCardImageKey | string | null) {
+  const selectedKey = normalizeDefaultImageKey(key);
+  return (
+    DEFAULT_CARD_IMAGE_OPTIONS.find((option) => option.key === selectedKey)
+      ?.path ?? DEFAULT_CARD_IMAGE_OPTIONS[0].path
+  );
+}
+
+export function defaultImageForCard(card?: Pick<Card, "defaultImageKey"> | null) {
+  return defaultImageForKey(card?.defaultImageKey);
 }
 
 export function formatDate(date: string) {

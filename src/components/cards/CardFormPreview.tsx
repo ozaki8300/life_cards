@@ -1,13 +1,12 @@
 import MarkdownMemo from "@/components/MarkdownMemo";
-import type { CardImageFitMode } from "@/lib/types";
+import type { CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
 
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
 type Props = {
   backText: string;
   cardDate: string;
-  cardId: string;
-  defaultImageSeed?: string;
+  defaultImageKey?: DefaultCardImageKey;
   frontComment: string;
   frontText: string;
   imageFitMode?: CardImageFitMode;
@@ -154,8 +153,7 @@ function PreviewFace({
 export default function CardFormPreview({
   backText,
   cardDate,
-  cardId,
-  defaultImageSeed,
+  defaultImageKey,
   frontComment,
   frontText,
   imageFitMode = "cover",
@@ -166,7 +164,7 @@ export default function CardFormPreview({
   selectedDeckName,
 }: Props) {
   const previewBackground =
-    imagePath || defaultImageForCard(defaultImageSeed ?? cardId);
+    imagePath || defaultImageForCard({ defaultImageKey });
   const date = formatDate(cardDate);
   const isBack = previewFace === "back";
 

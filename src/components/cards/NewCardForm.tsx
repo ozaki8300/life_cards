@@ -36,6 +36,7 @@ export default function NewCardForm({
     const nextCard: Card = {
       id: draftCardId,
       deckId: values.deckId,
+      defaultImageKey: values.defaultImageKey,
       imageFitMode: values.imageFitMode,
       imagePath: values.imagePath,
       linkUrl: values.linkUrl,
@@ -71,11 +72,11 @@ export default function NewCardForm({
         </header>
 
         <CardForm
-          cardId={draftCardId}
           deckOptions={deckOptions}
           initialValues={{
             backText: "",
             cardDate: todayInputValue(),
+            defaultImageKey: "night",
             deckId: initialDeckId,
             frontComment: "",
             frontText: "",

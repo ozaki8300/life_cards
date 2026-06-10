@@ -6,7 +6,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import { DeckRepository } from "@/lib/deckRepository";
 import { compressImage } from "@/lib/imageCompression";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { CardImageFitMode, Deck } from "@/lib/types";
+import type { CardImageFitMode, Deck, DefaultCardImageKey } from "@/lib/types";
 
 import BackMemoEditor from "./BackMemoEditor";
 import CardFormPreview from "./CardFormPreview";
@@ -17,6 +17,10 @@ import {
   normalizeDateInputValue,
   todayInputValue,
 } from "./cardFormUtils";
+import {
+  DEFAULT_CARD_IMAGE_OPTIONS,
+  normalizeDefaultImageKey,
+} from "./cardUiUtils";
 
 const imageLoginMessage =
   "写真カードはログイン後に利用できます。ログインすると画像をクラウド保存し、PC/スマホで同期できます。";
@@ -37,6 +41,7 @@ const imageFitModeOptions = [
 export type CardFormValues = {
   backText: string;
   cardDate: string;
+  defaultImageKey?: DefaultCardImageKey;
   deckId: string;
   frontComment: string;
   frontText: string;
@@ -51,7 +56,6 @@ export type CardFormSubmitContext = {
 };
 
 type Props = {
-  cardId: string;
   deckOptions: Deck[];
   initialValues: CardFormValues;
   mode: "new" | "edit";
@@ -65,7 +69,6 @@ type Props = {
 };
 
 export default function CardForm({
-  cardId,
   deckOptions,
   initialValues,
   onCancel,
@@ -81,6 +84,9 @@ export default function CardForm({
   const [selectedDeckId, setSelectedDeckId] = useState(initialValues.deckId);
   const [cardDate, setCardDate] = useState(() =>
     normalizeDateInputValue(initialValues.cardDate),
+  );
+  const [defaultImageKey, setDefaultImageKey] = useState<DefaultCardImageKey>(
+    () => normalizeDefaultImageKey(initialValues.defaultImageKey),
   );
   const [imageLabel, setImageLabel] = useState("");
   const [imageErrorMessage, setImageErrorMessage] = useState("");
@@ -110,6 +116,7 @@ export default function CardForm({
   const selectedDeckName =
     availableDecks.find((deck) => deck.id === selectedDeckId)?.name ??
     "Deck";
+  const hasSelectedImage = Boolean(imagePath.trim() || imageStoragePath.trim());
 
   function requestPreviewFace(face: "front" | "back") {
     setPreviewFace(face);
@@ -337,6 +344,7 @@ export default function CardForm({
       backText,
       cardDate,
       deckId: selectedDeckId,
+      defaultImageKey,
       frontComment,
       frontText,
       imageFitMode,
@@ -381,8 +389,7 @@ export default function CardForm({
         <CardFormPreview
           backText={backText}
           cardDate={cardDate}
-          cardId={cardId}
-          defaultImageSeed={cardId}
+          defaultImageKey={defaultImageKey}
           frontComment={frontComment}
           frontText={frontText}
           imageFitMode={imageFitMode}
@@ -484,6 +491,39 @@ export default function CardForm({
                   ))}
                 </div>
               </div>
+              {!hasSelectedImage ? (
+                <div className="grid gap-2 pt-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
+                    default画像
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {DEFAULT_CARD_IMAGE_OPTIONS.map((option) => {
+                      const isSelected = defaultImageKey === option.key;
+
+                      return (
+                        <button
+                          key={option.key}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => setDefaultImageKey(option.key)}
+                          className={`rounded-[14px] border p-2 text-left text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                            isSelected
+                              ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                              : "border-[#e0d3c0] bg-white/60 text-[#7d705f] hover:bg-white"
+                          }`}
+                        >
+                          <span
+                            className="mb-2 block aspect-[4/3] rounded-[10px] border border-white/45 bg-cover bg-center"
+                            style={{ backgroundImage: `url(${option.path})` }}
+                            aria-hidden="true"
+                          />
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
 
@@ -522,23 +562,17 @@ export default function CardForm({
           </section>
 
           <label className="block min-w-0">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-              表面タイトル
-            </span>
             <input
               name="frontText"
               value={frontText}
               onChange={(event) => setFrontText(event.target.value)}
               onFocus={() => requestPreviewFace("front")}
               placeholder="表面タイトル"
-              className="mt-2 box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base font-semibold leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+              className="box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base font-semibold leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </label>
 
           <label className="block min-w-0">
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-              表面コメント
-            </span>
             <textarea
               name="frontComment"
               value={frontComment}
@@ -546,7 +580,7 @@ export default function CardForm({
               onFocus={() => requestPreviewFace("front")}
               rows={3}
               placeholder="表面に添える数行コメント"
-              className="mt-2 box-border block w-full min-w-0 max-w-full resize-none rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+              className="box-border block w-full min-w-0 max-w-full resize-none rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </label>
 

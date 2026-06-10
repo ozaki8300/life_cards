@@ -78,7 +78,7 @@ export default function CardDetailModal({
     (storageResolutionMatches && resolvedStorageImage.status === "resolved"
       ? resolvedStorageImage.signedUrl
       : "");
-  const backgroundImage = displayImagePath || defaultImageForCard(card.id);
+  const backgroundImage = displayImagePath || defaultImageForCard(card);
   const hasAttachedImage = Boolean(
     card.imagePath?.trim() || imageStoragePath,
   );

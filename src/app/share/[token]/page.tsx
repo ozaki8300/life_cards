@@ -7,7 +7,7 @@ import LoginButton from "@/components/auth/LoginButton";
 import { formatDate } from "@/components/cards/cardUiUtils";
 import type { ShareCardPayload } from "@/lib/shareCardPayload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { CardImageFitMode } from "@/lib/types";
+import type { CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
 
 import SharedCardPreview from "./SharedCardPreview";
 
@@ -128,6 +128,15 @@ function isCardImageFitMode(value: unknown): value is CardImageFitMode {
   return value === "cover" || value === "blurExtend";
 }
 
+function isDefaultCardImageKey(value: unknown): value is DefaultCardImageKey {
+  return (
+    value === "night" ||
+    value === "sea" ||
+    value === "mountain" ||
+    value === "library"
+  );
+}
+
 function parseShareCardPayload(value: unknown): ShareCardPayload | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -157,6 +166,9 @@ function parseShareCardPayload(value: unknown): ShareCardPayload | null {
     card: {
       backText: isString(cardRecord.backText) ? cardRecord.backText : "",
       createdAt: cardRecord.createdAt,
+      defaultImageKey: isDefaultCardImageKey(cardRecord.defaultImageKey)
+        ? cardRecord.defaultImageKey
+        : "night",
       frontComment: isString(cardRecord.frontComment)
         ? cardRecord.frontComment
         : "",

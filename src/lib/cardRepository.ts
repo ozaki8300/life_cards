@@ -1,4 +1,8 @@
 import { cards as seedCards } from "@/data/cards/cards";
+import {
+  hydrateCardDefaultImageKeys,
+  rememberCardDefaultImageKey,
+} from "@/lib/cardDefaultImageKeys";
 import { CardSupabaseRepository } from "@/lib/supabase/cardSupabaseRepository";
 import type { Card } from "@/lib/types";
 
@@ -72,15 +76,16 @@ function todayInputValue() {
 
 export const CardRepository = {
   getCards(seed: Card[] = seedCards) {
-    return readStoredCards() ?? seed;
+    return hydrateCardDefaultImageKeys(readStoredCards() ?? seed);
   },
 
   async getCardsForCurrentUser(seed: Card[] = seedCards) {
     try {
-      return (
-        (await CardSupabaseRepository.getCards()) ??
-        CardRepository.getCards(seed)
-      );
+      const supabaseCards = await CardSupabaseRepository.getCards();
+
+      return supabaseCards
+        ? hydrateCardDefaultImageKeys(supabaseCards)
+        : CardRepository.getCards(seed);
     } catch (error) {
       console.warn("Life Cards Supabase cards fetch failed", error);
       return CardRepository.getCards(seed);
@@ -88,6 +93,7 @@ export const CardRepository = {
   },
 
   saveCard(card: Card, seed: Card[] = seedCards) {
+    rememberCardDefaultImageKey(card);
     const cards = CardRepository.getCards(seed);
     const nextCards = cards.some((item) => item.id === card.id)
       ? cards.map((item) => (item.id === card.id ? card : item))
@@ -106,7 +112,8 @@ export const CardRepository = {
       const savedCards = await CardSupabaseRepository.saveCard(card);
 
       if (savedCards) {
-        return savedCards;
+        rememberCardDefaultImageKey(card);
+        return hydrateCardDefaultImageKeys(savedCards);
       }
 
       if (options.expectsCloudSave) {
@@ -135,6 +142,7 @@ export const CardRepository = {
   },
 
   updateCard(card: Card, seed: Card[] = seedCards) {
+    rememberCardDefaultImageKey(card);
     const cards = CardRepository.getCards(seed);
     const nextCards = cards.map((item) => (item.id === card.id ? card : item));
 
@@ -151,7 +159,8 @@ export const CardRepository = {
       const savedCards = await CardSupabaseRepository.updateCard(card);
 
       if (savedCards) {
-        return savedCards;
+        rememberCardDefaultImageKey(card);
+        return hydrateCardDefaultImageKeys(savedCards);
       }
 
       if (options.expectsCloudSave) {

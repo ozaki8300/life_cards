@@ -1,4 +1,4 @@
-import type { Card, CardImageFitMode } from "./types";
+import type { Card, CardImageFitMode, DefaultCardImageKey } from "./types";
 
 export type ShareCardType = "card" | "people";
 
@@ -8,6 +8,7 @@ export type ShareCardPayload = {
     frontText?: string;
     frontComment?: string;
     backText?: string;
+    defaultImageKey?: DefaultCardImageKey;
     linkUrl?: string;
     imagePath?: string;
     imageFitMode: CardImageFitMode;
@@ -29,6 +30,7 @@ export function createShareCardPayload(
       frontText: card.frontText,
       frontComment: card.frontComment,
       backText: card.backText,
+      defaultImageKey: card.defaultImageKey ?? "night",
       linkUrl: card.linkUrl,
       imagePath: card.imagePath,
       imageFitMode: card.imageFitMode ?? "cover",

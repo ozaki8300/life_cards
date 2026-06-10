@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import type { Card, Deck } from "@/lib/types";
 
 import TradingCardGrid from "./TradingCardGrid";
@@ -31,7 +33,17 @@ export default function ReencounterSection({
   onUpdateCard,
   onToggleFavorite,
 }: Props) {
-  if (cards.length === 0) {
+  const displayCards = useMemo(() => {
+    if (!editSeedCards) {
+      return cards;
+    }
+
+    const latestCardsById = new Map(editSeedCards.map((card) => [card.id, card]));
+
+    return cards.map((card) => latestCardsById.get(card.id) ?? card);
+  }, [cards, editSeedCards]);
+
+  if (displayCards.length === 0) {
     return null;
   }
 
@@ -46,7 +58,7 @@ export default function ReencounterSection({
         </p>
       </div>
       <TradingCardGrid
-        cards={cards}
+        cards={displayCards}
         decks={decks}
         editSeedCards={editSeedCards}
         favoriteIds={favoriteIds}

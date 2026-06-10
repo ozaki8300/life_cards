@@ -36,7 +36,7 @@ export default function CardShareDialog({
   );
   useEscapeKey(onClose, { ignoreEditable: false });
   const formattedExpiresAt = useMemo(() => formatExpiresAt(expiresAt), [expiresAt]);
-  const previewBackground = card.imagePath || defaultImageForCard(card.id);
+  const previewBackground = card.imagePath || defaultImageForCard(card);
   const copyButtonLabel = copyStatus === "コピーしました" ? "コピーしました" : "リンクをコピー";
 
   useEffect(() => {

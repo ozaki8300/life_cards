@@ -12,6 +12,8 @@ export type Card = {
 
   deckId: string;
 
+  defaultImageKey?: DefaultCardImageKey;
+
   imagePath?: string;
 
   imageStoragePath?: string;
@@ -33,3 +35,4 @@ export type Card = {
 };
 
 export type CardImageFitMode = "cover" | "blurExtend";
+export type DefaultCardImageKey = "night" | "sea" | "mountain" | "library";

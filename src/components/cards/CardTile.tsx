@@ -32,7 +32,7 @@ export default function CardTile({
   onToggleFavorite: () => void;
 }) {
   const date = formatDate(card.createdAt);
-  const backgroundImage = card.imagePath || defaultImageForCard(card.id);
+  const backgroundImage = card.imagePath || defaultImageForCard(card);
   const isRail = layout === "rail";
 
   return (

@@ -38,6 +38,7 @@ export default function CardEditDialog({
     const nextCard: Card = {
       ...card,
       deckId: values.deckId,
+      defaultImageKey: values.defaultImageKey,
       imageFitMode: values.imageFitMode,
       imagePath: values.imagePath,
       imageStoragePath: values.imageStoragePath,
@@ -75,11 +76,11 @@ export default function CardEditDialog({
       </div>
 
       <CardForm
-        cardId={card.id}
         deckOptions={decks}
         initialValues={{
           backText: card.backText ?? "",
           cardDate: card.createdAt,
+          defaultImageKey: card.defaultImageKey ?? "night",
           deckId: card.deckId,
           frontComment: card.frontComment ?? "",
           frontText: card.frontText ?? "",
