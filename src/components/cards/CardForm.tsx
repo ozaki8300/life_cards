@@ -569,6 +569,23 @@ export default function CardForm({
           </label>
 
           <div className="mt-2 grid gap-3 border-t border-[#eadfce] pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            {isSaving ? (
+              <p className="text-xs font-semibold text-[#8d7f6e]">
+                保存しています。少しお待ちください。
+              </p>
+            ) : (
+              <span aria-hidden="true" className="hidden sm:block" />
+            )}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              {onCancel ? (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#e0d3c0] bg-white/72 px-6 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0] sm:w-auto"
+                >
+                  閉じる
+                </button>
+              ) : null}
             <button
               type="submit"
               disabled={
@@ -587,20 +604,7 @@ export default function CardForm({
               ) : null}
               {submitButtonLabel}
             </button>
-            {isSaving ? (
-              <p className="text-xs font-semibold text-[#8d7f6e] sm:col-start-1">
-                保存しています。少しお待ちください。
-              </p>
-            ) : null}
-            {onCancel ? (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#e0d3c0] bg-white/72 px-6 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0] sm:w-auto"
-              >
-                閉じる
-              </button>
-            ) : null}
+            </div>
           </div>
         </section>
       </form>
