@@ -33,11 +33,14 @@ export default function CardDetailModal({
   onDelete,
   onEdit,
   onNext,
+  onNextFullscreenImage,
   onPrevious,
   onShare,
   onToggleFavorite,
+  canGoNextFullscreenImage = false,
 }: {
   card: Card;
+  canGoNextFullscreenImage?: boolean;
   deckLabel: string;
   index: number;
   isFavorite: boolean;
@@ -46,6 +49,7 @@ export default function CardDetailModal({
   onDelete: () => void;
   onEdit: () => void;
   onNext: () => void;
+  onNextFullscreenImage?: () => Promise<string | null>;
   onPrevious: () => void;
   onShare: () => void;
   onToggleFavorite: () => void;
@@ -54,6 +58,8 @@ export default function CardDetailModal({
   const shouldSkipNextClick = useRef(false);
   const [fullscreenImagePath, setFullscreenImagePath] = useState("");
   const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
+  const [isResolvingNextFullscreenImage, setIsResolvingNextFullscreenImage] =
+    useState(false);
   const [isResolvingFullscreenImage, setIsResolvingFullscreenImage] =
     useState(false);
   const [resolvedStorageImage, setResolvedStorageImage] = useState<{
@@ -287,6 +293,24 @@ export default function CardDetailModal({
     }
   }
 
+  async function showNextFullscreenImage() {
+    if (!onNextFullscreenImage || isResolvingNextFullscreenImage) {
+      return;
+    }
+
+    setIsResolvingNextFullscreenImage(true);
+
+    try {
+      const nextImagePath = await onNextFullscreenImage();
+
+      if (nextImagePath) {
+        setFullscreenImagePath(nextImagePath);
+      }
+    } finally {
+      setIsResolvingNextFullscreenImage(false);
+    }
+  }
+
   const previousNavPositionClass = "left-[-1.25rem] sm:left-[-3.5rem]";
   const nextNavPositionClass = "right-[-1.25rem] sm:right-[-3.5rem]";
 
@@ -419,8 +443,12 @@ export default function CardDetailModal({
 
       {isFullscreenPhotoOpen ? (
         <FullscreenImageViewer
+          alt={card.frontText ?? ""}
+          canGoNextImage={canGoNextFullscreenImage}
           imageSrc={fullscreenImagePath}
+          isResolvingNextImage={isResolvingNextFullscreenImage}
           onClose={() => setIsFullscreenPhotoOpen(false)}
+          onNextImage={showNextFullscreenImage}
         />
       ) : null}
     </div>

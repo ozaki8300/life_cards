@@ -146,6 +146,16 @@ export default function TradingCardGrid({
   const selectedCard =
     selectedIndex === null ? null : displayCards[selectedIndex] ?? null;
   const hasMultipleCards = displayCards.length > 1;
+  const nextFullscreenImageIndex =
+    selectedIndex === null
+      ? null
+      : displayCards.findIndex(
+          (card, index) =>
+            index > selectedIndex &&
+            Boolean(card.imagePath?.trim() || card.imageStoragePath?.trim()),
+        );
+  const canGoNextFullscreenImage =
+    nextFullscreenImageIndex !== null && nextFullscreenImageIndex !== -1;
   const shouldShowCarouselIndicator =
     layout === "rail" && showCarouselIndicator && cards.length > 1;
 
@@ -362,6 +372,74 @@ export default function TradingCardGrid({
     onCardViewed?.(displayCards[index].id);
   }
 
+  async function imageUrlForFullscreen(card: Card) {
+    const directImagePath = card.imagePath?.trim();
+
+    if (directImagePath) {
+      return directImagePath;
+    }
+
+    const imageStoragePath = card.imageStoragePath?.trim();
+
+    if (!imageStoragePath) {
+      return null;
+    }
+
+    const cachedSignedUrl = signedImageUrlState.urlsByPath[imageStoragePath];
+
+    if (cachedSignedUrl) {
+      return cachedSignedUrl;
+    }
+
+    const signedUrl =
+      await CardImageStorageRepository.getCachedSignedImageUrl(imageStoragePath);
+
+    if (signedUrl) {
+      setSignedImageUrlState((current) => ({
+        signature: displayImageStorageSignature,
+        urlsByPath: {
+          ...current.urlsByPath,
+          [imageStoragePath]: signedUrl,
+        },
+      }));
+    }
+
+    return signedUrl ?? null;
+  }
+
+  async function showNextFullscreenImage() {
+    if (selectedIndex === null) {
+      return null;
+    }
+
+    for (let index = selectedIndex + 1; index < displayCards.length; index += 1) {
+      const card = displayCards[index];
+
+      if (!card.imagePath?.trim() && !card.imageStoragePath?.trim()) {
+        continue;
+      }
+
+      try {
+        const imageUrl = await imageUrlForFullscreen(card);
+
+        if (!imageUrl) {
+          continue;
+        }
+
+        setSelectedIndex(index);
+        setIsEditing(false);
+        setIsSharing(false);
+        onCardViewed?.(card.id);
+
+        return imageUrl;
+      } catch (error) {
+        console.warn("Life Cards next fullscreen image failed", error);
+      }
+    }
+
+    return null;
+  }
+
   function handleCardSaved(card: Card) {
     setUpdatedCardsById((current) => {
       const next = new Map(current);
@@ -543,6 +621,7 @@ export default function TradingCardGrid({
               ) : (
                 <CardDetailModal
                   card={selectedCard}
+                  canGoNextFullscreenImage={canGoNextFullscreenImage}
                   deckLabel={deckLabelFor(selectedCard)}
                   index={selectedIndex}
                   isFavorite={activeFavoriteIds.has(selectedCard.id)}
@@ -551,6 +630,7 @@ export default function TradingCardGrid({
                   onDelete={() => deleteCard(selectedCard)}
                   onEdit={() => setIsEditing(true)}
                   onNext={showNext}
+                  onNextFullscreenImage={showNextFullscreenImage}
                   onPrevious={showPrevious}
                   onShare={() => setIsSharing(true)}
                   onToggleFavorite={() => toggleFavorite(selectedCard.id)}
