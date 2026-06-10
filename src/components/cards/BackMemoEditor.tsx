@@ -27,9 +27,6 @@ export default function BackMemoEditor({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
             Back Memo
           </p>
-          <p className="mt-1 text-xs font-medium text-[#9a8d7a]">
-            カードの裏面に表示されます
-          </p>
         </div>
 
         <div className="rounded-full border border-[#e0d3c0] bg-[#fffaf0]/95 p-1 shadow-sm backdrop-blur">
