@@ -57,7 +57,7 @@ export default function BackMemoEditor({
           value={backText}
           onChange={(event) => onBackTextChange(event.target.value)}
           placeholder="裏面メモを書く（Markdown対応）"
-          className="box-border block min-h-[280px] w-full min-w-0 max-w-full cursor-text resize-y rounded-[16px] border border-[#d8c8aa] bg-white px-4 py-4 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/35 outline-none placeholder:text-[#9d917f] focus:border-[#c5ad8d] focus:ring-2 focus:ring-[#e0d3c0] lg:min-h-[360px] xl:min-h-[400px]"
+          className="box-border block min-h-[280px] w-full min-w-0 max-w-full cursor-text resize-y rounded-[16px] border-0 bg-[#fffaf0]/72 px-4 py-4 text-sm leading-6 text-[#332d25] shadow-none outline-none placeholder:text-[#9d917f] focus:bg-[#fffaf0]/90 focus:outline-none focus:ring-0 focus:shadow-none lg:min-h-[360px] xl:min-h-[400px]"
         />
       ) : (
         <>
