@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
@@ -12,11 +11,11 @@ import type { Card, Deck } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
 import AboutLifeCardsModal from "./AboutLifeCardsModal";
-import AuthStatus from "./auth/AuthStatus";
+import CardSearchMenu from "./CardSearchMenu";
+import DeckPanel from "./DeckPanel";
+import HeaderButtons from "./HeaderButtons";
 import DeckCreateModal from "./cards/DeckCreateModal";
 import { todayInputValue } from "./cards/cardFormUtils";
-
-const tabs = ["すべて", "お気に入り"];
 
 type Props = {
   activeDeckId?: string;
@@ -193,25 +192,6 @@ export default function CardFirstNav({
     }
   }
 
-  const displayButtons = (
-    <div className="space-y-2">
-      {tabs.map((tab) => (
-        <button
-          key={tab}
-          type="button"
-          onClick={() => onTabChange?.(tab)}
-          className={`block w-full rounded-[14px] border px-4 py-3 text-left text-sm font-semibold transition ${
-            activeTab === tab
-              ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-              : "border-[#e0d3c0] bg-[#fffaf0]/80 text-[#7d705f] hover:bg-white"
-          }`}
-        >
-          {tab}
-        </button>
-      ))}
-    </div>
-  );
-
   useEscapeKey(() => setIsDeckPanelOpen(false), {
     enabled: isDeckPanelOpen,
     ignoreEditable: false,
@@ -225,25 +205,10 @@ export default function CardFirstNav({
     ignoreEditable: false,
   });
   const navActions = (
-    <div className="static flex max-w-full shrink-0 items-center justify-end gap-1.5 sm:gap-2 lg:fixed lg:right-12 lg:top-8 lg:z-40 lg:max-w-[calc(100vw-1.5rem)] xl:right-[calc((100vw-72rem)/2+3rem)]">
-      <AuthStatus />
-      <button
-        type="button"
-        onClick={() => setIsDeckPanelOpen(true)}
-        aria-label="Open decks"
-        className="inline-flex h-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 px-3 text-xs font-semibold text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:h-11 sm:px-4 sm:text-sm"
-      >
-        Decks
-      </button>
-      <button
-        type="button"
-        onClick={() => setIsMenuOpen(true)}
-        aria-label="Open menu"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/88 text-xl leading-none text-[#5f5346] shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#f7f3ea] sm:h-11 sm:w-11 sm:text-2xl"
-      >
-        ☰
-      </button>
-    </div>
+    <HeaderButtons
+      onOpenDecks={() => setIsDeckPanelOpen(true)}
+      onOpenMenu={() => setIsMenuOpen(true)}
+    />
   );
 
   return (
@@ -260,194 +225,31 @@ export default function CardFirstNav({
       {children}
 
       {isDeckPanelOpen ? (
-        <div className="fixed inset-0 z-50 bg-[#3b3126]/40 p-4 backdrop-blur-sm">
-          <button
-            type="button"
-            aria-label="Close deck panel"
-            className="absolute inset-0 cursor-default"
-            onClick={() => setIsDeckPanelOpen(false)}
-          />
-          <aside className="relative flex h-full max-w-[360px] flex-col rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_24px_70px_rgba(87,72,52,0.28)]">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-[#332d25]">Decks</h2>
-              <button
-                type="button"
-                onClick={() => setIsDeckPanelOpen(false)}
-                className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-1 text-sm font-semibold text-[#7d705f]"
-              >
-                閉じる
-              </button>
-            </div>
-            <input
-              type="search"
-              value={deckSearchQuery}
-              onChange={(event) => setDeckSearchQuery(event.target.value)}
-              placeholder="Deckを検索"
-              className="mt-4 w-full rounded-[12px] border border-[#e8ddcb] bg-white/72 px-3 py-2 text-sm text-[#332d25] outline-none placeholder:text-[#a19380] focus:ring-2 focus:ring-[#e8ddcb]"
-            />
-
-            <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-              <div className="grid gap-2">
-                <Link
-                  href="/cards"
-                  onClick={() => setIsDeckPanelOpen(false)}
-                  className={`rounded-[14px] border px-4 py-3 text-sm font-semibold transition ${
-                    activeDeckId
-                      ? "border-[#e0d3c0] bg-[#fffaf0]/80 text-[#7d705f] hover:bg-white"
-                      : "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-                  }`}
-                >
-                  <span className="block">すべて</span>
-                  <span className="mt-1 block text-xs opacity-70">
-                    {isDataReady ? `${cards.length} cards` : "読み込み中"}
-                  </span>
-                </Link>
-
-                {filteredDecks.length > 0 ? (
-                  filteredDecks.map((deck) => {
-                    const deckIndex = reorderableDecks.findIndex(
-                      (item) => item.id === deck.id,
-                    );
-                    const canReorder = deck.id !== "uncategorized";
-                    const isFirstDeck = deckIndex === 0;
-                    const isLastDeck =
-                      deckIndex === reorderableDecks.length - 1;
-                    const isActiveDeck = activeDeckId === deck.id;
-                    const reorderButtonClass = `flex h-8 min-w-8 items-center justify-center rounded-full border px-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:opacity-35 ${
-                      isActiveDeck
-                        ? "border-white/24 bg-white/10 text-[#fffaf0] hover:bg-white/18"
-                        : "border-[#e0d3c0] bg-white/60 text-[#7d705f] hover:bg-white"
-                    }`;
-
-                    return (
-                      <div
-                        key={deck.id}
-                        className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[14px] border px-4 py-3 text-sm font-semibold transition ${
-                          isActiveDeck
-                            ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-                            : "border-[#e0d3c0] bg-[#fffaf0]/80 text-[#7d705f] hover:bg-white"
-                        }`}
-                      >
-                        <Link
-                          href={`/cards/${deck.id}`}
-                          onClick={() => setIsDeckPanelOpen(false)}
-                          className="min-w-0"
-                        >
-                          <span className="block truncate">{deck.name}</span>
-                          <span className="mt-1 block text-xs opacity-70">
-                            {isDataReady
-                              ? `${cardCountFor(deck.id)} cards`
-                              : "読み込み中"}
-                          </span>
-                        </Link>
-                        {canReorder ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              aria-label={`${deck.name}を上へ移動`}
-                              onClick={() => moveDeck(deck.id, "up")}
-                              disabled={isFirstDeck}
-                              className={reorderButtonClass}
-                            >
-                              ↑
-                            </button>
-                            <button
-                              type="button"
-                              aria-label={`${deck.name}を下へ移動`}
-                              onClick={() => moveDeck(deck.id, "down")}
-                              disabled={isLastDeck}
-                              className={reorderButtonClass}
-                            >
-                              ↓
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeckDeleteTarget(deck)}
-                              className={`h-8 rounded-full border px-2.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
-                                isActiveDeck
-                                  ? "border-white/28 bg-white/12 text-[#fffaf0] hover:bg-white/20"
-                                  : "border-[#e6c9be] bg-[#fff4ef] text-[#9b4b35] hover:bg-white"
-                              }`}
-                            >
-                              削除
-                            </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="rounded-[14px] border border-dashed border-[#d8c8aa] bg-white/56 px-4 py-4 text-sm font-semibold text-[#8d7f6e]">
-                    該当するDeckがありません
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-3 border-t border-[#eadfce] pt-3">
-              <button
-                type="button"
-                onClick={() => setIsDeckCreateOpen(true)}
-                className="w-full rounded-[14px] border border-dashed border-[#d8c8aa] bg-white/56 px-4 py-3 text-left text-sm font-semibold text-[#7d705f] transition hover:bg-white"
-              >
-                ＋ 新しいDeck
-              </button>
-            </div>
-          </aside>
-        </div>
+        <DeckPanel
+          activeDeckId={activeDeckId}
+          allCardsCount={cards.length}
+          cardCountFor={cardCountFor}
+          deckSearchQuery={deckSearchQuery}
+          filteredDecks={filteredDecks}
+          isDataReady={isDataReady}
+          onClose={() => setIsDeckPanelOpen(false)}
+          onCreateDeck={() => setIsDeckCreateOpen(true)}
+          onDeleteDeck={setDeckDeleteTarget}
+          onMoveDeck={moveDeck}
+          onSearchChange={setDeckSearchQuery}
+          reorderableDecks={reorderableDecks}
+        />
       ) : null}
 
       {isMenuOpen ? (
-        <div className="fixed inset-0 z-50 bg-[#3b3126]/40 p-4 backdrop-blur-sm">
-          <button
-            type="button"
-            aria-label="Close deck menu"
-            className="absolute inset-0 cursor-default"
-            onClick={() => setIsMenuOpen(false)}
-          />
-          <aside className="relative h-full max-w-[340px] rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_24px_70px_rgba(87,72,52,0.28)]">
-            <div className="flex h-full flex-col">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                  検索
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-1 text-sm font-semibold text-[#7d705f]"
-                >
-                  閉じる
-                </button>
-              </div>
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(event) => onSearchChange?.(event.target.value)}
-                placeholder="カードを検索（AND検索）"
-                className="mt-4 w-full rounded-[12px] border border-[#e8ddcb] bg-white/72 px-3 py-2 text-sm text-[#332d25] outline-none placeholder:text-[#a19380] focus:ring-2 focus:ring-[#e8ddcb]"
-              />
-              <div className="mt-6">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                  表示
-                </p>
-                <div className="mt-3">{displayButtons}</div>
-              </div>
-
-              <div className="mt-auto border-t border-[#eadfce] pt-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setIsAboutOpen(true);
-                  }}
-                  className="w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-4 py-3 text-left text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
-                >
-                  About Life Cards
-                </button>
-              </div>
-            </div>
-          </aside>
-        </div>
+        <CardSearchMenu
+          activeTab={activeTab}
+          searchQuery={searchQuery}
+          onClose={() => setIsMenuOpen(false)}
+          onOpenAbout={() => setIsAboutOpen(true)}
+          onSearchChange={onSearchChange}
+          onTabChange={onTabChange}
+        />
       ) : null}
 
       {deckDeleteTarget ? (
