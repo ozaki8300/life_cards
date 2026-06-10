@@ -5,8 +5,6 @@ import { useEffect } from "react";
 
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
-import useFullscreenImagePanZoom from "./useFullscreenImagePanZoom";
-
 type Props = {
   alt?: string;
   imageSrc: string;
@@ -18,21 +16,6 @@ export default function FullscreenImageViewer({
   imageSrc,
   onClose,
 }: Props) {
-  const {
-    isDragging,
-    offset,
-    reset,
-    scale,
-    handlePointerCancel,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handleTouchEnd,
-    handleTouchMove,
-    handleTouchStart,
-    handleDoubleClick,
-  } = useFullscreenImagePanZoom();
-
   useEscapeKey(onClose);
 
   useEffect(() => {
@@ -48,29 +31,23 @@ export default function FullscreenImageViewer({
     };
   }, []);
 
-  useEffect(() => {
-    reset();
-  }, [imageSrc, reset]);
-
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="画像ビューア"
       className="pointer-events-auto fixed inset-0 z-[80] h-[100dvh] w-screen overflow-hidden bg-[#050505] text-white"
+      onClick={(event) => event.stopPropagation()}
+      onPointerCancel={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerMove={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
+      onTouchEnd={(event) => event.stopPropagation()}
+      onTouchMove={(event) => event.stopPropagation()}
+      onTouchStart={(event) => event.stopPropagation()}
     >
       <div
-        className={`relative h-full w-full touch-none select-none overflow-hidden ${
-          scale > 1 ? (isDragging ? "cursor-grabbing" : "cursor-grab") : "cursor-zoom-in"
-        }`}
-        onPointerCancel={handlePointerCancel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchMove}
-        onTouchStart={handleTouchStart}
-        onDoubleClick={handleDoubleClick}
+        className="relative h-full w-full select-none overflow-hidden"
         style={{
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
@@ -78,10 +55,6 @@ export default function FullscreenImageViewer({
       >
         <div
           className="absolute inset-0"
-          style={{
-            transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
-            transformOrigin: "center center",
-          }}
         >
           <Image
             src={imageSrc}
@@ -107,10 +80,6 @@ export default function FullscreenImageViewer({
           </span>
         </button>
       </div>
-
-      <p className="pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-10 mx-auto w-fit rounded-full bg-black/45 px-3 py-1.5 text-xs font-medium text-white/72 backdrop-blur-md">
-        ダブルタップで拡大
-      </p>
     </div>
   );
 }
