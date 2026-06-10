@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { CardRepository } from "@/lib/cardRepository";
 import type { Card, Deck } from "@/lib/types";
@@ -26,13 +27,14 @@ export default function NewCardForm({
 }: Props) {
   const router = useRouter();
   const initialDeckId = deckId ?? deckOptions[0]?.id ?? "";
+  const [draftCardId] = useState(() => `card_${Date.now()}`);
 
   async function handleSubmit(
     values: CardFormValues,
     context: CardFormSubmitContext,
   ) {
     const nextCard: Card = {
-      id: `card_${Date.now()}`,
+      id: draftCardId,
       deckId: values.deckId,
       imageFitMode: values.imageFitMode,
       imagePath: values.imagePath,
@@ -69,7 +71,7 @@ export default function NewCardForm({
         </header>
 
         <CardForm
-          cardId="new_card_preview"
+          cardId={draftCardId}
           deckOptions={deckOptions}
           initialValues={{
             backText: "",
