@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import LoginButton from "@/components/auth/LoginButton";
+
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-[#f7f3ea] text-[#2f2a23]">
@@ -7,33 +9,26 @@ export default function Home() {
         <div className="grid items-center gap-12 lg:grid-cols-[1fr_360px]">
           <div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[#8d7f6e]">
-              Private memory decks
+              Private memory cards
             </p>
             <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">
               Life Cards
             </h1>
-            <p className="mt-6 max-w-xl whitespace-pre-line text-xl font-semibold leading-relaxed text-[#3c352c] sm:text-2xl">
-              {"保存する。\n再会する。\n意味が育つ。"}
+            <p className="mt-6 max-w-xl text-xl font-semibold leading-relaxed text-[#3c352c] sm:text-2xl">
+              保存した記憶と、もう一度出会う。
             </p>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#6f6253] sm:text-lg">
-              本を読んだときの気づき。
-              <br />
-              誰かとの会話で心に残った言葉。
-              <br />
-              ふと見上げた景色。
-              <br />
-              <br />
-              そんな瞬間をカードとして残し、未来の自分と再会するためのアプリです。
-              <br />
-              <br />
-              同じカードでも、時間が経つと違って見えることがあります。
+              カードに残した言葉、画像、メモを、時間をおいて見返すための小さな記憶アプリです。
             </p>
-            <Link
-              href="/cards"
-              className="mt-8 inline-flex rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
-            >
-              再会を始める
-            </Link>
+            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <Link
+                href="/cards"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#2f2a23] px-7 text-base font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#f7f3ea]"
+              >
+                はじめる
+              </Link>
+              <LoginButton className="h-10 bg-[#fffaf0]/62 px-4 text-sm" />
+            </div>
           </div>
 
           <div className="relative mx-auto h-[430px] w-full max-w-[330px]">
