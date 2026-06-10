@@ -52,6 +52,15 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        <footer className="mt-10 flex flex-wrap gap-4 text-sm font-semibold text-[#8d7f6e]">
+          <Link href="/privacy" className="transition hover:text-[#2f2a23]">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="transition hover:text-[#2f2a23]">
+            Terms of Service
+          </Link>
+        </footer>
       </section>
     </main>
   );
