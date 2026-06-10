@@ -302,7 +302,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         >
           <section>
             {viewStatus === "loading" ? (
-              <CardHomeStatus message="カードを読み込んでいます。" />
+              <CardHomeStatus isLoading message="カードを読み込んでいます" />
             ) : null}
             {viewStatus === "error" ? (
               <CardHomeStatus message="カードを読み込めませんでした。時間をおいてもう一度お試しください。" />
@@ -343,10 +343,30 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
   );
 }
 
-function CardHomeStatus({ message }: { message: string }) {
+function LoadingSpinner() {
   return (
-    <div className="rounded-[12px] border border-[#e8ddcb] bg-[#fffaf0] p-8 text-sm font-semibold text-[#8d7f6e] shadow-lg shadow-[#d7cab8]">
-      {message}
+    <span
+      className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#d8c8aa] border-t-[#6f6253]"
+      aria-hidden="true"
+    />
+  );
+}
+
+function CardHomeStatus({
+  isLoading = false,
+  message,
+}: {
+  isLoading?: boolean;
+  message: string;
+}) {
+  return (
+    <div
+      className="flex min-h-[160px] flex-col items-center justify-center gap-4 rounded-[12px] border border-[#e8ddcb] bg-[#fffaf0] p-8 text-center text-sm font-semibold text-[#8d7f6e] shadow-lg shadow-[#d7cab8]"
+      role={isLoading ? "status" : undefined}
+      aria-live={isLoading ? "polite" : undefined}
+    >
+      {isLoading ? <LoadingSpinner /> : null}
+      <span>{message}</span>
     </div>
   );
 }
