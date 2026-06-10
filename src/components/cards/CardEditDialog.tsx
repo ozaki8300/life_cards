@@ -15,12 +15,14 @@ export default function CardEditDialog({
   currentCards,
   decks,
   onClose,
+  onDecksChange,
   onSaved,
 }: {
   card: Card;
   currentCards: Card[];
   decks: Deck[];
   onClose: () => void;
+  onDecksChange?: (decks: Deck[]) => void;
   onSaved?: (card: Card) => void;
 }) {
   useEscapeKey(onClose);
@@ -88,6 +90,7 @@ export default function CardEditDialog({
         }}
         mode="edit"
         onCancel={onClose}
+        onDecksChange={onDecksChange}
         onSubmit={handleSubmit}
       />
     </div>

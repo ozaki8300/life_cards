@@ -17,6 +17,7 @@ type Props = {
   favoriteIds?: string[];
   layout?: "grid" | "rail";
   onCardViewed?: (cardId: string) => void;
+  onDecksChange?: (decks: Deck[]) => void;
   onDeleteCard?: (cardId: string) => void;
   onUpdateCard?: (card: Card) => void;
   onToggleFavorite?: (cardId: string) => void;
@@ -50,6 +51,7 @@ export default function TradingCardGrid({
   favoriteIds,
   layout = "grid",
   onCardViewed,
+  onDecksChange,
   onDeleteCard,
   onUpdateCard,
   onToggleFavorite,
@@ -129,7 +131,6 @@ export default function TradingCardGrid({
           ? {
               ...card,
               imagePath: signedImagePath || card.imagePath,
-              imageStoragePath: undefined,
             }
           : card;
       }),
@@ -536,6 +537,7 @@ export default function TradingCardGrid({
                   currentCards={currentCardsForEdit}
                   decks={decks}
                   onClose={() => setIsEditing(false)}
+                  onDecksChange={onDecksChange}
                   onSaved={handleCardSaved}
                 />
               ) : (

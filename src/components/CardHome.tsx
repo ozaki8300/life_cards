@@ -282,6 +282,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
           editSeedCards={allCards}
           favoriteIds={activeFavoriteIds}
           onCardViewed={recordCardReencounter}
+          onDecksChange={setAllDecks}
           onDeleteCard={handleDeleteCard}
           onUpdateCard={handleUpdateCard}
           onToggleFavorite={toggleFavorite}
@@ -319,6 +320,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
                 editSeedCards={allCards}
                 favoriteIds={activeFavoriteIds}
                 onCardViewed={recordCardView}
+                onDecksChange={setAllDecks}
                 onDeleteCard={handleDeleteCard}
                 onUpdateCard={handleUpdateCard}
                 onToggleFavorite={toggleFavorite}

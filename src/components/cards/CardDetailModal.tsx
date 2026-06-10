@@ -47,7 +47,10 @@ export default function CardDetailModal({
   const shouldSkipNextClick = useRef(false);
   const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
   const backgroundImage = card.imagePath || defaultImageForCard(card.id);
-  const hasImage = Boolean(card.imagePath?.trim());
+  const hasAttachedImage = Boolean(
+    card.imagePath?.trim() || card.imageStoragePath?.trim(),
+  );
+  const canOpenFullscreen = Boolean(card.imagePath?.trim());
   const date = formatDate(card.createdAt);
   const {
     viewMode,
@@ -99,7 +102,7 @@ export default function CardDetailModal({
   }
 
   function openFullscreenPhoto() {
-    if (!hasImage) {
+    if (!canOpenFullscreen) {
       return;
     }
 
@@ -211,7 +214,7 @@ export default function CardDetailModal({
 
       <div className="pointer-events-auto">
         <CardDetailActionBar
-          hasImage={hasImage}
+          hasImage={hasAttachedImage && canOpenFullscreen}
           onClose={onClose}
           onDelete={onDelete}
           onEdit={onEdit}

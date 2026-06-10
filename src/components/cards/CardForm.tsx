@@ -56,6 +56,7 @@ type Props = {
   initialValues: CardFormValues;
   mode: "new" | "edit";
   onCancel?: () => void;
+  onDecksChange?: (decks: Deck[]) => void;
   onSubmit: (
     values: CardFormValues,
     context: CardFormSubmitContext,
@@ -68,6 +69,7 @@ export default function CardForm({
   deckOptions,
   initialValues,
   onCancel,
+  onDecksChange,
   onSubmit,
   saveLabel = "保存",
 }: Props) {
@@ -269,6 +271,7 @@ export default function CardForm({
 
     setAvailableDecks(nextDecks);
     setSelectedDeckId(nextDeck.id);
+    onDecksChange?.(nextDecks);
     setIsDeckModalOpen(false);
   }
 

@@ -49,6 +49,7 @@ export default function NewCardForm({
       expectsCloudSave: context.expectsCloudSave,
     });
     router.push(backHref);
+    router.refresh();
   }
 
   return (
