@@ -76,8 +76,7 @@ export default function CardDetailModal({
   const canOpenFullscreen = Boolean(displayImagePath);
   const imageResolveFailed =
     storageResolutionMatches && resolvedStorageImage.status === "error";
-  const canRequestFullscreen =
-    hasAttachedImage && !imageResolveFailed && !isResolvingFullscreenImage;
+  const actionBarHasImage = hasAttachedImage;
   const date = formatDate(card.createdAt);
   const {
     viewMode,
@@ -93,7 +92,7 @@ export default function CardDetailModal({
 
   useEffect(() => {
     debugImageState("render values", {
-      actionBarHasImage: canRequestFullscreen,
+      actionBarHasImage,
       canOpenFullscreen,
       cardId: card.id,
       cardImagePath: card.imagePath,
@@ -106,8 +105,8 @@ export default function CardDetailModal({
       resolvedStorageImage,
     });
   }, [
+    actionBarHasImage,
     canOpenFullscreen,
-    canRequestFullscreen,
     card.id,
     card.imagePath,
     card.imageStoragePath,
@@ -219,7 +218,7 @@ export default function CardDetailModal({
 
     debugImageState("open requested", {
       canOpenFullscreen,
-      canRequestFullscreen,
+      actionBarHasImage,
       cardId: card.id,
       directImagePath,
       displayImagePath,
@@ -238,7 +237,7 @@ export default function CardDetailModal({
       return;
     }
 
-    if (!imageStoragePath || imageResolveFailed) {
+    if (!imageStoragePath) {
       return;
     }
 
@@ -393,7 +392,7 @@ export default function CardDetailModal({
 
       <div className="pointer-events-auto">
         <CardDetailActionBar
-          hasImage={canRequestFullscreen}
+          hasImage={actionBarHasImage}
           onClose={onClose}
           onDelete={onDelete}
           onEdit={onEdit}
