@@ -5,6 +5,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 export type UsageEventName =
   | "app_opened"
   | "card_created"
+  | "copy_for_ai_used"
   | "reencounter_opened"
   | "share_created";
 

@@ -89,6 +89,17 @@ function ImageIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+function AiIcon() {
+  return (
+    <span
+      aria-hidden="true"
+      className="text-[0.78rem] font-bold tracking-normal sm:text-sm"
+    >
+      AI
+    </span>
+  );
+}
+
 function TrashIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg
@@ -114,19 +125,32 @@ type Props = {
   onClose: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onCopyForAi?: () => void;
   onOpenPhoto: () => void;
   onShare: () => void;
+  copyForAiStatus?: "copied" | "failed" | "idle" | "working";
   hasImage: boolean;
+  showCopyForAi?: boolean;
 };
 
 export default function CardDetailActionBar({
   onClose,
   onDelete,
   onEdit,
+  onCopyForAi,
   onOpenPhoto,
   onShare,
+  copyForAiStatus = "idle",
   hasImage,
+  showCopyForAi = false,
 }: Props) {
+  const copyForAiLabel =
+    copyForAiStatus === "copied"
+      ? "AIに渡すMarkdownをコピーしました"
+      : copyForAiStatus === "failed"
+        ? "AIに渡すMarkdownをコピーできませんでした"
+        : "AIに渡す";
+
   return (
     <section className={actionBarClass}>
       <button
@@ -137,6 +161,18 @@ export default function CardDetailActionBar({
       >
         <QrCodeIcon />
       </button>
+      {showCopyForAi ? (
+        <button
+          type="button"
+          aria-label={copyForAiLabel}
+          title={copyForAiLabel}
+          onClick={onCopyForAi}
+          disabled={copyForAiStatus === "working"}
+          className={actionButtonClass}
+        >
+          <AiIcon />
+        </button>
+      ) : null}
       <button
         type="button"
         aria-label="編集"

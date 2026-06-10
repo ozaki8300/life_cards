@@ -3,8 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, TouchEvent } from "react";
 
+import { createCopyForAiMarkdown } from "@/lib/copyForAi";
+import {
+  COPY_FOR_AI_LOCAL_STORAGE_KEY,
+  isCopyForAiEnabled,
+} from "@/lib/featureFlags";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card } from "@/lib/types";
+import { recordUsageEvent } from "@/lib/usageEvents";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
 import CardFace from "./CardFace";
@@ -65,11 +71,17 @@ export default function CardDetailModal({
     useState(false);
   const [isResolvingFullscreenImage, setIsResolvingFullscreenImage] =
     useState(false);
+  const [isCopyForAiVisible, setIsCopyForAiVisible] = useState(false);
+  const [copyForAiStatus, setCopyForAiStatus] = useState<
+    "copied" | "failed" | "idle" | "working"
+  >("idle");
   const [resolvedStorageImage, setResolvedStorageImage] = useState<{
     signedUrl: string;
     status: "error" | "resolved";
     storagePath: string;
   } | null>(null);
+  const copyForAiStatusResetTimerRef =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageStoragePath = card.imageStoragePath?.trim() ?? "";
   const storageResolutionMatches =
     resolvedStorageImage?.storagePath === imageStoragePath;
@@ -98,6 +110,33 @@ export default function CardDetailModal({
   useEscapeKey(() => {
     onClose();
   });
+
+  useEffect(() => {
+    function syncCopyForAiFlag() {
+      setIsCopyForAiVisible(isCopyForAiEnabled());
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === COPY_FOR_AI_LOCAL_STORAGE_KEY) {
+        syncCopyForAiFlag();
+      }
+    }
+
+    syncCopyForAiFlag();
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (copyForAiStatusResetTimerRef.current) {
+        clearTimeout(copyForAiStatusResetTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     debugImageState("render values", {
@@ -320,6 +359,69 @@ export default function CardDetailModal({
     }
   }
 
+  function showCopyForAiStatus(status: "copied" | "failed") {
+    if (copyForAiStatusResetTimerRef.current) {
+      clearTimeout(copyForAiStatusResetTimerRef.current);
+    }
+
+    setCopyForAiStatus(status);
+    copyForAiStatusResetTimerRef.current = setTimeout(() => {
+      setCopyForAiStatus("idle");
+      copyForAiStatusResetTimerRef.current = null;
+    }, 1500);
+  }
+
+  async function copyMarkdownToClipboard(markdown: string) {
+    await navigator.clipboard.writeText(markdown);
+  }
+
+  function canUseNativeShare() {
+    return (
+      typeof navigator.share === "function" &&
+      typeof navigator.maxTouchPoints === "number" &&
+      navigator.maxTouchPoints > 0
+    );
+  }
+
+  async function handleCopyForAi() {
+    const markdown = createCopyForAiMarkdown(card, { deckLabel });
+
+    setCopyForAiStatus("working");
+
+    try {
+      if (canUseNativeShare()) {
+        await navigator.share({
+          title: "Life Card",
+          text: markdown,
+        });
+      } else {
+        await copyMarkdownToClipboard(markdown);
+      }
+
+      showCopyForAiStatus("copied");
+      void recordUsageEvent("copy_for_ai_used", {
+        cardId: card.id,
+        deckId: card.deckId,
+      });
+    } catch (shareError) {
+      try {
+        await copyMarkdownToClipboard(markdown);
+        showCopyForAiStatus("copied");
+        void recordUsageEvent("copy_for_ai_used", {
+          cardId: card.id,
+          deckId: card.deckId,
+          fallback: true,
+        });
+      } catch (clipboardError) {
+        console.warn("Life Cards Copy for AI failed", {
+          clipboardError,
+          shareError,
+        });
+        showCopyForAiStatus("failed");
+      }
+    }
+  }
+
   const previousNavPositionClass = "left-[-1.25rem] sm:left-[-3.5rem]";
   const nextNavPositionClass = "right-[-1.25rem] sm:right-[-3.5rem]";
 
@@ -425,12 +527,15 @@ export default function CardDetailModal({
 
       <div className="pointer-events-auto">
         <CardDetailActionBar
+          copyForAiStatus={copyForAiStatus}
           hasImage={actionBarHasImage}
           onClose={onClose}
+          onCopyForAi={handleCopyForAi}
           onDelete={onDelete}
           onEdit={onEdit}
           onOpenPhoto={openFullscreenPhoto}
           onShare={onShare}
+          showCopyForAi={isCopyForAiVisible}
         />
       </div>
 
