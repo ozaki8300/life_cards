@@ -146,16 +146,12 @@ export default function TradingCardGrid({
   const selectedCard =
     selectedIndex === null ? null : displayCards[selectedIndex] ?? null;
   const hasMultipleCards = displayCards.length > 1;
-  const nextFullscreenImageIndex =
-    selectedIndex === null
-      ? null
-      : displayCards.findIndex(
-          (card, index) =>
-            index > selectedIndex &&
-            Boolean(card.imagePath?.trim() || card.imageStoragePath?.trim()),
-        );
-  const canGoNextFullscreenImage =
-    nextFullscreenImageIndex !== null && nextFullscreenImageIndex !== -1;
+  const fullscreenImageIndexes = displayCards
+    .map((card, index) =>
+      card.imagePath?.trim() || card.imageStoragePath?.trim() ? index : -1,
+    )
+    .filter((index) => index >= 0);
+  const canGoNextFullscreenImage = fullscreenImageIndexes.length >= 2;
   const shouldShowCarouselIndicator =
     layout === "rail" && showCarouselIndicator && cards.length > 1;
 
@@ -408,16 +404,17 @@ export default function TradingCardGrid({
   }
 
   async function showNextFullscreenImage() {
-    if (selectedIndex === null) {
+    if (selectedIndex === null || fullscreenImageIndexes.length < 2) {
       return null;
     }
 
-    for (let index = selectedIndex + 1; index < displayCards.length; index += 1) {
-      const card = displayCards[index];
+    const nextCandidateIndexes = [
+      ...fullscreenImageIndexes.filter((index) => index > selectedIndex),
+      ...fullscreenImageIndexes.filter((index) => index < selectedIndex),
+    ];
 
-      if (!card.imagePath?.trim() && !card.imageStoragePath?.trim()) {
-        continue;
-      }
+    for (const index of nextCandidateIndexes) {
+      const card = displayCards[index];
 
       try {
         const imageUrl = await imageUrlForFullscreen(card);
