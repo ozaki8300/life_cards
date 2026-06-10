@@ -157,7 +157,31 @@ primary key (user_id, card_id)
 - `life_cards.encounters` の `Record<string, EncounterMetadata>` を Supabase では `(user_id, card_id)` の行として表す。
 - Reencounter Engine に渡す時は Supabase rows を `Record<cardId, EncounterMetadata>` に adapter で変換する。
 
-## 6. Storage
+## 6. Usage Events Table
+
+候補 table:
+
+```sql
+usage_events
+```
+
+候補 columns:
+
+- `id uuid primary key default gen_random_uuid()`
+- `user_id uuid not null references auth.users(id) on delete cascade`
+- `event_name text not null`
+- `metadata jsonb not null default '{}'::jsonb`
+- `created_at timestamptz not null default now()`
+
+補足:
+
+- App Store 前の最小 KPI 用。外部 analytics は導入しない。
+- 初期 event は `app_opened` / `card_created` / `reencounter_opened` / `share_created`。
+- `metadata` は optional な補助情報だけを入れる。画像本文や不要な個人情報は入れない。
+- RLS は自分の row の select / insert のみにする。public read は不可。
+- `user_id` は `auth.users(id)` への cascade 参照なので、アカウント削除時に event も削除される。
+
+## 7. Storage
 
 候補 bucket:
 
@@ -187,7 +211,7 @@ users/{userId}/cards/{cardId}/front.webp
 
 この cleanup は Supabase Storage 実装時に別途決める。
 
-## 7. RLS 方針
+## 8. RLS 方針
 
 基本方針:
 
@@ -202,6 +226,12 @@ user_id = auth.uid()
 - 自分の row だけ `update` できる。
 - 自分の row だけ `delete` できる。
 
+`usage_events`:
+
+- 自分の row だけ `select` できる。
+- 自分の row だけ `insert` できる。
+- 初期では `update` / `delete` は作らない。
+
 Storage:
 
 - `card-images` bucket は user path 単位で制限する。
@@ -214,7 +244,7 @@ Storage:
 - `is_shared` は schema 上残しても、RLS では共有用途に使わない。
 - 将来の共有機能は RLS 設計を別フェーズで作り直す。
 
-## 8. localStorage との関係
+## 9. localStorage との関係
 
 現在の localStorage:
 

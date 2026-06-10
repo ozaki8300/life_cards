@@ -9,6 +9,7 @@ import { EncounterRepository } from "@/lib/encounterRepository";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 import type { Card, Deck } from "@/lib/types";
+import { recordUsageEvent } from "@/lib/usageEvents";
 
 export type CardHomeLoadStatus = "loading" | "ready" | "empty" | "error";
 
@@ -170,6 +171,9 @@ export default function useCardHomeData({
       );
 
     setEncounterMetadataByCardId(nextEncounterMetadata);
+    await recordUsageEvent("reencounter_opened", {
+      card_id: cardId,
+    });
   }, []);
 
   const handleDeleteCard = useCallback(

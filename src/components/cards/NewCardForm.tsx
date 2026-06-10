@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { CardRepository } from "@/lib/cardRepository";
 import type { Card, Deck } from "@/lib/types";
+import { recordUsageEvent } from "@/lib/usageEvents";
 
 import CardForm, {
   type CardFormSubmitContext,
@@ -50,6 +51,10 @@ export default function NewCardForm({
 
     await CardRepository.saveCardForCurrentUser(nextCard, undefined, {
       expectsCloudSave: context.expectsCloudSave,
+    });
+    await recordUsageEvent("card_created", {
+      card_id: nextCard.id,
+      deck_id: nextCard.deckId,
     });
     router.push(backHref);
     router.refresh();

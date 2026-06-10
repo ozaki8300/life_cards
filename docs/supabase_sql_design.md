@@ -136,6 +136,25 @@ create table if not exists public.encounters (
 - 初期削除方針は cards の物理削除を推奨するため、encounter は cascade で削除する。
 - soft delete を将来採用する場合、encounter を残すか cleanup するかは別途決める。
 
+### usage_events
+
+```sql
+create table if not exists public.usage_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  event_name text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+```
+
+補足:
+
+- App Store 前の最小 KPI 用。外部 analytics は導入しない。
+- 初期 event は `app_opened` / `card_created` / `reencounter_opened` / `share_created`。
+- `metadata` は optional な補助情報だけを入れる。
+- account deletion 時は `user_id` cascade で削除される。
+
 ## 4. Indexes
 
 ```sql
@@ -150,6 +169,12 @@ create index if not exists cards_user_updated_at_idx
 
 create index if not exists encounters_user_next_reencounter_at_idx
   on public.encounters (user_id, next_reencounter_at);
+
+create index if not exists usage_events_user_created_at_idx
+  on public.usage_events (user_id, created_at desc);
+
+create index if not exists usage_events_user_event_name_idx
+  on public.usage_events (user_id, event_name);
 ```
 
 補足:
@@ -172,6 +197,7 @@ alter table public.profiles enable row level security;
 alter table public.decks enable row level security;
 alter table public.cards enable row level security;
 alter table public.encounters enable row level security;
+alter table public.usage_events enable row level security;
 ```
 
 ## 6. Profiles RLS
@@ -281,7 +307,26 @@ create policy "encounters_delete_own"
   using (user_id = auth.uid());
 ```
 
-## 10. Storage Policy 案
+## 10. Usage Events RLS
+
+```sql
+create policy "usage_events_select_own"
+  on public.usage_events
+  for select
+  using (user_id = auth.uid());
+
+create policy "usage_events_insert_own"
+  on public.usage_events
+  for insert
+  with check (user_id = auth.uid());
+```
+
+補足:
+
+- 初期 KPI では update / delete policy は作らない。
+- public read は許可しない。
+
+## 11. Storage Policy 案
 
 候補 bucket:
 

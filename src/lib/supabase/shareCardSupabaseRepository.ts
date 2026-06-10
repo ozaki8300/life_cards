@@ -7,6 +7,7 @@ import {
 } from "@/lib/shareCardPayload";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Card } from "@/lib/types";
+import { recordUsageEvent } from "@/lib/usageEvents";
 
 const shareDurationMs = 7 * 24 * 60 * 60 * 1000;
 const shareTokenByteLength = 24;
@@ -162,6 +163,11 @@ export async function createShareCardForCurrentUser(
       `share_cards insert failed: ${error.message} (${error.code ?? "no-code"})`,
     );
   }
+
+  await recordUsageEvent("share_created", {
+    card_id: card.id,
+    share_type: shareType,
+  });
 
   return {
     expiresAt,

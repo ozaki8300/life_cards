@@ -12,7 +12,7 @@
 
 ## 結論
 
-Supabase SQL Editor に貼る v1 SQL は、`decks` / `cards` / `encounters` の 3 table に絞る。
+Supabase SQL Editor に貼る v1 SQL は、`decks` / `cards` / `encounters` / `usage_events` の 4 table に絞る。
 
 - `profiles` は今回作らない。
 - 削除方針は初期 v1 では物理削除にする。
@@ -34,6 +34,7 @@ Supabase SQL Editor に貼る v1 SQL は、`decks` / `cards` / `encounters` の 
 public.decks
 public.cards
 public.encounters
+public.usage_events
 ```
 
 今回作らない table:
@@ -76,6 +77,7 @@ encounters: user_id,card_id
 1. `decks`
 2. `cards`
 3. `encounters`
+4. `usage_events`
 
 参照関係:
 
@@ -150,6 +152,9 @@ user_id = auth.uid()
 
 この v1 では共有機能を作らないため、`is_shared` は RLS に使わない。
 
+`usage_events` は App Store 前の最小 KPI 用に、自分の row だけ select / insert できる。
+update / delete は初期では作らない。
+
 ## Supabase SQL Editor 用 最終 SQL 案
 
 以下を Supabase SQL Editor に貼って実行する想定。
@@ -163,6 +168,8 @@ user_id = auth.uid()
 
 ```sql
 begin;
+
+create extension if not exists pgcrypto;
 
 create table if not exists public.decks (
   id text not null,
@@ -226,9 +233,24 @@ create index if not exists cards_user_updated_at_idx
 create index if not exists encounters_user_next_reencounter_at_idx
   on public.encounters (user_id, next_reencounter_at);
 
+create table if not exists public.usage_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  event_name text not null,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists usage_events_user_created_at_idx
+  on public.usage_events (user_id, created_at desc);
+
+create index if not exists usage_events_user_event_name_idx
+  on public.usage_events (user_id, event_name);
+
 alter table public.decks enable row level security;
 alter table public.cards enable row level security;
 alter table public.encounters enable row level security;
+alter table public.usage_events enable row level security;
 
 drop policy if exists "decks_select_own" on public.decks;
 drop policy if exists "decks_insert_own" on public.decks;
@@ -308,6 +330,19 @@ create policy "encounters_delete_own"
   for delete
   using (user_id = auth.uid());
 
+drop policy if exists "usage_events_select_own" on public.usage_events;
+drop policy if exists "usage_events_insert_own" on public.usage_events;
+
+create policy "usage_events_select_own"
+  on public.usage_events
+  for select
+  using (user_id = auth.uid());
+
+create policy "usage_events_insert_own"
+  on public.usage_events
+  for insert
+  with check (user_id = auth.uid());
+
 commit;
 ```
 
@@ -321,5 +356,6 @@ commit;
 - card 削除時は `encounters` が cascade delete されることを確認する。
 - image data URL は DB に入れない方針を維持する。Storage upload は後続フェーズで扱う。
 - Storage bucket `card-images` と Storage RLS は、この SQL とは別に設計確認してから適用する。
+- `usage_events` は自前の最小 KPI 用。外部 analytics は使わず、app 側で `app_opened` を user / date 単位に抑制する。
 - `updated_at` は default のみで自動更新 trigger は未作成。update 時は app / repository 側で値を更新する。
 - 既存 table がある環境へ適用する場合は、この SQL だけでは schema drift を修正しない。差分を手動確認する。

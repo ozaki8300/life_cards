@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { Card, Deck } from "@/lib/types";
+import { recordDailyAppOpened } from "@/lib/usageEvents";
 
 import CardFirstNav from "./CardFirstNav";
 import ProfileSetupModal from "./auth/ProfileSetupModal";
@@ -93,6 +94,12 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
       : loadStatus === "ready" && visibleCards.length === 0
         ? "filteredEmpty"
         : loadStatus;
+
+  useEffect(() => {
+    if (isDataReady) {
+      void recordDailyAppOpened();
+    }
+  }, [isDataReady]);
 
   const activeFavoriteIds = Array.from(favoriteIds);
   const todayCards = useReencounterCards({
