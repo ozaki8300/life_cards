@@ -81,6 +81,7 @@ export default function NewCardForm({
             linkUrl: "",
           }}
           mode="new"
+          onCancel={() => router.push(backHref)}
           onSubmit={handleSubmit}
         />
       </section>

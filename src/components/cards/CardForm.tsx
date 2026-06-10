@@ -368,7 +368,7 @@ export default function CardForm({
     <>
       <form
         onSubmit={handleSubmit}
-        className="grid min-w-0 gap-5 pb-[calc(env(safe-area-inset-bottom)+7rem)] lg:grid-cols-[minmax(280px,0.42fr)_minmax(0,0.58fr)] lg:items-start"
+        className="grid min-w-0 gap-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:grid-cols-[minmax(280px,0.42fr)_minmax(0,0.58fr)] lg:items-start"
       >
         <input type="hidden" name="deckId" value={selectedDeckId} />
         <input type="hidden" name="imageAction" value={imageLabel} />
@@ -568,7 +568,7 @@ export default function CardForm({
             />
           </label>
 
-          <div className="sticky bottom-[env(safe-area-inset-bottom)] z-10 -mx-4 -mb-4 grid gap-2 border-t border-[#eadfce] bg-[#fffaf0]/92 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:bottom-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 sm:pb-4">
+          <div className="mt-2 grid gap-3 border-t border-[#eadfce] pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
             <button
               type="submit"
               disabled={
@@ -577,7 +577,7 @@ export default function CardForm({
                 isSaving ||
                 saveStatus === "success"
               }
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-[0_10px_24px_rgba(87,72,52,0.16)] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none sm:w-auto sm:justify-self-start"
             >
               {isSaving ? (
                 <span
@@ -596,7 +596,7 @@ export default function CardForm({
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-full border border-[#e0d3c0] bg-white/72 px-6 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#e0d3c0] bg-white/72 px-6 py-3 text-sm font-semibold text-[#7d705f] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0] sm:w-auto"
               >
                 閉じる
               </button>
