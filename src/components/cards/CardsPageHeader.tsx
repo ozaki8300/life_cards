@@ -19,7 +19,8 @@ export default function CardsPageHeader({ cardCount, deckName }: Props) {
         {isDeckPage ? (
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <p className="text-sm font-medium text-[#8d7f6e]">
-              {deckName} ・ {cardCount ?? 0} cards
+              {deckName}
+              {typeof cardCount === "number" ? ` ・ ${cardCount} cards` : ""}
             </p>
             <Link
               href="/cards"

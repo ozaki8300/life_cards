@@ -22,6 +22,9 @@ import {
   sortCardsByNewest,
 } from "./cards/cardHomeUtils";
 
+type LoadStatus = "loading" | "ready" | "empty" | "error";
+type ViewStatus = LoadStatus | "filteredEmpty";
+
 type Props = {
   cards: Card[];
   decks: Deck[];
@@ -29,8 +32,9 @@ type Props = {
 };
 
 export default function CardHome({ cards, decks, activeDeckId }: Props) {
-  const [allCards, setAllCards] = useState(cards);
-  const [allDecks, setAllDecks] = useState(decks);
+  const [allCards, setAllCards] = useState<Card[]>([]);
+  const [allDecks, setAllDecks] = useState<Deck[]>([]);
+  const [loadStatus, setLoadStatus] = useState<LoadStatus>("loading");
   const [activeTab, setActiveTab] = useState("すべて");
   const [searchQuery, setSearchQuery] = useState("");
   const [encounterMetadataByCardId, setEncounterMetadataByCardId] = useState<
@@ -38,12 +42,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
   >({});
   const [isProfileSetupOpen, setIsProfileSetupOpen] = useState(false);
   const [profileDisplayName, setProfileDisplayName] = useState("");
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(
-    () =>
-      new Set(
-        cards.filter((card) => card.isFavorite).map((card) => card.id),
-      ),
-  );
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(() => new Set());
   const scopedCards = useMemo(
     () =>
       activeDeckId
@@ -60,26 +59,45 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         return;
       }
 
-      const repositoryDecks = await DeckRepository.getDecksForCurrentUser(decks);
-      const repositoryCards =
-        await CardRepository.getCardsForCurrentUser(cards);
-      const repositoryEncounterMetadata =
-        await EncounterRepository.getMetadataMapForCurrentUser();
+      setLoadStatus("loading");
 
-      if (!isActive) {
-        return;
+      try {
+        const supabase = createSupabaseBrowserClient();
+        await supabase.auth.getSession();
+
+        const [repositoryDecks, repositoryCards, repositoryEncounterMetadata] =
+          await Promise.all([
+            DeckRepository.getDecksForCurrentUser(decks),
+            CardRepository.getCardsForCurrentUser(cards),
+            EncounterRepository.getMetadataMapForCurrentUser(),
+          ]);
+
+        if (!isActive) {
+          return;
+        }
+
+        setAllCards(repositoryCards);
+        setAllDecks(repositoryDecks);
+        setEncounterMetadataByCardId(repositoryEncounterMetadata);
+        setFavoriteIds(
+          new Set(
+            repositoryCards
+              .filter((card) => card.isFavorite)
+              .map((card) => card.id),
+          ),
+        );
+        setLoadStatus(repositoryCards.length === 0 ? "empty" : "ready");
+      } catch {
+        if (!isActive) {
+          return;
+        }
+
+        setAllCards([]);
+        setAllDecks([]);
+        setEncounterMetadataByCardId({});
+        setFavoriteIds(new Set());
+        setLoadStatus("error");
       }
-
-      setAllCards(repositoryCards);
-      setAllDecks(repositoryDecks);
-      setEncounterMetadataByCardId(repositoryEncounterMetadata);
-      setFavoriteIds(
-        new Set(
-          repositoryCards
-            .filter((card) => card.isFavorite)
-            .map((card) => card.id),
-        ),
-      );
     });
 
     return () => {
@@ -148,6 +166,13 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
       (activeDeckId === "uncategorized" ? "未分類" : "Deck")
     );
   }, [activeDeckId, allDecks]);
+  const isDataReady = loadStatus === "ready" || loadStatus === "empty";
+  const viewStatus: ViewStatus =
+    loadStatus === "ready" && scopedCards.length === 0
+      ? "empty"
+      : loadStatus === "ready" && visibleCards.length === 0
+        ? "filteredEmpty"
+        : loadStatus;
 
   async function toggleFavorite(cardId: string) {
     const card = allCards.find((item) => item.id === cardId);
@@ -242,7 +267,9 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
   return (
     <>
       <CardsPageHeader
-        cardCount={activeDeckId ? scopedCards.length : undefined}
+        cardCount={
+          activeDeckId && isDataReady ? scopedCards.length : undefined
+        }
         deckName={activeDeckName}
       />
 
@@ -265,6 +292,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
           activeTab={activeTab}
           cards={allCards}
           decks={allDecks}
+          isDataReady={isDataReady}
           searchQuery={searchQuery}
           onCardsChange={setAllCards}
           onDecksChange={setAllDecks}
@@ -272,16 +300,30 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
           onSearchChange={setSearchQuery}
         >
           <section>
-            <TradingCardGrid
-              cards={visibleCards}
-              decks={allDecks}
-              editSeedCards={allCards}
-              favoriteIds={activeFavoriteIds}
-              onCardViewed={recordCardView}
-              onDeleteCard={handleDeleteCard}
-              onUpdateCard={handleUpdateCard}
-              onToggleFavorite={toggleFavorite}
-            />
+            {viewStatus === "loading" ? (
+              <CardHomeStatus message="カードを読み込んでいます。" />
+            ) : null}
+            {viewStatus === "error" ? (
+              <CardHomeStatus message="カードを読み込めませんでした。時間をおいてもう一度お試しください。" />
+            ) : null}
+            {viewStatus === "empty" ? (
+              <CardHomeStatus message="No cards yet." />
+            ) : null}
+            {viewStatus === "filteredEmpty" ? (
+              <CardHomeStatus message="該当するカードがありません。" />
+            ) : null}
+            {viewStatus === "ready" ? (
+              <TradingCardGrid
+                cards={visibleCards}
+                decks={allDecks}
+                editSeedCards={allCards}
+                favoriteIds={activeFavoriteIds}
+                onCardViewed={recordCardView}
+                onDeleteCard={handleDeleteCard}
+                onUpdateCard={handleUpdateCard}
+                onToggleFavorite={toggleFavorite}
+              />
+            ) : null}
           </section>
         </CardFirstNav>
       </div>
@@ -296,5 +338,13 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         />
       ) : null}
     </>
+  );
+}
+
+function CardHomeStatus({ message }: { message: string }) {
+  return (
+    <div className="rounded-[12px] border border-[#e8ddcb] bg-[#fffaf0] p-8 text-sm font-semibold text-[#8d7f6e] shadow-lg shadow-[#d7cab8]">
+      {message}
+    </div>
   );
 }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 import { DeckRepository } from "@/lib/deckRepository";
-import { cardSaveErrorMessage } from "@/lib/cardSaveErrors";
 import { compressImage } from "@/lib/imageCompression";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { CardImageFitMode, Deck } from "@/lib/types";
@@ -99,6 +98,10 @@ export default function CardForm({
   const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState("");
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "success" | "error"
+  >("idle");
+  const isSavingRef = useRef(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const screenshotInputRef = useRef<HTMLInputElement>(null);
@@ -130,7 +133,7 @@ export default function CardForm({
         setImagePath("");
         setImageLabel("");
         setImageErrorMessage(
-          "画像を圧縮できませんでした。別の写真を選んでください。",
+          "画像を準備できませんでした。別の写真を選んでください。",
         );
       }
     },
@@ -293,15 +296,26 @@ export default function CardForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isSavingRef.current) {
+      return;
+    }
+
+    isSavingRef.current = true;
+    setSaveStatus("saving");
     setSaveErrorMessage("");
 
     if (!isAuthResolved) {
       setSaveErrorMessage("保存先を確認中です。少し待ってからもう一度お試しください。");
+      setSaveStatus("error");
+      isSavingRef.current = false;
       return;
     }
 
     if (!isDecksResolved) {
       setSaveErrorMessage("保存先のデッキを確認中です。少し待ってからもう一度お試しください。");
+      setSaveStatus("error");
+      isSavingRef.current = false;
       return;
     }
 
@@ -311,6 +325,8 @@ export default function CardForm({
 
     if (!selectedDeck) {
       setSaveErrorMessage("保存先のデッキを確認できませんでした。デッキを選び直してください。");
+      setSaveStatus("error");
+      isSavingRef.current = false;
       return;
     }
 
@@ -330,11 +346,23 @@ export default function CardForm({
       await onSubmit(values, {
         expectsCloudSave: isSignedIn,
       });
-    } catch (error) {
-      console.warn("Life Cards form save failed", error);
-      setSaveErrorMessage(cardSaveErrorMessage(error));
+      setSaveStatus("success");
+    } catch {
+      setSaveStatus("error");
+      setSaveErrorMessage("保存できませんでした。もう一度お試しください。");
+      isSavingRef.current = false;
     }
   }
+
+  const submitButtonLabel =
+    saveStatus === "saving"
+      ? "保存中..."
+      : saveStatus === "success"
+        ? "保存しました"
+        : saveStatus === "error" && saveErrorMessage
+          ? "保存できませんでした"
+          : saveLabel;
+  const isSaving = saveStatus === "saving";
 
   return (
     <>
@@ -543,11 +571,27 @@ export default function CardForm({
           <div className="sticky bottom-[env(safe-area-inset-bottom)] z-10 -mx-4 -mb-4 grid gap-2 border-t border-[#eadfce] bg-[#fffaf0]/92 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur sm:-mx-5 sm:-mb-5 sm:bottom-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5 sm:pb-4">
             <button
               type="submit"
-              disabled={!isAuthResolved || !isDecksResolved}
-              className="rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none"
+              disabled={
+                !isAuthResolved ||
+                !isDecksResolved ||
+                isSaving ||
+                saveStatus === "success"
+              }
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-lg shadow-[#d5cab8] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none"
             >
-              {saveLabel}
+              {isSaving ? (
+                <span
+                  aria-hidden="true"
+                  className="h-4 w-4 rounded-full border-2 border-[#fffaf0]/45 border-t-[#fffaf0] motion-safe:animate-spin"
+                />
+              ) : null}
+              {submitButtonLabel}
             </button>
+            {isSaving ? (
+              <p className="text-xs font-semibold text-[#8d7f6e] sm:col-start-1">
+                保存しています。少しお待ちください。
+              </p>
+            ) : null}
             {onCancel ? (
               <button
                 type="button"

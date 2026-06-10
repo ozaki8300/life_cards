@@ -23,6 +23,7 @@ type Props = {
   activeTab?: string;
   cards: Card[];
   decks: Deck[];
+  isDataReady?: boolean;
   searchQuery?: string;
   onCardsChange?: (cards: Card[]) => void;
   onDecksChange?: (decks: Deck[]) => void;
@@ -36,6 +37,7 @@ export default function CardFirstNav({
   activeTab = "すべて",
   cards,
   decks,
+  isDataReady = true,
   searchQuery = "",
   onCardsChange,
   onDecksChange,
@@ -284,7 +286,7 @@ export default function CardFirstNav({
                 >
                   <span className="block">すべて</span>
                   <span className="mt-1 block text-xs opacity-70">
-                    {cards.length} cards
+                    {isDataReady ? `${cards.length} cards` : "読み込み中"}
                   </span>
                 </Link>
 
@@ -320,7 +322,9 @@ export default function CardFirstNav({
                         >
                           <span className="block truncate">{deck.name}</span>
                           <span className="mt-1 block text-xs opacity-70">
-                            {cardCountFor(deck.id)} cards
+                            {isDataReady
+                              ? `${cardCountFor(deck.id)} cards`
+                              : "読み込み中"}
                           </span>
                         </Link>
                         {canReorder ? (
@@ -448,7 +452,8 @@ export default function CardFirstNav({
                 {deckDeleteTarget.name}
               </p>
               <p className="mt-1 text-sm text-[#8d7f6e]">
-                対象カード: {cardCountFor(deckDeleteTarget.id)}枚
+                対象カード:{" "}
+                {isDataReady ? `${cardCountFor(deckDeleteTarget.id)}枚` : "確認中"}
               </p>
             </div>
 
