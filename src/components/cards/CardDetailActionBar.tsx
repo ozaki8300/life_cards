@@ -2,6 +2,8 @@ const actionButtonBaseClass =
   "flex h-11 w-11 items-center justify-center rounded-full border text-base font-semibold shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:w-14 sm:text-lg";
 const actionButtonClass =
   `${actionButtonBaseClass} border-[#e0d3c0] bg-white/70 text-[#6f6253] hover:bg-white`;
+const copyForAiActionButtonClass =
+  "flex h-11 min-w-[5.25rem] items-center justify-center rounded-full border border-[#d9c9b2] bg-white/70 px-3 text-sm font-semibold text-[#6f6253] shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:min-w-[6rem] sm:px-4 sm:text-base";
 const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
 const actionBarClass =
@@ -89,17 +91,6 @@ function ImageIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function AiIcon() {
-  return (
-    <span
-      aria-hidden="true"
-      className="text-[0.78rem] font-bold tracking-normal sm:text-sm"
-    >
-      AI
-    </span>
-  );
-}
-
 function TrashIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg
@@ -128,7 +119,7 @@ type Props = {
   onCopyForAi?: () => void;
   onOpenPhoto: () => void;
   onShare: () => void;
-  copyForAiStatus?: "copied" | "failed" | "idle" | "working";
+  copyForAiStatus?: "copied" | "failed" | "idle" | "shared" | "working";
   hasImage: boolean;
   showCopyForAi?: boolean;
 };
@@ -144,13 +135,6 @@ export default function CardDetailActionBar({
   hasImage,
   showCopyForAi = false,
 }: Props) {
-  const copyForAiLabel =
-    copyForAiStatus === "copied"
-      ? "AIに渡すMarkdownをコピーしました"
-      : copyForAiStatus === "failed"
-        ? "AIに渡すMarkdownをコピーできませんでした"
-        : "AIに渡す";
-
   return (
     <section className={actionBarClass}>
       <button
@@ -164,13 +148,13 @@ export default function CardDetailActionBar({
       {showCopyForAi ? (
         <button
           type="button"
-          aria-label={copyForAiLabel}
-          title={copyForAiLabel}
+          aria-label="AIに渡す文章をコピー"
+          title="AIに渡す文章をコピー"
           onClick={onCopyForAi}
           disabled={copyForAiStatus === "working"}
-          className={actionButtonClass}
+          className={copyForAiActionButtonClass}
         >
-          <AiIcon />
+          AIへ渡す
         </button>
       ) : null}
       <button

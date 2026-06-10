@@ -70,7 +70,7 @@ export default function CardDetailModal({
     useState(false);
   const isCopyForAiVisible = useCopyForAiFeatureFlag();
   const [copyForAiStatus, setCopyForAiStatus] = useState<
-    "copied" | "failed" | "idle" | "working"
+    "copied" | "failed" | "idle" | "shared" | "working"
   >("idle");
   const [resolvedStorageImage, setResolvedStorageImage] = useState<{
     signedUrl: string;
@@ -337,7 +337,7 @@ export default function CardDetailModal({
     }
   }
 
-  function showCopyForAiStatus(status: "copied" | "failed") {
+  function showCopyForAiStatus(status: "copied" | "failed" | "shared") {
     if (copyForAiStatusResetTimerRef.current) {
       clearTimeout(copyForAiStatusResetTimerRef.current);
     }
@@ -346,7 +346,7 @@ export default function CardDetailModal({
     copyForAiStatusResetTimerRef.current = setTimeout(() => {
       setCopyForAiStatus("idle");
       copyForAiStatusResetTimerRef.current = null;
-    }, 1500);
+    }, 3500);
   }
 
   async function copyMarkdownToClipboard(markdown: string) {
@@ -372,11 +372,12 @@ export default function CardDetailModal({
           title: "Life Card",
           text: markdown,
         });
+        showCopyForAiStatus("shared");
       } else {
         await copyMarkdownToClipboard(markdown);
+        showCopyForAiStatus("copied");
       }
 
-      showCopyForAiStatus("copied");
       void recordUsageEvent("copy_for_ai_used", {
         cardId: card.id,
         deckId: card.deckId,
@@ -402,6 +403,16 @@ export default function CardDetailModal({
 
   const previousNavPositionClass = "left-[-1.25rem] sm:left-[-3.5rem]";
   const nextNavPositionClass = "right-[-1.25rem] sm:right-[-3.5rem]";
+  const copyForAiStatusMessage =
+    copyForAiStatus === "copied"
+      ? "AIに渡す文章をコピーしました\nChatGPTやClaudeに貼り付けてください"
+      : copyForAiStatus === "shared"
+        ? "AIに渡す文章を共有しました"
+        : copyForAiStatus === "failed"
+          ? "コピーできませんでした"
+          : copyForAiStatus === "working"
+            ? "AIに渡す文章を準備しています"
+            : "AIとは通信しません。カード内容をAI向け文章としてコピーします。";
 
   return (
     <div className="pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-4">
@@ -515,6 +526,14 @@ export default function CardDetailModal({
           onShare={onShare}
           showCopyForAi={isCopyForAiVisible}
         />
+        {isCopyForAiVisible ? (
+          <p
+            aria-live="polite"
+            className="mx-auto mt-2 max-w-[min(390px,calc(100vw-2rem))] whitespace-pre-line text-center text-xs leading-relaxed text-[#6f6253]/82 sm:max-w-[460px]"
+          >
+            {copyForAiStatusMessage}
+          </p>
+        ) : null}
       </div>
 
       {hasMultipleCards ? (

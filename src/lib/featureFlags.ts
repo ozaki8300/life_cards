@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 
 const COPY_FOR_AI_STORAGE_KEY = "life_cards.feature.copy_for_ai";
@@ -53,15 +55,8 @@ export function useCopyForAiFeatureFlag() {
   const [isEnabled, setIsEnabled] = useState(false);
 
   useEffect(() => {
-    let previousValue = false;
-
     function syncFlag() {
-      const nextValue = isCopyForAiEnabled();
-
-      if (nextValue !== previousValue) {
-        previousValue = nextValue;
-        setIsEnabled(nextValue);
-      }
+      setIsEnabled(isCopyForAiEnabled());
     }
 
     function handleStorage(event: StorageEvent) {
