@@ -4,10 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, TouchEvent } from "react";
 
 import { createCopyForAiMarkdown } from "@/lib/copyForAi";
-import {
-  COPY_FOR_AI_LOCAL_STORAGE_KEY,
-  isCopyForAiEnabled,
-} from "@/lib/featureFlags";
+import { useCopyForAiFeatureFlag } from "@/lib/featureFlags";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card } from "@/lib/types";
 import { recordUsageEvent } from "@/lib/usageEvents";
@@ -71,7 +68,7 @@ export default function CardDetailModal({
     useState(false);
   const [isResolvingFullscreenImage, setIsResolvingFullscreenImage] =
     useState(false);
-  const [isCopyForAiVisible, setIsCopyForAiVisible] = useState(false);
+  const isCopyForAiVisible = useCopyForAiFeatureFlag();
   const [copyForAiStatus, setCopyForAiStatus] = useState<
     "copied" | "failed" | "idle" | "working"
   >("idle");
@@ -110,25 +107,6 @@ export default function CardDetailModal({
   useEscapeKey(() => {
     onClose();
   });
-
-  useEffect(() => {
-    function syncCopyForAiFlag() {
-      setIsCopyForAiVisible(isCopyForAiEnabled());
-    }
-
-    function handleStorage(event: StorageEvent) {
-      if (event.key === COPY_FOR_AI_LOCAL_STORAGE_KEY) {
-        syncCopyForAiFlag();
-      }
-    }
-
-    syncCopyForAiFlag();
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, []);
 
   useEffect(() => {
     return () => {

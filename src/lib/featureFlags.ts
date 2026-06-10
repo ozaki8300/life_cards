@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 const COPY_FOR_AI_STORAGE_KEY = "life_cards.feature.copy_for_ai";
 
 function parseBooleanFlag(value: string | undefined | null) {
@@ -45,4 +47,45 @@ export function getCopyForAiLocalOverride() {
 
 export function isCopyForAiEnabled() {
   return getCopyForAiLocalOverride() ?? ENABLE_COPY_FOR_AI;
+}
+
+export function useCopyForAiFeatureFlag() {
+  const [isEnabled, setIsEnabled] = useState(false);
+
+  useEffect(() => {
+    let previousValue = false;
+
+    function syncFlag() {
+      const nextValue = isCopyForAiEnabled();
+
+      if (nextValue !== previousValue) {
+        previousValue = nextValue;
+        setIsEnabled(nextValue);
+      }
+    }
+
+    function handleStorage(event: StorageEvent) {
+      if (event.key === COPY_FOR_AI_LOCAL_STORAGE_KEY) {
+        syncFlag();
+      }
+    }
+
+    syncFlag();
+    window.addEventListener("focus", syncFlag);
+    window.addEventListener("pageshow", syncFlag);
+    window.addEventListener("storage", handleStorage);
+    document.addEventListener("visibilitychange", syncFlag);
+
+    const intervalId = window.setInterval(syncFlag, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", syncFlag);
+      window.removeEventListener("pageshow", syncFlag);
+      window.removeEventListener("storage", handleStorage);
+      document.removeEventListener("visibilitychange", syncFlag);
+    };
+  }, []);
+
+  return isEnabled;
 }
