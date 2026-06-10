@@ -6,8 +6,6 @@ const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
 const actionBarClass =
   "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-2rem))] flex-wrap items-center justify-center gap-1.5 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:max-w-[460px] sm:gap-2";
-const photoActionBarClass =
-  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(520px,calc(100vw-2rem))] flex-wrap items-center justify-center gap-1.5 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-2 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:gap-2";
 
 type IconProps = {
   className?: string;
@@ -91,26 +89,6 @@ function ImageIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function CardIcon({ className = "h-5 w-5" }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <rect height="16" rx="2" ry="2" width="12" x="6" y="4" />
-      <path d="M9 8h6" />
-      <path d="M9 12h6" />
-      <path d="M9 16h3" />
-    </svg>
-  );
-}
-
 function TrashIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg
@@ -133,125 +111,65 @@ function TrashIcon({ className = "h-5 w-5" }: IconProps) {
 }
 
 type Props = {
-  isPhotoMode: boolean;
-  photoZoom: number;
-  zoomLabel: string;
   onClose: () => void;
-  onDecreasePhotoZoom: () => void;
   onDelete: () => void;
   onEdit: () => void;
-  onIncreasePhotoZoom: () => void;
   onOpenPhoto: () => void;
-  onResetPhotoZoom: () => void;
-  onShowFront: () => void;
   onShare: () => void;
+  hasImage: boolean;
 };
 
 export default function CardDetailActionBar({
-  isPhotoMode,
-  photoZoom,
-  zoomLabel,
   onClose,
-  onDecreasePhotoZoom,
   onDelete,
   onEdit,
-  onIncreasePhotoZoom,
   onOpenPhoto,
-  onResetPhotoZoom,
-  onShowFront,
   onShare,
+  hasImage,
 }: Props) {
   return (
-    <section className={isPhotoMode ? photoActionBarClass : actionBarClass}>
-      {isPhotoMode ? (
-        <>
-          <button
-            type="button"
-            aria-label="縮小"
-            onClick={onDecreasePhotoZoom}
-            disabled={photoZoom <= 1}
-            className={actionButtonClass}
-          >
-            <span aria-hidden="true">−</span>
-          </button>
-          <button
-            type="button"
-            aria-label="倍率をリセット"
-            onClick={onResetPhotoZoom}
-            className="flex h-12 min-w-14 items-center justify-center rounded-full border border-[#e0d3c0] bg-white/45 px-3 text-sm font-semibold text-[#6f6253] shadow-[0_4px_12px_rgba(87,72,52,0.06)] backdrop-blur transition hover:bg-white/70 focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:h-14 sm:min-w-16"
-          >
-            {zoomLabel}
-          </button>
-          <button
-            type="button"
-            aria-label="拡大"
-            onClick={onIncreasePhotoZoom}
-            disabled={photoZoom >= 3}
-            className={actionButtonClass}
-          >
-            <span aria-hidden="true">＋</span>
-          </button>
-          <button
-            type="button"
-            aria-label="カードへ戻る"
-            onClick={onShowFront}
-            className={actionButtonClass}
-          >
-            <CardIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="閉じる"
-            onClick={onClose}
-            className={actionButtonClass}
-          >
-            <XIcon />
-          </button>
-        </>
-      ) : (
-        <>
-          <button
-            type="button"
-            aria-label="QR共有"
-            onClick={onShare}
-            className={actionButtonClass}
-          >
-            <QrCodeIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="編集"
-            onClick={onEdit}
-            className={actionButtonClass}
-          >
-            <PencilIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="画像を開く"
-            onClick={onOpenPhoto}
-            className={actionButtonClass}
-          >
-            <ImageIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="削除"
-            onClick={onDelete}
-            className={deleteActionButtonClass}
-          >
-            <TrashIcon />
-          </button>
-          <button
-            type="button"
-            aria-label="閉じる"
-            onClick={onClose}
-            className={actionButtonClass}
-          >
-            <XIcon />
-          </button>
-        </>
-      )}
+    <section className={actionBarClass}>
+      <button
+        type="button"
+        aria-label="QR共有"
+        onClick={onShare}
+        className={actionButtonClass}
+      >
+        <QrCodeIcon />
+      </button>
+      <button
+        type="button"
+        aria-label="編集"
+        onClick={onEdit}
+        className={actionButtonClass}
+      >
+        <PencilIcon />
+      </button>
+      <button
+        type="button"
+        aria-label="画像を開く"
+        onClick={onOpenPhoto}
+        disabled={!hasImage}
+        className={actionButtonClass}
+      >
+        <ImageIcon />
+      </button>
+      <button
+        type="button"
+        aria-label="削除"
+        onClick={onDelete}
+        className={deleteActionButtonClass}
+      >
+        <TrashIcon />
+      </button>
+      <button
+        type="button"
+        aria-label="閉じる"
+        onClick={onClose}
+        className={actionButtonClass}
+      >
+        <XIcon />
+      </button>
     </section>
   );
 }
