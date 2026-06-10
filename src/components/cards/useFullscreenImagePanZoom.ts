@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import type { PointerEvent } from "react";
+import type { MouseEvent, PointerEvent, TouchEvent } from "react";
 
 type Offset = {
   x: number;
@@ -24,6 +24,8 @@ type GestureState = {
 const minScale = 1;
 const maxScale = 5;
 const doubleTapDelayMs = 280;
+const doubleTapMaxDistance = 36;
+const tapMoveTolerance = 10;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -47,7 +49,11 @@ export default function useFullscreenImagePanZoom() {
   const pointersRef = useRef(new Map<number, PointerPosition>());
   const gestureRef = useRef<GestureState | null>(null);
   const tapStartRef = useRef<PointerPosition | null>(null);
+  const touchStartRef = useRef<PointerPosition | null>(null);
+  const touchMovedRef = useRef(false);
+  const touchHadMultipleTouchesRef = useRef(false);
   const lastTapAtRef = useRef(0);
+  const lastTapPointRef = useRef<PointerPosition | null>(null);
   const movedDuringGestureRef = useRef(false);
 
   const clampOffset = useCallback((nextOffset: Offset, nextScale: number) => {
@@ -64,14 +70,19 @@ export default function useFullscreenImagePanZoom() {
     pointersRef.current.clear();
     gestureRef.current = null;
     tapStartRef.current = null;
+    touchStartRef.current = null;
+    touchMovedRef.current = false;
+    touchHadMultipleTouchesRef.current = false;
     movedDuringGestureRef.current = false;
+    lastTapAtRef.current = 0;
+    lastTapPointRef.current = null;
     setScale(1);
     setOffset({ x: 0, y: 0 });
     setIsDragging(false);
   }, []);
 
-  const zoomFromPoint = useCallback(
-    (event: PointerEvent<HTMLElement>) => {
+  const zoomAtPoint = useCallback(
+    (element: HTMLElement, point: PointerPosition) => {
       const nextScale = scale > minScale ? minScale : 2.5;
 
       if (nextScale === minScale) {
@@ -80,9 +91,9 @@ export default function useFullscreenImagePanZoom() {
         return;
       }
 
-      const rect = event.currentTarget.getBoundingClientRect();
-      const localX = event.clientX - rect.left;
-      const localY = event.clientY - rect.top;
+      const rect = element.getBoundingClientRect();
+      const localX = point.x - rect.left;
+      const localY = point.y - rect.top;
       const nextOffset = clampOffset(
         {
           x: (rect.width / 2 - localX) * (nextScale - 1),
@@ -95,6 +106,29 @@ export default function useFullscreenImagePanZoom() {
       setOffset(nextOffset);
     },
     [clampOffset, scale],
+  );
+
+  const handleDoubleTapCandidate = useCallback(
+    (element: HTMLElement, point: PointerPosition) => {
+      const now = Date.now();
+      const lastPoint = lastTapPointRef.current;
+      const isDoubleTap =
+        lastPoint &&
+        now - lastTapAtRef.current <= doubleTapDelayMs &&
+        distanceBetween(lastPoint, point) <= doubleTapMaxDistance;
+
+      if (isDoubleTap) {
+        lastTapAtRef.current = 0;
+        lastTapPointRef.current = null;
+        zoomAtPoint(element, point);
+        return true;
+      }
+
+      lastTapAtRef.current = now;
+      lastTapPointRef.current = point;
+      return false;
+    },
+    [zoomAtPoint],
   );
 
   function beginGesture() {
@@ -230,15 +264,88 @@ export default function useFullscreenImagePanZoom() {
       return;
     }
 
-    const now = Date.now();
+    if (event.pointerType !== "touch" && event.pointerType !== "mouse") {
+      handleDoubleTapCandidate(event.currentTarget, {
+        x: event.clientX,
+        y: event.clientY,
+      });
+      return;
+    }
+  }
 
-    if (now - lastTapAtRef.current <= doubleTapDelayMs) {
-      lastTapAtRef.current = 0;
-      zoomFromPoint(event);
+  function handleTouchStart(event: TouchEvent<HTMLElement>) {
+    if (event.touches.length > 1) {
+      touchHadMultipleTouchesRef.current = true;
+      touchStartRef.current = null;
       return;
     }
 
-    lastTapAtRef.current = now;
+    const touch = event.touches[0];
+
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+    touchMovedRef.current = false;
+    touchHadMultipleTouchesRef.current = false;
+  }
+
+  function handleTouchMove(event: TouchEvent<HTMLElement>) {
+    if (event.touches.length > 1) {
+      touchHadMultipleTouchesRef.current = true;
+      touchMovedRef.current = true;
+      return;
+    }
+
+    const startPoint = touchStartRef.current;
+    const touch = event.touches[0];
+
+    if (!startPoint || !touch) {
+      return;
+    }
+
+    if (
+      distanceBetween(startPoint, {
+        x: touch.clientX,
+        y: touch.clientY,
+      }) > tapMoveTolerance
+    ) {
+      touchMovedRef.current = true;
+    }
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLElement>) {
+    if (
+      touchHadMultipleTouchesRef.current ||
+      touchMovedRef.current ||
+      event.touches.length > 0 ||
+      event.changedTouches.length !== 1
+    ) {
+      touchStartRef.current = null;
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const wasDoubleTap = handleDoubleTapCandidate(event.currentTarget, {
+      x: touch.clientX,
+      y: touch.clientY,
+    });
+
+    touchStartRef.current = null;
+
+    if (wasDoubleTap) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  function handleDoubleClick(event: MouseEvent<HTMLElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    zoomAtPoint(event.currentTarget, {
+      x: event.clientX,
+      y: event.clientY,
+    });
   }
 
   return {
@@ -250,5 +357,9 @@ export default function useFullscreenImagePanZoom() {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp: handlePointerEnd,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchStart,
+    handleDoubleClick,
   };
 }

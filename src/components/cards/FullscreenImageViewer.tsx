@@ -27,6 +27,10 @@ export default function FullscreenImageViewer({
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchStart,
+    handleDoubleClick,
   } = useFullscreenImagePanZoom();
 
   useEscapeKey(onClose);
@@ -63,6 +67,14 @@ export default function FullscreenImageViewer({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onTouchStart={handleTouchStart}
+        onDoubleClick={handleDoubleClick}
+        style={{
+          WebkitTouchCallout: "none",
+          WebkitUserSelect: "none",
+        }}
       >
         <div
           className="absolute inset-0"
