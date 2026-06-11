@@ -80,13 +80,51 @@ const blurExtendTopFadeClass = {
   preview: "bg-gradient-to-b from-[#fffaf0]/4 to-transparent",
   tile: "bg-gradient-to-b from-[#fffaf0]/2 to-transparent",
 } as const;
-const tileDocumentImageFadeClass = {
-  commentOnly:
-    "absolute bottom-[calc(5.25rem+0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
-  full:
-    "absolute bottom-[calc(8.75rem+0.625rem)] left-1/2 max-h-[56%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
-  titleOnly:
-    "absolute bottom-[calc(6.25rem+0.625rem)] left-1/2 max-h-[62%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+type TextLayoutVariant = "commentOnly" | "full" | "titleOnly";
+
+const blurExtendTextReserveClass = {
+  detail: {
+    commentOnly: "min-h-[7.75rem]",
+    full: "min-h-[13.75rem]",
+    titleOnly: "min-h-[9.5rem]",
+  },
+  preview: {
+    commentOnly: "min-h-[6.5rem]",
+    full: "min-h-[11.5rem]",
+    titleOnly: "min-h-[7.75rem]",
+  },
+  tile: {
+    commentOnly: "min-h-[5.25rem]",
+    full: "min-h-[8.75rem]",
+    titleOnly: "min-h-[6.25rem]",
+  },
+} as const;
+
+const blurExtendTextAnchoredImageClass = {
+  detail: {
+    commentOnly:
+      "absolute bottom-[calc(7.75rem+0.75rem)] left-1/2 max-h-[64%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
+    full:
+      "absolute bottom-[calc(13.75rem+0.75rem)] left-1/2 max-h-[54%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
+    titleOnly:
+      "absolute bottom-[calc(9.5rem+0.75rem)] left-1/2 max-h-[60%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
+  },
+  preview: {
+    commentOnly:
+      "absolute bottom-[calc(6.5rem+0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    full:
+      "absolute bottom-[calc(11.5rem+0.625rem)] left-1/2 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    titleOnly:
+      "absolute bottom-[calc(7.75rem+0.625rem)] left-1/2 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+  },
+  tile: {
+    commentOnly:
+      "absolute bottom-[calc(5.25rem+0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+    full:
+      "absolute bottom-[calc(8.75rem+0.625rem)] left-1/2 max-h-[56%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+    titleOnly:
+      "absolute bottom-[calc(6.25rem+0.625rem)] left-1/2 max-h-[62%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+  },
 } as const;
 
 function normalizeLinkUrl(linkUrl: string) {
@@ -149,24 +187,22 @@ export default function CardFace({
   const frontCommentClass = isDocumentFront
     ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/88 drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]";
-  const frontTitleWeightClass = size === "tile" ? "font-medium" : "font-semibold";
-  const usesTileDocumentTextReserve =
-    isDocumentFront && size === "tile" && (hasFrontTitle || hasFrontComment);
-  const frontContentReserveClass =
-    usesTileDocumentTextReserve && hasFrontTitle && hasFrontComment
-      ? "min-h-[8.75rem]"
-      : usesTileDocumentTextReserve && hasFrontTitle
-        ? "min-h-[6.25rem]"
-        : usesTileDocumentTextReserve
-          ? "min-h-[5.25rem]"
-          : "";
-  const blurExtendImageClass = usesTileDocumentTextReserve
-    ? hasFrontTitle && hasFrontComment
-      ? tileDocumentImageFadeClass.full
-      : hasFrontTitle
-        ? tileDocumentImageFadeClass.titleOnly
-        : tileDocumentImageFadeClass.commentOnly
+  const frontTitleWeightClass = "font-semibold";
+  const hasDocumentFrontText =
+    isDocumentFront && (hasFrontTitle || hasFrontComment);
+  const documentTextLayoutVariant: TextLayoutVariant = hasFrontTitle
+    ? hasFrontComment
+      ? "full"
+      : "titleOnly"
+    : "commentOnly";
+  const frontContentReserveClass = hasDocumentFrontText
+    ? blurExtendTextReserveClass[size][documentTextLayoutVariant]
+    : "";
+  const blurExtendImageClass = hasDocumentFrontText
+    ? blurExtendTextAnchoredImageClass[size][documentTextLayoutVariant]
     : blurExtendImageFadeClass[size];
+  const frontTitleClampClass = isDocumentFront ? "line-clamp-2" : "";
+  const frontCommentClampClass = isDocumentFront ? "line-clamp-2" : "";
   const faceTransform = isBack
     ? preserve3d
       ? "[transform:rotateY(180deg)_translateZ(0)]"
@@ -255,7 +291,7 @@ export default function CardFace({
             </p>
             {hasFrontTitle ? (
               <h3
-                className={`mt-3 ${frontTitleWeightClass} ${frontTitleClass} ${styles.title}`}
+                className={`mt-3 ${frontTitleWeightClass} ${frontTitleClass} ${styles.title} ${frontTitleClampClass}`}
               >
                 {displayFrontText}
               </h3>
@@ -264,7 +300,7 @@ export default function CardFace({
               <p
                 className={`${
                   hasFrontTitle ? "mt-4" : "mt-3"
-                } whitespace-pre-line ${frontCommentClass} ${styles.comment}`}
+                } whitespace-pre-line ${frontCommentClass} ${styles.comment} ${frontCommentClampClass}`}
               >
                 {displayFrontComment}
               </p>

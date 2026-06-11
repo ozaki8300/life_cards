@@ -5,6 +5,19 @@ import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
 const blurExtendImageFadeClass =
   "absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]";
+const blurExtendPreviewTextReserveClass = {
+  commentOnly: "min-h-[6.5rem]",
+  full: "min-h-[11.5rem]",
+  titleOnly: "min-h-[7.75rem]",
+} as const;
+const blurExtendPreviewTextAnchoredImageClass = {
+  commentOnly:
+    "absolute bottom-[calc(6.5rem+0.625rem)] left-1/2 z-0 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+  full:
+    "absolute bottom-[calc(11.5rem+0.625rem)] left-1/2 z-0 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+  titleOnly:
+    "absolute bottom-[calc(7.75rem+0.625rem)] left-1/2 z-0 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+} as const;
 
 type Props = {
   backText: string;
@@ -67,6 +80,24 @@ function PreviewFace({
     ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/90";
   const displayFrontText = frontText.trim();
+  const displayFrontComment = frontComment.trim();
+  const hasFrontTitle = Boolean(displayFrontText);
+  const hasFrontComment = Boolean(displayFrontComment);
+  const documentTextLayoutVariant = hasFrontTitle
+    ? hasFrontComment
+      ? "full"
+      : "titleOnly"
+    : "commentOnly";
+  const hasDocumentFrontText =
+    isDocumentFront && (hasFrontTitle || hasFrontComment);
+  const frontContentReserveClass = hasDocumentFrontText
+    ? blurExtendPreviewTextReserveClass[documentTextLayoutVariant]
+    : "";
+  const blurExtendImageClass = hasDocumentFrontText
+    ? blurExtendPreviewTextAnchoredImageClass[documentTextLayoutVariant]
+    : blurExtendImageFadeClass;
+  const frontTitleClampClass = isDocumentFront ? "line-clamp-2" : "line-clamp-3";
+  const frontCommentClampClass = isDocumentFront ? "line-clamp-2" : "";
   const backgroundStyle = {
     backgroundImage: `url(${backgroundImage})`,
   };
@@ -92,7 +123,7 @@ function PreviewFace({
           <img
             alt=""
             aria-hidden="true"
-            className={blurExtendImageFadeClass}
+            className={blurExtendImageClass}
             src={backgroundImage}
           />
         </>
@@ -120,23 +151,23 @@ function PreviewFace({
           </p>
 
           <div
-            className={`absolute inset-x-0 bottom-0 z-10 px-5 pb-6 pt-5 ${frontContentClass}`}
+            className={`absolute inset-x-0 bottom-0 z-10 px-5 pb-6 pt-5 ${frontContentClass} ${frontContentReserveClass}`}
           >
             <p className={`text-xs font-medium ${frontDateClass}`}>{date}</p>
-            {displayFrontText ? (
+            {hasFrontTitle ? (
               <h3
-                className={`mt-3 line-clamp-3 text-3xl font-semibold leading-tight ${frontTitleClass}`}
+                className={`mt-3 ${frontTitleClampClass} text-3xl font-semibold leading-tight ${frontTitleClass}`}
               >
                 {displayFrontText}
               </h3>
             ) : null}
-            {frontComment ? (
+            {hasFrontComment ? (
               <p
                 className={`${
-                  displayFrontText ? "mt-4" : "mt-3"
-                } whitespace-pre-line text-sm leading-6 ${frontCommentClass}`}
+                  hasFrontTitle ? "mt-4" : "mt-3"
+                } whitespace-pre-line text-sm leading-6 ${frontCommentClass} ${frontCommentClampClass}`}
               >
-                {frontComment}
+                {displayFrontComment}
               </p>
             ) : null}
           </div>
