@@ -49,7 +49,7 @@ const faceSize = {
     comment: "text-sm leading-6 sm:text-base sm:leading-7",
     date: "text-[11px] sm:text-xs",
     backContent: "px-5 pb-5 pt-4 sm:px-7 sm:pb-7 sm:pt-6",
-    backMemo: "card-back-scroll overflow-y-auto pr-2 text-base leading-6 sm:text-base sm:leading-7",
+    backMemo: "card-detail-back-scroll overflow-y-auto pr-2 text-base leading-6 sm:text-base sm:leading-7",
   },
 } as const;
 
