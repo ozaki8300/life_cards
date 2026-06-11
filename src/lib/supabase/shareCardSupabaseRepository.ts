@@ -5,7 +5,10 @@ import {
   type ShareCardPayload,
   type ShareCardType,
 } from "@/lib/shareCardPayload";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 import type { Card } from "@/lib/types";
 import { recordUsageEvent } from "@/lib/usageEvents";
 
@@ -80,9 +83,7 @@ function resolveShareOrigin(origin?: string) {
 
 async function getCurrentUser() {
   const supabase = createSupabaseBrowserClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSupabaseSessionSafely(supabase);
   const user = session?.user;
 
   if (!user?.id) {

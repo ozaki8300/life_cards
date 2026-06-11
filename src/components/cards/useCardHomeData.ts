@@ -6,7 +6,10 @@ import type { EncounterMetadata } from "@/domain/reencounter/types";
 import { CardRepository } from "@/lib/cardRepository";
 import { DeckRepository } from "@/lib/deckRepository";
 import { EncounterRepository } from "@/lib/encounterRepository";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 import type { Card, Deck } from "@/lib/types";
 import { recordUsageEvent } from "@/lib/usageEvents";
@@ -45,7 +48,7 @@ export default function useCardHomeData({
 
       try {
         const supabase = createSupabaseBrowserClient();
-        await supabase.auth.getSession();
+        await getSupabaseSessionSafely(supabase);
 
         const [repositoryDecks, repositoryCards, repositoryEncounterMetadata] =
           await Promise.all([
@@ -93,9 +96,7 @@ export default function useCardHomeData({
     queueMicrotask(async () => {
       try {
         const supabase = createSupabaseBrowserClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        const session = await getSupabaseSessionSafely(supabase);
 
         if (!isActive || !session?.user) {
           return;

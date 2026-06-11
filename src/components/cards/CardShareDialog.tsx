@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 
 import { createShareCardForCurrentUser } from "@/lib/supabase/shareCardSupabaseRepository";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -63,9 +66,7 @@ export default function CardShareDialog({
 
   async function resolveCreatorLabel() {
     const supabase = createSupabaseBrowserClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const session = await getSupabaseSessionSafely(supabase);
     const user = session?.user;
 
     if (!user) {

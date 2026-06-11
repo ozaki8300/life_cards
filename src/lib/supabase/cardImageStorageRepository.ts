@@ -1,7 +1,10 @@
 "use client";
 
 import { dataUrlToBlob } from "@/lib/imageCompression";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 
 const CARD_IMAGES_BUCKET = "card-images";
 const SIGNED_URL_EXPIRES_IN_SECONDS = 60 * 60 * 24;
@@ -37,9 +40,7 @@ function supabaseErrorLog(error: unknown) {
 
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSupabaseSessionSafely(supabase);
   const userId = session?.user.id;
 
   return userId ? { supabase, userId } : null;

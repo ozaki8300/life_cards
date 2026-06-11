@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  clearInvalidSupabaseSession,
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+  isInvalidRefreshTokenError,
+} from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 
 import AccountDeletionDialog from "./AccountDeletionDialog";
@@ -53,6 +58,17 @@ export default function AuthStatus() {
           });
         }
       } catch (error) {
+        if (isInvalidRefreshTokenError(error)) {
+          const supabase = createSupabaseBrowserClient();
+          await clearInvalidSupabaseSession(supabase);
+
+          if (isActive) {
+            setAuthState({ status: "signed-out" });
+          }
+
+          return;
+        }
+
         console.warn("Life Cards auth profile load failed", error);
 
         if (isActive) {
@@ -67,20 +83,26 @@ export default function AuthStatus() {
     try {
       const supabase = createSupabaseBrowserClient();
 
-      supabase.auth.getSession().then(({ data }) => {
-        if (!isActive) {
-          return;
-        }
+      getSupabaseSessionSafely(supabase)
+        .then((session) => {
+          if (!isActive) {
+            return;
+          }
 
-        const user = data.session?.user;
+          const user = session?.user;
 
-        if (user) {
-          setSignedInState(user);
-          return;
-        }
+          if (user) {
+            setSignedInState(user);
+            return;
+          }
 
-        setAuthState({ status: "signed-out" });
-      });
+          setAuthState({ status: "signed-out" });
+        })
+        .catch(() => {
+          if (isActive) {
+            setAuthState({ status: "signed-out" });
+          }
+        });
 
       const {
         data: { subscription },

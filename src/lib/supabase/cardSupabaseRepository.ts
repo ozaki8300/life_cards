@@ -1,7 +1,10 @@
 "use client";
 
 import { CardSaveError } from "@/lib/cardSaveErrors";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card, CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
 
@@ -248,9 +251,7 @@ async function persistImageFitMode(
 
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSupabaseSessionSafely(supabase);
   const userId = session?.user.id;
 
   return userId ? { supabase, userId } : null;

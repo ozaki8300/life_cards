@@ -5,7 +5,10 @@ import type { ChangeEvent, FormEvent } from "react";
 
 import { DeckRepository } from "@/lib/deckRepository";
 import { compressImage } from "@/lib/imageCompression";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 import type { CardImageFitMode, Deck, DefaultCardImageKey } from "@/lib/types";
 
 import BackMemoEditor from "./BackMemoEditor";
@@ -155,9 +158,14 @@ export default function CardForm({
     try {
       const supabase = createSupabaseBrowserClient();
 
-      supabase.auth.getSession().then(({ data }) => {
+      getSupabaseSessionSafely(supabase).then((session) => {
         if (isActive) {
-          setIsSignedIn(Boolean(data.session?.user));
+          setIsSignedIn(Boolean(session?.user));
+          setIsAuthResolved(true);
+        }
+      }).catch(() => {
+        if (isActive) {
+          setIsSignedIn(false);
           setIsAuthResolved(true);
         }
       });

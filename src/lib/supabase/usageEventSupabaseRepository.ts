@@ -1,6 +1,9 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 
 export type UsageEventName =
   | "app_opened"
@@ -19,9 +22,7 @@ type UsageEventInsertRow = {
 
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSupabaseSessionSafely(supabase);
   const userId = session?.user.id;
 
   return userId ? { supabase, userId } : null;

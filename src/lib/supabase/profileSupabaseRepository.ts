@@ -1,6 +1,9 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 
 export type UserProfile = {
   displayName: string;
@@ -14,9 +17,7 @@ type ProfileRow = {
 
 async function getCurrentUserClient() {
   const supabase = createSupabaseBrowserClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getSupabaseSessionSafely(supabase);
   const user = session?.user;
 
   return user?.id ? { supabase, user } : null;
