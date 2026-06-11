@@ -8,7 +8,9 @@ import {
 export type UsageEventName =
   | "app_opened"
   | "card_created"
+  | "card_viewed"
   | "copy_for_ai_used"
+  | "login"
   | "reencounter_opened"
   | "share_created";
 

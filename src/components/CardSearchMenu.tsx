@@ -45,7 +45,7 @@ export default function CardSearchMenu({
             type="search"
             value={searchQuery}
             onChange={(event) => onSearchChange?.(event.target.value)}
-            placeholder="カードを検索（AND検索）"
+            placeholder="カードを検索"
             className="mt-4 w-full rounded-[12px] border border-[#e8ddcb] bg-white/72 px-3 py-2 text-sm text-[#332d25] outline-none placeholder:text-[#a19380] focus:ring-2 focus:ring-[#e8ddcb]"
           />
           <div className="mt-6">

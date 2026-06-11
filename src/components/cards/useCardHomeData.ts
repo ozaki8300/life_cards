@@ -162,6 +162,9 @@ export default function useCardHomeData({
       );
 
     setEncounterMetadataByCardId(nextEncounterMetadata);
+    await recordUsageEvent("card_viewed", {
+      cardId,
+    });
   }, []);
 
   const recordCardReencounter = useCallback(async (cardId: string) => {
@@ -172,6 +175,9 @@ export default function useCardHomeData({
       );
 
     setEncounterMetadataByCardId(nextEncounterMetadata);
+    await recordUsageEvent("card_viewed", {
+      cardId,
+    });
     await recordUsageEvent("reencounter_opened", {
       card_id: cardId,
     });
