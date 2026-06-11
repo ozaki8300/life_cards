@@ -2,18 +2,21 @@ import type { Card, Deck } from "@/lib/types";
 import type { EncounterMetadata } from "@/domain/reencounter/types";
 import { ReencounterEngine } from "@/domain/reencounter/engine";
 
+export function normalizeSearchText(value: string) {
+  return value.normalize("NFKC").toLowerCase();
+}
+
 export function keywordsFor(query: string) {
   return query
     .trim()
     .split(/[\s　]+/)
     .filter(Boolean)
-    .map((keyword) => keyword.toLowerCase());
+    .map(normalizeSearchText);
 }
 
 export function cardSearchText(card: Card, decks: Deck[]) {
   const deckName = decks.find((deck) => deck.id === card.deckId)?.name ?? "";
-
-  return [
+  const searchText = [
     card.frontText,
     card.frontComment,
     card.backText,
@@ -22,8 +25,9 @@ export function cardSearchText(card: Card, decks: Deck[]) {
     card.updatedAt,
   ]
     .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+    .join(" ");
+
+  return normalizeSearchText(searchText);
 }
 
 export function sortCardsByNewest(cards: Card[]) {

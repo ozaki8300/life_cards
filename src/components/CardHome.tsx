@@ -88,6 +88,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     );
   }, [activeDeckId, allDecks]);
   const isDataReady = loadStatus === "ready" || loadStatus === "empty";
+  const isSearching = searchQuery.trim().length > 0;
   const viewStatus: ViewStatus =
     loadStatus === "ready" && scopedCards.length === 0
       ? "empty"
@@ -131,19 +132,21 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         onSearchChange={setSearchQuery}
       >
         <div className="space-y-6">
-          <ReencounterSection
-            title="今日の再会"
-            subtitle="久しぶりに見たいカード"
-            cards={todayCards}
-            decks={allDecks}
-            editSeedCards={allCards}
-            favoriteIds={activeFavoriteIds}
-            onCardViewed={recordCardReencounter}
-            onDecksChange={setAllDecks}
-            onDeleteCard={handleDeleteCard}
-            onUpdateCard={handleUpdateCard}
-            onToggleFavorite={toggleFavorite}
-          />
+          {!isSearching ? (
+            <ReencounterSection
+              title="今日の再会"
+              subtitle="久しぶりに見たいカード"
+              cards={todayCards}
+              decks={allDecks}
+              editSeedCards={allCards}
+              favoriteIds={activeFavoriteIds}
+              onCardViewed={recordCardReencounter}
+              onDecksChange={setAllDecks}
+              onDeleteCard={handleDeleteCard}
+              onUpdateCard={handleUpdateCard}
+              onToggleFavorite={toggleFavorite}
+            />
+          ) : null}
 
           <section>
             {viewStatus === "loading" ? (
