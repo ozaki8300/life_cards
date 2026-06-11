@@ -22,10 +22,6 @@ function appOpenedStorageKey(userId: string) {
 }
 
 function warnUsageEventError(message: string, error: unknown) {
-  if (process.env.NODE_ENV !== "development") {
-    return;
-  }
-
   console.warn(message, error);
 }
 
@@ -34,9 +30,22 @@ export async function recordUsageEvent(
   metadata: UsageEventMetadata = {},
 ) {
   try {
-    await UsageEventSupabaseRepository.recordEvent(eventName, metadata);
+    const recorded = await UsageEventSupabaseRepository.recordEvent(
+      eventName,
+      metadata,
+    );
+
+    if (!recorded) {
+      warnUsageEventError("Life Cards usage event skipped", {
+        eventName,
+        reason: "missing-session",
+      });
+    }
   } catch (error) {
-    warnUsageEventError("Life Cards usage event record failed", error);
+    warnUsageEventError("Life Cards usage event record failed", {
+      error,
+      eventName,
+    });
     // Usage events must never block the core Life Cards experience.
   }
 }

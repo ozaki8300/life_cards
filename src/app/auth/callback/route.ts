@@ -26,9 +26,7 @@ async function recordLoginEvent(
       throw error;
     }
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("Life Cards login usage event failed", error);
-    }
+    console.warn("Life Cards login usage event failed", error);
   }
 }
 
