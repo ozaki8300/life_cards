@@ -55,16 +55,16 @@ const faceSize = {
 
 const blurExtendImageFadeClass = {
   detail:
-    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]",
+    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]",
   preview:
-    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]",
+    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]",
   tile:
-    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)]",
+    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)]",
 } as const;
 const blurExtendBackgroundWashClass = {
-  detail: "absolute inset-0 bg-[#fff7ec]/38",
-  preview: "absolute inset-0 bg-[#fff7ec]/38",
-  tile: "absolute inset-0 bg-[#fff7ec]/26",
+  detail: "absolute inset-0 bg-[#fff7ec]/34",
+  preview: "absolute inset-0 bg-[#fff7ec]/34",
+  tile: "absolute inset-0 bg-[#fff7ec]/22",
 } as const;
 const blurExtendFrontOverlayClass = {
   detail: "bg-gradient-to-t from-[#fffaf0]/28 via-[#fffaf0]/5 to-transparent",
@@ -138,7 +138,9 @@ export default function CardFace({
   return (
     <section
       className={`absolute inset-0 overflow-hidden border bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
-        isBlurExtend ? "border-[#f3eadb]/70 bg-[#f6efe4]" : "border-white/25 bg-cover"
+        isBlurExtend
+          ? "border-[#f3eadb]/70 bg-[#f6efe4]"
+          : "border-[#f3eadb]/42 bg-[#f6efe4] bg-cover"
       } ${
         styles.rounded
       } ${faceTransform}`}
@@ -160,10 +162,10 @@ export default function CardFace({
           />
         </>
       ) : null}
-      {isBack ? <div className="absolute inset-0 backdrop-blur-[1.5px]" /> : null}
+      {isBack ? <div className="absolute inset-0 backdrop-blur-[1px]" /> : null}
       <div
         className={`absolute inset-0 ${
-          isBack ? "bg-[#fff7ec]/88" : frontOverlayClass
+          isBack ? "bg-[#f5ecdf]/84" : frontOverlayClass
         }`}
       />
       {!isBack ? (

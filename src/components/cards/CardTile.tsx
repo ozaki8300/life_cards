@@ -11,6 +11,15 @@ const frontFaceClass = `${faceBaseClass} ${
 const backFaceClass = `${faceBaseClass} ${
   "invisible opacity-0 pointer-events-none group-data-[side=back]:visible group-data-[side=back]:opacity-100 group-data-[side=back]:pointer-events-auto"
 }`;
+const faceControlBaseClass =
+  "absolute flex items-center justify-center rounded-full border backdrop-blur-[2px] transition focus:outline-none focus:ring-2 focus:ring-white/70";
+const faceControlLayerClass =
+  "pointer-events-none absolute inset-0 z-20 [transform-style:preserve-3d]";
+const frontControlTransformClass = "[transform:translateZ(1px)]";
+const backControlTransformClass =
+  "[-webkit-backface-visibility:hidden] [backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)]";
+const openDetailButtonClass = `${faceControlBaseClass} right-4 top-4 h-8 w-8 border-[#d8c8aa]/45 bg-[#f5eee1]/84 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_8px_22px_rgba(87,72,52,0.1)] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]`;
+const favoriteButtonBaseClass = `${faceControlBaseClass} bottom-4 right-4 h-9 w-9 text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
 
 export default function CardTile({
   card,
@@ -42,6 +51,40 @@ export default function CardTile({
     : isRail
       ? "shadow-[0_10px_24px_rgba(32,24,16,0.16)]"
       : "shadow-[0_18px_42px_rgba(32,24,16,0.22)] hover:shadow-[0_24px_54px_rgba(32,24,16,0.28)]";
+  const favoriteButtonToneClass = isFavorite
+    ? "border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]"
+    : "border-[#d8c8aa]/45 bg-[#f5eee1]/82 text-[#8f806d] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]";
+
+  function renderFaceControls(transformClass: string) {
+    return (
+      <div className={`${faceControlLayerClass} ${transformClass}`}>
+        <button
+          type="button"
+          aria-label="Open card detail"
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen();
+          }}
+          className={`${openDetailButtonClass} pointer-events-auto`}
+        >
+          ...
+        </button>
+
+        <button
+          type="button"
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          aria-pressed={isFavorite}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleFavorite();
+          }}
+          className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto`}
+        >
+          {isFavorite ? "★" : "☆"}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <article
@@ -69,6 +112,7 @@ export default function CardTile({
             linkUrl={card.linkUrl}
             size="tile"
           />
+          {renderFaceControls(frontControlTransformClass)}
         </div>
         <div className={backFaceClass}>
           <CardFace
@@ -83,37 +127,9 @@ export default function CardTile({
             linkUrl={card.linkUrl}
             size="tile"
           />
+          {renderFaceControls(backControlTransformClass)}
         </div>
       </div>
-
-      <button
-        type="button"
-        aria-label="Open card detail"
-        onClick={(event) => {
-          event.stopPropagation();
-          onOpen();
-        }}
-        className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-[#d8c8aa]/60 bg-[#fffaf0]/70 text-lg font-semibold leading-none text-[#5f5346] shadow-[0_4px_14px_rgba(87,72,52,0.14)] backdrop-blur-md transition hover:bg-[#fffaf0]/86 hover:text-[#4a4034] focus:outline-none focus:ring-2 focus:ring-white/70"
-      >
-        ...
-      </button>
-
-      <button
-        type="button"
-        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-        aria-pressed={isFavorite}
-        onClick={(event) => {
-          event.stopPropagation();
-          onToggleFavorite();
-        }}
-        className={`absolute bottom-4 right-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border text-lg leading-none shadow-[0_4px_14px_rgba(87,72,52,0.14)] backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
-          isFavorite
-            ? "border-[#d8c8aa]/70 bg-[#fff4c7]/82 text-[#8a6410] hover:bg-[#fff0b5]"
-            : "border-[#d8c8aa]/60 bg-[#fffaf0]/64 text-[#6f6253]/82 hover:bg-[#fffaf0]/82 hover:text-[#5f5346]"
-        }`}
-      >
-        {isFavorite ? "★" : "☆"}
-      </button>
 
     </article>
   );

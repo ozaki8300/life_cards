@@ -501,8 +501,8 @@ export default function TradingCardGrid({
                     type="button"
                     className={`h-2 rounded-full transition-all ${
                       index === activeRailIndex
-                        ? "w-5 bg-[#4d4033]"
-                        : "w-2 bg-[#b9a68e]"
+                        ? "w-5 bg-[#8f806d]"
+                        : "w-2 bg-[#d8cdbd]"
                     }`}
                     aria-label={`${index + 1}枚目のカードへ移動`}
                     aria-current={index === activeRailIndex ? "true" : undefined}

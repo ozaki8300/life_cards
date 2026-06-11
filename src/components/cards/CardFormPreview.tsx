@@ -76,8 +76,8 @@ function PreviewFace({
 
   return (
     <div
-      className={`absolute inset-0 isolate overflow-hidden rounded-[22px] border bg-[#fffaf0] ${
-        isBlurExtend ? "border-[#f3eadb]/70 bg-[#f6efe4]" : "border-white/25"
+      className={`absolute inset-0 isolate overflow-hidden rounded-[22px] border bg-[#f6efe4] ${
+        isBlurExtend ? "border-[#f3eadb]/70 bg-[#f6efe4]" : "border-[#f3eadb]/42"
       }`}
     >
       {isBlurExtend ? (
@@ -103,7 +103,7 @@ function PreviewFace({
       )}
       <div
         className={`absolute inset-0 z-0 ${
-          isBack ? "bg-[#fff7ec]/94" : frontOverlayClass
+          isBack ? "bg-[#f5ecdf]/88" : frontOverlayClass
         }`}
       />
       {!isBack ? (

@@ -20,6 +20,13 @@ const sideNavButtonClass =
   "pointer-events-auto absolute top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/80 bg-[#fffaf0]/86 text-3xl font-semibold leading-none text-[#5f513f] shadow-[0_8px_24px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:h-12 sm:w-12 sm:text-4xl";
 const shutterButtonClass =
   "relative flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
+const favoriteButtonBaseClass =
+  "absolute bottom-5 right-5 flex h-11 w-11 items-center justify-center rounded-full border text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] backdrop-blur-[2px] transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0]";
+const faceControlLayerClass =
+  "pointer-events-none absolute inset-0 z-20 [transform-style:preserve-3d]";
+const frontControlTransformClass = "[transform:translateZ(1px)]";
+const backControlTransformClass =
+  "[-webkit-backface-visibility:hidden] [backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)]";
 
 function debugImageState(message: string, payload: Record<string, unknown>) {
   if (process.env.NODE_ENV !== "production") {
@@ -383,6 +390,28 @@ export default function CardDetailModal({
       : copyForAiStatus === "failed"
         ? "コピーできませんでした"
         : null;
+  const favoriteButtonToneClass = isFavorite
+    ? "border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]"
+    : "border-[#d8c8aa]/45 bg-[#f5eee1]/82 text-[#8f806d] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]";
+
+  function renderFavoriteButton(transformClass: string) {
+    return (
+      <div className={`${faceControlLayerClass} ${transformClass}`}>
+        <button
+          type="button"
+          aria-label={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
+          aria-pressed={isFavorite}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleFavorite();
+          }}
+          className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto`}
+        >
+          {isFavorite ? "★" : "☆"}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-4">
@@ -417,6 +446,7 @@ export default function CardDetailModal({
                 linkUrl={card.linkUrl}
                 size="detail"
               />
+              {renderFavoriteButton(frontControlTransformClass)}
             </div>
             <div
               className={`absolute inset-0 [transform-style:preserve-3d] ${
@@ -436,24 +466,9 @@ export default function CardDetailModal({
                 linkUrl={card.linkUrl}
                 size="detail"
               />
+              {renderFavoriteButton(backControlTransformClass)}
             </div>
           </div>
-          <button
-            type="button"
-            aria-label={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
-            aria-pressed={isFavorite}
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggleFavorite();
-            }}
-            className={`absolute bottom-5 right-5 z-20 flex h-11 w-11 items-center justify-center rounded-full border text-lg leading-none shadow-[0_4px_14px_rgba(87,72,52,0.14)] backdrop-blur-md transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${
-              isFavorite
-                ? "border-[#d8c8aa]/70 bg-[#fff4c7]/82 text-[#8a6410] hover:bg-[#fff0b5]"
-                : "border-[#d8c8aa]/60 bg-[#fffaf0]/64 text-[#6f6253]/82 hover:bg-[#fffaf0]/82 hover:text-[#5f5346]"
-            }`}
-          >
-            {isFavorite ? "★" : "☆"}
-          </button>
         </article>
 
         {hasMultipleCards ? (
