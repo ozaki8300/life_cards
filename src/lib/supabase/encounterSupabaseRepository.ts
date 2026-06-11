@@ -1,10 +1,7 @@
 "use client";
 
 import type { EncounterMetadata } from "@/domain/reencounter/types";
-import {
-  createSupabaseBrowserClient,
-  getSupabaseSessionSafely,
-} from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type EncounterMetadataMap = Record<string, EncounterMetadata>;
 
@@ -17,6 +14,24 @@ type SupabaseEncounterRow = {
   updated_at: string;
   view_count: number;
 };
+
+function supabaseErrorLog(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return error;
+  }
+
+  const errorRecord = error as Record<string, unknown>;
+
+  return {
+    code: errorRecord.code,
+    details: errorRecord.details,
+    hint: errorRecord.hint,
+    message: errorRecord.message,
+    name: errorRecord.name,
+    status: errorRecord.status,
+    statusCode: errorRecord.statusCode,
+  };
+}
 
 function rowToMetadata(row: SupabaseEncounterRow): EncounterMetadata {
   return {
@@ -52,10 +67,19 @@ function rowsToMetadataMap(rows: SupabaseEncounterRow[]): EncounterMetadataMap {
 
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
-  const session = await getSupabaseSessionSafely(supabase);
-  const userId = session?.user.id;
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  return userId ? { supabase, userId } : null;
+  if (error) {
+    console.warn("Life Cards Supabase encounter user lookup failed", {
+      error: supabaseErrorLog(error),
+    });
+    throw error;
+  }
+
+  return user?.id ? { supabase, userId: user.id } : null;
 }
 
 async function fetchMetadataMap(
@@ -90,17 +114,36 @@ export const EncounterSupabaseRepository = {
     }
 
     const row = metadataToRow(metadata, client.userId);
+    const { data: existingEncounter, error: existingEncounterError } =
+      await client.supabase
+        .from("encounters")
+        .select("card_id")
+        .eq("user_id", client.userId)
+        .eq("card_id", metadata.cardId)
+        .maybeSingle<Pick<SupabaseEncounterRow, "card_id">>();
 
-    const { error } = await client.supabase
-      .from("encounters")
-      .upsert(row, {
-        onConflict: "user_id,card_id",
+    if (existingEncounterError) {
+      console.warn("Life Cards Supabase encounter lookup before save failed", {
+        cardId: metadata.cardId,
+        error: supabaseErrorLog(existingEncounterError),
+        userId: client.userId,
       });
+      throw existingEncounterError;
+    }
+
+    const { error } = existingEncounter
+      ? await client.supabase
+          .from("encounters")
+          .update(row)
+          .eq("user_id", client.userId)
+          .eq("card_id", metadata.cardId)
+      : await client.supabase.from("encounters").insert(row);
 
     if (error) {
       console.warn("Life Cards Supabase encounter upsert error", {
-        error,
-        row,
+        cardId: metadata.cardId,
+        error: supabaseErrorLog(error),
+        userId: client.userId,
       });
       throw error;
     }

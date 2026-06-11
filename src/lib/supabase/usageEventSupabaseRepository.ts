@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  createSupabaseBrowserClient,
-  getSupabaseSessionSafely,
-} from "@/lib/supabase/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type UsageEventName =
   | "app_opened"
@@ -22,12 +19,39 @@ type UsageEventInsertRow = {
   user_id: string;
 };
 
+function supabaseErrorLog(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return error;
+  }
+
+  const errorRecord = error as Record<string, unknown>;
+
+  return {
+    code: errorRecord.code,
+    details: errorRecord.details,
+    hint: errorRecord.hint,
+    message: errorRecord.message,
+    name: errorRecord.name,
+    status: errorRecord.status,
+    statusCode: errorRecord.statusCode,
+  };
+}
+
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
-  const session = await getSupabaseSessionSafely(supabase);
-  const userId = session?.user.id;
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  return userId ? { supabase, userId } : null;
+  if (error) {
+    console.warn("Life Cards usage event user lookup failed", {
+      error: supabaseErrorLog(error),
+    });
+    throw error;
+  }
+
+  return user?.id ? { supabase, userId: user.id } : null;
 }
 
 export const UsageEventSupabaseRepository = {
@@ -50,6 +74,11 @@ export const UsageEventSupabaseRepository = {
     const { error } = await client.supabase.from("usage_events").insert(row);
 
     if (error) {
+      console.warn("Life Cards usage event insert failed", {
+        error: supabaseErrorLog(error),
+        eventName,
+        userId: client.userId,
+      });
       throw error;
     }
 
