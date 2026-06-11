@@ -12,11 +12,11 @@ const blurExtendPreviewTextReserveClass = {
 } as const;
 const blurExtendPreviewTextAnchoredImageClass = {
   commentOnly:
-    "absolute bottom-[calc(6.5rem+0.625rem)] left-1/2 z-0 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    "absolute bottom-[calc(6.5rem-0.625rem)] left-1/2 z-0 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
   full:
-    "absolute bottom-[calc(11.5rem+0.625rem)] left-1/2 z-0 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    "absolute bottom-[calc(11.5rem-0.625rem)] left-1/2 z-0 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
   titleOnly:
-    "absolute bottom-[calc(7.75rem+0.625rem)] left-1/2 z-0 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    "absolute bottom-[calc(7.75rem-0.625rem)] left-1/2 z-0 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
 } as const;
 
 type Props = {

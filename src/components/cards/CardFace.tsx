@@ -103,27 +103,27 @@ const blurExtendTextReserveClass = {
 const blurExtendTextAnchoredImageClass = {
   detail: {
     commentOnly:
-      "absolute bottom-[calc(7.75rem+0.75rem)] left-1/2 max-h-[64%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
+      "absolute bottom-[calc(7.75rem-0.875rem)] left-1/2 max-h-[64%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
     full:
-      "absolute bottom-[calc(13.75rem+0.75rem)] left-1/2 max-h-[54%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
+      "absolute bottom-[calc(13.75rem-0.875rem)] left-1/2 max-h-[54%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
     titleOnly:
-      "absolute bottom-[calc(9.5rem+0.75rem)] left-1/2 max-h-[60%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
+      "absolute bottom-[calc(9.5rem-0.875rem)] left-1/2 max-h-[60%] max-w-[calc(100%-2rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-24px),transparent_100%)]",
   },
   preview: {
     commentOnly:
-      "absolute bottom-[calc(6.5rem+0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+      "absolute bottom-[calc(6.5rem-0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
     full:
-      "absolute bottom-[calc(11.5rem+0.625rem)] left-1/2 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+      "absolute bottom-[calc(11.5rem-0.625rem)] left-1/2 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
     titleOnly:
-      "absolute bottom-[calc(7.75rem+0.625rem)] left-1/2 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+      "absolute bottom-[calc(7.75rem-0.625rem)] left-1/2 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.04] [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
   },
   tile: {
     commentOnly:
-      "absolute bottom-[calc(5.25rem+0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+      "absolute bottom-[calc(5.25rem-0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
     full:
-      "absolute bottom-[calc(8.75rem+0.625rem)] left-1/2 max-h-[56%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+      "absolute bottom-[calc(8.75rem-0.625rem)] left-1/2 max-h-[56%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
     titleOnly:
-      "absolute bottom-[calc(6.25rem+0.625rem)] left-1/2 max-h-[62%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+      "absolute bottom-[calc(6.25rem-0.625rem)] left-1/2 max-h-[62%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
   },
 } as const;
 
