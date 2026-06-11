@@ -75,20 +75,43 @@ html:hover::-webkit-scrollbar-thumb {
   }
 }
 
+.card-tile-back-scroll {
+  scrollbar-color: transparent transparent;
+  scrollbar-width: thin;
+}
+
+.card-tile-back-scroll.is-scrolling {
+  scrollbar-color: rgba(95, 81, 63, 0.16) transparent;
+}
+
 .card-back-scroll,
 .card-detail-back-scroll {
   scrollbar-color: rgba(95, 81, 63, 0.12) transparent;
   scrollbar-width: thin;
 }
 
+.card-tile-back-scroll::-webkit-scrollbar,
 .card-back-scroll::-webkit-scrollbar,
 .card-detail-back-scroll::-webkit-scrollbar {
   width: 5px;
 }
 
+.card-tile-back-scroll::-webkit-scrollbar-track,
 .card-back-scroll::-webkit-scrollbar-track,
 .card-detail-back-scroll::-webkit-scrollbar-track {
   background: transparent;
+}
+
+.card-tile-back-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  background-clip: content-box;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+}
+
+.card-tile-back-scroll.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(95, 81, 63, 0.16);
+  background-clip: content-box;
 }
 
 .card-back-scroll::-webkit-scrollbar-thumb,

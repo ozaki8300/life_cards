@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
 import MarkdownMemo from "@/components/MarkdownMemo";
 import type { CardImageFitMode } from "@/lib/types";
 
@@ -22,12 +26,12 @@ const faceSize = {
     rounded: "rounded-[18px]",
     topFade: "h-24",
     label: "left-4 top-4 max-w-[60%] px-3 py-1 text-[11px]",
-    frontContent: "px-5 pb-5 pt-5 sm:px-4 sm:pb-4",
-    title: "line-clamp-3 text-2xl leading-snug sm:text-xl",
-    comment: "line-clamp-3 text-[15px] leading-6 sm:text-sm",
+    frontContent: "px-5 pb-5 pr-16 pt-5 sm:px-4 sm:pb-4 sm:pr-14",
+    title: "line-clamp-2 break-words text-[1.42rem] leading-[1.15] [overflow-wrap:anywhere] sm:text-[1.18rem] sm:leading-[1.16]",
+    comment: "line-clamp-2 text-[15px] leading-6 sm:text-sm",
     date: "text-[10px]",
     backContent: "px-5 pb-5 pt-4 sm:px-4 sm:pb-4",
-    backMemo: "max-h-[calc(100%-4.75rem)] overflow-hidden text-[15px] leading-5 sm:text-sm sm:leading-6",
+    backMemo: "card-tile-back-scroll max-h-[calc(100%-4.75rem)] overflow-y-auto overscroll-y-contain pr-2 text-[15px] leading-5 [-webkit-overflow-scrolling:touch] sm:text-sm sm:leading-6",
   },
   preview: {
     rounded: "rounded-[22px]",
@@ -76,6 +80,14 @@ const blurExtendTopFadeClass = {
   preview: "bg-gradient-to-b from-[#fffaf0]/4 to-transparent",
   tile: "bg-gradient-to-b from-[#fffaf0]/2 to-transparent",
 } as const;
+const tileDocumentImageFadeClass = {
+  commentOnly:
+    "absolute bottom-[calc(5.25rem+0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+  full:
+    "absolute bottom-[calc(8.75rem+0.625rem)] left-1/2 max-h-[56%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+  titleOnly:
+    "absolute bottom-[calc(6.25rem+0.625rem)] left-1/2 max-h-[62%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-16px),transparent_100%)]",
+} as const;
 
 function normalizeLinkUrl(linkUrl: string) {
   const trimmed = linkUrl.trim();
@@ -100,15 +112,23 @@ export default function CardFace({
   preserve3d = true,
   size,
 }: Props) {
+  const scrollIdleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const [isTileBackScrolling, setIsTileBackScrolling] = useState(false);
   const styles = faceSize[size];
   const backgroundStyle = { backgroundImage: `url(${backgroundImage})` };
   const blurExtendImageStyle = {
     ...backgroundStyle,
-    backgroundPosition: "center 35%",
+    backgroundPosition: "center 30%",
   };
   const isBlurExtend = imageFitMode === "blurExtend";
   const isBack = face === "back";
   const isDocumentFront = isBlurExtend && !isBack;
+  const displayFrontText = frontText.trim();
+  const displayFrontComment = frontComment.trim();
+  const hasFrontTitle = Boolean(displayFrontText);
+  const hasFrontComment = Boolean(displayFrontComment);
   const linkHref = normalizeLinkUrl(linkUrl);
   const frontOverlayClass = isDocumentFront
     ? blurExtendFrontOverlayClass[size]
@@ -129,11 +149,54 @@ export default function CardFace({
   const frontCommentClass = isDocumentFront
     ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/88 drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]";
+  const frontTitleWeightClass = size === "tile" ? "font-medium" : "font-semibold";
+  const usesTileDocumentTextReserve =
+    isDocumentFront && size === "tile" && (hasFrontTitle || hasFrontComment);
+  const frontContentReserveClass =
+    usesTileDocumentTextReserve && hasFrontTitle && hasFrontComment
+      ? "min-h-[8.75rem]"
+      : usesTileDocumentTextReserve && hasFrontTitle
+        ? "min-h-[6.25rem]"
+        : usesTileDocumentTextReserve
+          ? "min-h-[5.25rem]"
+          : "";
+  const blurExtendImageClass = usesTileDocumentTextReserve
+    ? hasFrontTitle && hasFrontComment
+      ? tileDocumentImageFadeClass.full
+      : hasFrontTitle
+        ? tileDocumentImageFadeClass.titleOnly
+        : tileDocumentImageFadeClass.commentOnly
+    : blurExtendImageFadeClass[size];
   const faceTransform = isBack
     ? preserve3d
       ? "[transform:rotateY(180deg)_translateZ(0)]"
       : "[transform:translateZ(0)]"
     : "[transform:translateZ(0)]";
+  const showsSoftTileScrollbar = isBack && size === "tile";
+
+  useEffect(() => {
+    return () => {
+      if (scrollIdleTimeoutRef.current) {
+        clearTimeout(scrollIdleTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function handleBackMemoScroll() {
+    if (!showsSoftTileScrollbar) {
+      return;
+    }
+
+    if (scrollIdleTimeoutRef.current) {
+      clearTimeout(scrollIdleTimeoutRef.current);
+    }
+
+    setIsTileBackScrolling(true);
+    scrollIdleTimeoutRef.current = setTimeout(() => {
+      setIsTileBackScrolling(false);
+      scrollIdleTimeoutRef.current = null;
+    }, 650);
+  }
 
   return (
     <section
@@ -157,7 +220,7 @@ export default function CardFace({
           <img
             alt=""
             aria-hidden="true"
-            className={blurExtendImageFadeClass[size]}
+            className={blurExtendImageClass}
             src={backgroundImage}
           />
         </>
@@ -183,23 +246,27 @@ export default function CardFace({
           </p>
 
           <div
-            className={`absolute inset-x-0 bottom-0 ${frontContentClass} ${styles.frontContent}`}
+            className={`absolute inset-x-0 bottom-0 ${frontContentClass} ${styles.frontContent} ${frontContentReserveClass}`}
           >
             <p
               className={`font-medium ${frontDateClass} ${styles.date}`}
             >
               {date}
             </p>
-            <h3
-              className={`mt-3 font-semibold ${frontTitleClass} ${styles.title}`}
-            >
-              {frontText || "Untitled"}
-            </h3>
-            {frontComment ? (
-              <p
-                className={`mt-4 whitespace-pre-line ${frontCommentClass} ${styles.comment}`}
+            {hasFrontTitle ? (
+              <h3
+                className={`mt-3 ${frontTitleWeightClass} ${frontTitleClass} ${styles.title}`}
               >
-                {frontComment}
+                {displayFrontText}
+              </h3>
+            ) : null}
+            {hasFrontComment ? (
+              <p
+                className={`${
+                  hasFrontTitle ? "mt-4" : "mt-3"
+                } whitespace-pre-line ${frontCommentClass} ${styles.comment}`}
+              >
+                {displayFrontComment}
               </p>
             ) : null}
           </div>
@@ -220,7 +287,17 @@ export default function CardFace({
           </div>
 
           <div
-            className={`mt-3 min-h-0 flex-1 ${styles.backMemo}`}
+            onClick={
+              showsSoftTileScrollbar
+                ? (event) => event.stopPropagation()
+                : undefined
+            }
+            onScroll={handleBackMemoScroll}
+            className={`mt-3 min-h-0 flex-1 ${styles.backMemo} ${
+              showsSoftTileScrollbar && isTileBackScrolling
+                ? "is-scrolling"
+                : ""
+            }`}
           >
             <MarkdownMemo
               compact={size !== "detail"}

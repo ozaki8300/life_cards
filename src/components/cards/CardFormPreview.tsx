@@ -66,6 +66,7 @@ function PreviewFace({
   const frontCommentClass = isDocumentFront
     ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/90";
+  const displayFrontText = frontText.trim();
   const backgroundStyle = {
     backgroundImage: `url(${backgroundImage})`,
   };
@@ -122,14 +123,18 @@ function PreviewFace({
             className={`absolute inset-x-0 bottom-0 z-10 px-5 pb-6 pt-5 ${frontContentClass}`}
           >
             <p className={`text-xs font-medium ${frontDateClass}`}>{date}</p>
-            <h3
-              className={`mt-3 line-clamp-3 text-3xl font-semibold leading-tight ${frontTitleClass}`}
-            >
-              {frontText || "Untitled"}
-            </h3>
+            {displayFrontText ? (
+              <h3
+                className={`mt-3 line-clamp-3 text-3xl font-semibold leading-tight ${frontTitleClass}`}
+              >
+                {displayFrontText}
+              </h3>
+            ) : null}
             {frontComment ? (
               <p
-                className={`mt-4 whitespace-pre-line text-sm leading-6 ${frontCommentClass}`}
+                className={`${
+                  displayFrontText ? "mt-4" : "mt-3"
+                } whitespace-pre-line text-sm leading-6 ${frontCommentClass}`}
               >
                 {frontComment}
               </p>
