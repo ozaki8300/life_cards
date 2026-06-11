@@ -53,6 +53,30 @@ const faceSize = {
   },
 } as const;
 
+const blurExtendImageFadeClass = {
+  detail:
+    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]",
+  preview:
+    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]",
+  tile:
+    "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)]",
+} as const;
+const blurExtendBackgroundWashClass = {
+  detail: "absolute inset-0 bg-[#fff7ec]/38",
+  preview: "absolute inset-0 bg-[#fff7ec]/38",
+  tile: "absolute inset-0 bg-[#fff7ec]/26",
+} as const;
+const blurExtendFrontOverlayClass = {
+  detail: "bg-gradient-to-t from-[#fffaf0]/28 via-[#fffaf0]/5 to-transparent",
+  preview: "bg-gradient-to-t from-[#fffaf0]/28 via-[#fffaf0]/5 to-transparent",
+  tile: "bg-gradient-to-t from-[#fffaf0]/20 via-[#fffaf0]/3 to-transparent",
+} as const;
+const blurExtendTopFadeClass = {
+  detail: "bg-gradient-to-b from-[#fffaf0]/4 to-transparent",
+  preview: "bg-gradient-to-b from-[#fffaf0]/4 to-transparent",
+  tile: "bg-gradient-to-b from-[#fffaf0]/2 to-transparent",
+} as const;
+
 function normalizeLinkUrl(linkUrl: string) {
   const trimmed = linkUrl.trim();
 
@@ -87,23 +111,23 @@ export default function CardFace({
   const isDocumentFront = isBlurExtend && !isBack;
   const linkHref = normalizeLinkUrl(linkUrl);
   const frontOverlayClass = isDocumentFront
-    ? "bg-gradient-to-t from-[#fffaf0]/76 via-[#fffaf0]/34 to-[#fffaf0]/10"
+    ? blurExtendFrontOverlayClass[size]
     : "bg-gradient-to-t from-black/56 via-black/18 to-black/5";
   const frontTopFadeClass = isDocumentFront
-    ? "bg-gradient-to-b from-[#fffaf0]/46 to-transparent"
+    ? blurExtendTopFadeClass[size]
     : "bg-gradient-to-b from-black/32 to-transparent";
   const frontLabelClass = isDocumentFront
-    ? "bg-white/76 text-[#5f5346] shadow-sm"
+    ? "bg-[#fffaf0]/54 text-[#5f5346] shadow-sm"
     : "bg-black/16 text-white/70 backdrop-blur-sm";
   const frontContentClass = isDocumentFront ? "text-[#2f2a23]" : "text-white";
   const frontDateClass = isDocumentFront
-    ? "text-[#5f5346]"
+    ? "text-[#5f5346] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/88 drop-shadow-[0_1px_7px_rgba(0,0,0,0.86)]";
   const frontTitleClass = isDocumentFront
-    ? "text-[#231f1a]"
+    ? "text-[#231f1a] drop-shadow-[0_1px_4px_rgba(255,250,240,0.82)]"
     : "text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]";
   const frontCommentClass = isDocumentFront
-    ? "text-[#3b352d]"
+    ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/88 drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]";
   const faceTransform = isBack
     ? preserve3d
@@ -114,7 +138,7 @@ export default function CardFace({
   return (
     <section
       className={`absolute inset-0 overflow-hidden border bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
-        isBlurExtend ? "border-white/45 bg-[#1f1b16]" : "border-white/25 bg-cover"
+        isBlurExtend ? "border-[#f3eadb]/70 bg-[#f6efe4]" : "border-white/25 bg-cover"
       } ${
         styles.rounded
       } ${faceTransform}`}
@@ -123,12 +147,16 @@ export default function CardFace({
       {isBlurExtend ? (
         <>
           <div
-            className="absolute inset-0 scale-110 bg-cover blur-xl brightness-[0.82]"
+            className="absolute inset-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
             style={blurExtendImageStyle}
           />
-          <div
-            className="absolute inset-0 bg-contain bg-no-repeat"
-            style={blurExtendImageStyle}
+          <div className={blurExtendBackgroundWashClass[size]} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt=""
+            aria-hidden="true"
+            className={blurExtendImageFadeClass[size]}
+            src={backgroundImage}
           />
         </>
       ) : null}

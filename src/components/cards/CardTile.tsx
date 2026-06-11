@@ -34,6 +34,14 @@ export default function CardTile({
   const date = formatDate(card.createdAt);
   const backgroundImage = card.imagePath || defaultImageForCard(card);
   const isRail = layout === "rail";
+  const isBlurExtend = card.imageFitMode === "blurExtend";
+  const cardShadowClass = isBlurExtend
+    ? isRail
+      ? "shadow-[0_12px_30px_rgba(126,107,82,0.14)]"
+      : "shadow-[0_20px_52px_rgba(126,107,82,0.16)] hover:shadow-[0_24px_62px_rgba(126,107,82,0.2)]"
+    : isRail
+      ? "shadow-[0_10px_24px_rgba(32,24,16,0.16)]"
+      : "shadow-[0_18px_42px_rgba(32,24,16,0.22)] hover:shadow-[0_24px_54px_rgba(32,24,16,0.28)]";
 
   return (
     <article
@@ -41,7 +49,7 @@ export default function CardTile({
       data-side={isBack ? "back" : "front"}
       className={`group relative isolate aspect-[3/4] cursor-pointer overflow-hidden rounded-[18px] transition duration-200 [perspective:1000px] focus-within:ring-2 focus-within:ring-[#d8c8aa] focus-within:ring-offset-2 focus-within:ring-offset-[#fffaf0] ${
         isRail ? "" : "hover:-translate-y-1"
-      } ${isRail ? "shadow-[0_10px_24px_rgba(32,24,16,0.16)]" : "shadow-[0_18px_42px_rgba(32,24,16,0.22)] hover:shadow-[0_24px_54px_rgba(32,24,16,0.28)]"}`}
+      } ${cardShadowClass}`}
     >
       <div
         className={`absolute inset-0 rounded-[18px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none ${

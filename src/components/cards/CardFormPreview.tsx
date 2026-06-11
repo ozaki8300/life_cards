@@ -3,6 +3,9 @@ import type { CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
 
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
+const blurExtendImageFadeClass =
+  "absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]";
+
 type Props = {
   backText: string;
   cardDate: string;
@@ -45,18 +48,24 @@ function PreviewFace({
   const isDocumentFront = isBlurExtend && !isBack;
   const trimmedLinkUrl = linkUrl.trim();
   const frontOverlayClass = isDocumentFront
-    ? "bg-gradient-to-t from-[#fffaf0]/76 via-[#fffaf0]/34 to-[#fffaf0]/10"
+    ? "bg-gradient-to-t from-[#fffaf0]/28 via-[#fffaf0]/5 to-transparent"
     : "bg-gradient-to-t from-black/60 via-black/18 to-black/5";
   const frontTopFadeClass = isDocumentFront
-    ? "bg-gradient-to-b from-[#fffaf0]/46 to-transparent"
+    ? "bg-gradient-to-b from-[#fffaf0]/4 to-transparent"
     : "bg-gradient-to-b from-black/32 to-transparent";
   const frontLabelClass = isDocumentFront
-    ? "bg-white/76 text-[#5f5346] shadow-sm"
+    ? "bg-[#fffaf0]/54 text-[#5f5346] shadow-sm"
     : "bg-black/24 text-white/78";
   const frontContentClass = isDocumentFront ? "text-[#2f2a23]" : "text-white";
-  const frontDateClass = isDocumentFront ? "text-[#5f5346]" : "text-white/90";
-  const frontTitleClass = isDocumentFront ? "text-[#231f1a]" : "text-white";
-  const frontCommentClass = isDocumentFront ? "text-[#3b352d]" : "text-white/90";
+  const frontDateClass = isDocumentFront
+    ? "text-[#5f5346] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
+    : "text-white/90";
+  const frontTitleClass = isDocumentFront
+    ? "text-[#231f1a] drop-shadow-[0_1px_4px_rgba(255,250,240,0.82)]"
+    : "text-white";
+  const frontCommentClass = isDocumentFront
+    ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
+    : "text-white/90";
   const backgroundStyle = {
     backgroundImage: `url(${backgroundImage})`,
   };
@@ -68,18 +77,22 @@ function PreviewFace({
   return (
     <div
       className={`absolute inset-0 isolate overflow-hidden rounded-[22px] border bg-[#fffaf0] ${
-        isBlurExtend ? "border-white/45" : "border-white/25"
+        isBlurExtend ? "border-[#f3eadb]/70 bg-[#f6efe4]" : "border-white/25"
       }`}
     >
       {isBlurExtend ? (
         <>
           <div
-            className="absolute inset-0 z-0 scale-110 bg-cover blur-xl brightness-[0.82]"
+            className="absolute inset-0 z-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
             style={blurExtendImageStyle}
           />
-          <div
-            className="absolute inset-0 z-0 bg-contain bg-no-repeat"
-            style={blurExtendImageStyle}
+          <div className="absolute inset-0 z-0 bg-[#fff7ec]/38" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt=""
+            aria-hidden="true"
+            className={blurExtendImageFadeClass}
+            src={backgroundImage}
           />
         </>
       ) : (
@@ -167,13 +180,17 @@ export default function CardFormPreview({
     imagePath || defaultImageForCard({ defaultImageKey });
   const date = formatDate(cardDate);
   const isBack = previewFace === "back";
+  const previewShadowClass =
+    imageFitMode === "blurExtend"
+      ? "shadow-[0_22px_58px_rgba(126,107,82,0.16)]"
+      : "shadow-[0_20px_54px_rgba(87,72,52,0.24)]";
 
   return (
     <section className="mx-auto w-full max-w-[360px] lg:sticky lg:top-4">
       <button
         type="button"
         onClick={() => onPreviewFaceChange(isBack ? "front" : "back")}
-        className="group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-[22px] text-left shadow-[0_20px_54px_rgba(87,72,52,0.24)] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+        className={`group relative block aspect-[3/4] w-full cursor-pointer overflow-hidden rounded-[22px] text-left focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0] ${previewShadowClass}`}
         aria-label={isBack ? "表面プレビューを表示" : "裏面プレビューを表示"}
       >
         <PreviewFace

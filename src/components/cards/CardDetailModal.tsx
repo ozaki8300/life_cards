@@ -373,6 +373,10 @@ export default function CardDetailModal({
 
   const previousNavPositionClass = "left-[-1.25rem] sm:left-[-3.5rem]";
   const nextNavPositionClass = "right-[-1.25rem] sm:right-[-3.5rem]";
+  const cardShadowClass =
+    card.imageFitMode === "blurExtend"
+      ? "shadow-[0_28px_90px_rgba(126,107,82,0.2)]"
+      : "shadow-[0_28px_80px_rgba(87,72,52,0.3)]";
   const copyForAiToastMessage =
     copyForAiStatus === "copied"
       ? "プロンプトをコピーしました"
@@ -389,7 +393,7 @@ export default function CardDetailModal({
           onClick={handleCardClick}
           onTouchStart={handleCardTouchStart}
           onTouchEnd={handleCardTouchEnd}
-          className="pointer-events-auto relative mx-auto aspect-[3/4] w-full max-w-[min(350px,calc((100dvh-13rem)*0.75),calc(100vw-2rem))] cursor-pointer overflow-hidden rounded-[24px] shadow-[0_28px_80px_rgba(87,72,52,0.3)] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] sm:max-w-[460px]"
+          className={`pointer-events-auto relative mx-auto aspect-[3/4] w-full max-w-[min(350px,calc((100dvh-13rem)*0.75),calc(100vw-2rem))] cursor-pointer overflow-hidden rounded-[24px] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] sm:max-w-[460px] ${cardShadowClass}`}
         >
           <div
             className="absolute inset-0 rounded-[24px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
