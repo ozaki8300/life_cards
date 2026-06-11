@@ -29,6 +29,11 @@ export async function recordUsageEvent(
   eventName: UsageEventName,
   metadata: UsageEventMetadata = {},
 ) {
+  console.warn("Life Cards usage event start", {
+    eventName,
+    metadataKeys: Object.keys(metadata),
+  });
+
   try {
     const recorded = await UsageEventSupabaseRepository.recordEvent(
       eventName,

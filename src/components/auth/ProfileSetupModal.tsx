@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { upsertProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
 import { useEscapeKey } from "@/lib/useEscapeKey";
@@ -19,7 +19,16 @@ export default function ProfileSetupModal({
   const [displayName, setDisplayName] = useState(initialDisplayName);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const displayNameInputRef = useRef<HTMLInputElement>(null);
   const canClose = Boolean(onClose);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      displayNameInputRef.current?.focus();
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   useEscapeKey(() => {
     onClose?.();
@@ -89,6 +98,7 @@ export default function ProfileSetupModal({
           </span>
           <input
             autoFocus
+            ref={displayNameInputRef}
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
             placeholder="Life Cardsで表示する名前"

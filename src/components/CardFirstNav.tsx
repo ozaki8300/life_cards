@@ -192,6 +192,11 @@ export default function CardFirstNav({
     }
   }
 
+  function closeSearchMenu() {
+    onSearchChange?.("");
+    setIsMenuOpen(false);
+  }
+
   useEscapeKey(() => setIsDeckPanelOpen(false), {
     enabled: isDeckPanelOpen,
     ignoreEditable: false,
@@ -200,7 +205,7 @@ export default function CardFirstNav({
     enabled: Boolean(deckDeleteTarget),
     ignoreEditable: false,
   });
-  useEscapeKey(() => setIsMenuOpen(false), {
+  useEscapeKey(closeSearchMenu, {
     enabled: isMenuOpen,
     ignoreEditable: false,
   });
@@ -245,7 +250,7 @@ export default function CardFirstNav({
         <CardSearchMenu
           activeTab={activeTab}
           searchQuery={searchQuery}
-          onClose={() => setIsMenuOpen(false)}
+          onClose={closeSearchMenu}
           onOpenAbout={() => setIsAboutOpen(true)}
           onSearchChange={onSearchChange}
           onTabChange={onTabChange}

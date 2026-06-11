@@ -37,6 +37,32 @@ function supabaseErrorLog(error: unknown) {
   };
 }
 
+function usageEventInsertHint(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return "Unknown usage_events insert error.";
+  }
+
+  const code = (error as Record<string, unknown>).code;
+
+  if (code === "42501") {
+    return "Check usage_events RLS and usage_events_insert_own policy: with check (user_id = auth.uid()).";
+  }
+
+  if (code === "42P01") {
+    return "Check that public.usage_events exists in the connected Supabase project.";
+  }
+
+  if (code === "42703") {
+    return "Check usage_events columns: user_id, event_name, metadata, created_at.";
+  }
+
+  if (code === "23503") {
+    return "Check usage_events.user_id references an existing auth.users id.";
+  }
+
+  return "Check usage_events schema, RLS, and insert policy in the connected Supabase project.";
+}
+
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
   const {
@@ -59,11 +85,25 @@ export const UsageEventSupabaseRepository = {
     eventName: UsageEventName,
     metadata: UsageEventMetadata = {},
   ) {
+    console.warn("Life Cards usage event repository start", {
+      eventName,
+      metadataKeys: Object.keys(metadata),
+    });
+
     const client = await getClient();
 
     if (!client) {
+      console.warn("Life Cards usage event repository skipped", {
+        eventName,
+        reason: "missing-user",
+      });
       return false;
     }
+
+    console.warn("Life Cards usage event repository user", {
+      eventName,
+      userId: client.userId,
+    });
 
     const row: UsageEventInsertRow = {
       event_name: eventName,
@@ -77,10 +117,18 @@ export const UsageEventSupabaseRepository = {
       console.warn("Life Cards usage event insert failed", {
         error: supabaseErrorLog(error),
         eventName,
+        hint: usageEventInsertHint(error),
+        metadataKeys: Object.keys(metadata),
+        row,
         userId: client.userId,
       });
       throw error;
     }
+
+    console.warn("Life Cards usage event insert success", {
+      eventName,
+      userId: client.userId,
+    });
 
     return true;
   },
