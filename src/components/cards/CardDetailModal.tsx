@@ -70,7 +70,7 @@ export default function CardDetailModal({
     useState(false);
   const isCopyForAiVisible = useCopyForAiFeatureFlag();
   const [copyForAiStatus, setCopyForAiStatus] = useState<
-    "copied" | "failed" | "idle" | "shared" | "working"
+    "copied" | "failed" | "idle" | "working"
   >("idle");
   const [resolvedStorageImage, setResolvedStorageImage] = useState<{
     signedUrl: string;
@@ -337,7 +337,7 @@ export default function CardDetailModal({
     }
   }
 
-  function showCopyForAiStatus(status: "copied" | "failed" | "shared") {
+  function showCopyForAiStatus(status: "copied" | "failed") {
     if (copyForAiStatusResetTimerRef.current) {
       clearTimeout(copyForAiStatusResetTimerRef.current);
     }
@@ -353,51 +353,21 @@ export default function CardDetailModal({
     await navigator.clipboard.writeText(markdown);
   }
 
-  function canUseNativeShare() {
-    return (
-      typeof navigator.share === "function" &&
-      typeof navigator.maxTouchPoints === "number" &&
-      navigator.maxTouchPoints > 0
-    );
-  }
-
   async function handleCopyForAi() {
     const markdown = createCopyForAiMarkdown(card, { deckLabel });
 
     setCopyForAiStatus("working");
 
     try {
-      if (canUseNativeShare()) {
-        await navigator.share({
-          title: "Life Card",
-          text: markdown,
-        });
-        showCopyForAiStatus("shared");
-      } else {
-        await copyMarkdownToClipboard(markdown);
-        showCopyForAiStatus("copied");
-      }
-
+      await copyMarkdownToClipboard(markdown);
+      showCopyForAiStatus("copied");
       void recordUsageEvent("copy_for_ai_used", {
         cardId: card.id,
         deckId: card.deckId,
       });
-    } catch (shareError) {
-      try {
-        await copyMarkdownToClipboard(markdown);
-        showCopyForAiStatus("copied");
-        void recordUsageEvent("copy_for_ai_used", {
-          cardId: card.id,
-          deckId: card.deckId,
-          fallback: true,
-        });
-      } catch (clipboardError) {
-        console.warn("Life Cards Copy for AI failed", {
-          clipboardError,
-          shareError,
-        });
-        showCopyForAiStatus("failed");
-      }
+    } catch (clipboardError) {
+      console.warn("Life Cards Copy for AI failed", { clipboardError });
+      showCopyForAiStatus("failed");
     }
   }
 
@@ -406,11 +376,9 @@ export default function CardDetailModal({
   const copyForAiToastMessage =
     copyForAiStatus === "copied"
       ? "プロンプトをコピーしました"
-      : copyForAiStatus === "shared"
-        ? "AIに渡す文章を共有しました"
-        : copyForAiStatus === "failed"
-          ? "コピーできませんでした"
-          : null;
+      : copyForAiStatus === "failed"
+        ? "コピーできませんでした"
+        : null;
 
   return (
     <div className="pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-4">

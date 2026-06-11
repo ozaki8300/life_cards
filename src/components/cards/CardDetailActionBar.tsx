@@ -119,7 +119,7 @@ type Props = {
   onCopyForAi?: () => void;
   onOpenPhoto: () => void;
   onShare: () => void;
-  copyForAiStatus?: "copied" | "failed" | "idle" | "shared" | "working";
+  copyForAiStatus?: "copied" | "failed" | "idle" | "working";
   hasImage: boolean;
   showCopyForAi?: boolean;
 };
