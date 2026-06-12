@@ -14,6 +14,7 @@ import type { CardImageFitMode, Deck, DefaultCardImageKey } from "@/lib/types";
 import BackMemoEditor from "./BackMemoEditor";
 import CardFormPreview from "./CardFormPreview";
 import DeckCreateModal from "./DeckCreateModal";
+import MobileDesktopHint from "./MobileDesktopHint";
 import {
   type BackMemoMode,
   imageActions,
@@ -644,6 +645,7 @@ export default function CardForm({
               {submitButtonLabel}
             </button>
             </div>
+            <MobileDesktopHint isVisible={isAuthResolved && isSignedIn} />
           </div>
         </section>
       </form>
