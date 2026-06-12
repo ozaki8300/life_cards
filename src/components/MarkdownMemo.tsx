@@ -14,6 +14,7 @@ type MarkdownMemoProps = {
   children: string;
   emptyText?: string;
   compact?: boolean;
+  readingDensity?: "default" | "detailBack";
 };
 type MarkdownParent = (Content | Root) & {
   children: Content[];
@@ -82,19 +83,31 @@ const remarkHighlightSyntax: Plugin<[], Root> = () => {
   };
 };
 
-function createMarkdownComponents(compact: boolean): Components {
+function createMarkdownComponents(
+  compact: boolean,
+  readingDensity: MarkdownMemoProps["readingDensity"],
+): Components {
+  const isDetailBack = readingDensity === "detailBack";
   const paragraphClass = compact
     ? "my-1.5 leading-5 text-[#5f5346] first:mt-0 last:mb-0 sm:leading-6"
-    : "my-3 leading-7 text-[#5f5346] first:mt-0 last:mb-0 sm:my-4 sm:leading-8";
+    : isDetailBack
+      ? "my-2 leading-[1.7] text-[#5f5346] first:mt-0 last:mb-0 sm:my-3 sm:leading-7"
+      : "my-3 leading-7 text-[#5f5346] first:mt-0 last:mb-0 sm:my-4 sm:leading-8";
   const listClass = compact
     ? "my-2 list-disc space-y-1.5 pl-5 text-[#5f5346] marker:text-[#b5a184]"
-    : "my-3 list-disc space-y-2 pl-5 text-[#5f5346] marker:text-[#c2ad8e] sm:my-4";
+    : isDetailBack
+      ? "my-2 list-disc space-y-1.5 pl-5 text-[#5f5346] marker:text-[#c2ad8e] sm:my-3"
+      : "my-3 list-disc space-y-2 pl-5 text-[#5f5346] marker:text-[#c2ad8e] sm:my-4";
   const orderedListClass = compact
     ? "my-2 list-decimal space-y-1.5 pl-5 text-[#5f5346] marker:text-[#b5a184]"
-    : "my-3 list-decimal space-y-2 pl-5 text-[#5f5346] marker:text-[#c2ad8e] sm:my-4";
+    : isDetailBack
+      ? "my-2 list-decimal space-y-1.5 pl-5 text-[#5f5346] marker:text-[#c2ad8e] sm:my-3"
+      : "my-3 list-decimal space-y-2 pl-5 text-[#5f5346] marker:text-[#c2ad8e] sm:my-4";
   const listItemClass = compact
     ? "pl-1 leading-5 sm:leading-6"
-    : "pl-1 leading-6 sm:leading-7";
+    : isDetailBack
+      ? "pl-1 leading-[1.65] sm:leading-7"
+      : "pl-1 leading-6 sm:leading-7";
 
   return {
     h1: ({ children }) => (
@@ -165,15 +178,18 @@ export default function MarkdownMemo({
   children,
   emptyText = "No back text",
   compact = false,
+  readingDensity = "default",
 }: MarkdownMemoProps) {
   const source = children.trim() || emptyText;
-  const components = createMarkdownComponents(compact);
+  const components = createMarkdownComponents(compact, readingDensity);
 
   return (
     <div
       className={
         compact
           ? "text-[15px] leading-5 text-[#5f5346] sm:text-sm sm:leading-6"
+          : readingDensity === "detailBack"
+            ? "text-[15px] leading-[1.7] text-[#5f5346] sm:text-base sm:leading-7"
           : "text-base leading-7 text-[#5f5346] sm:text-lg sm:leading-8"
       }
     >

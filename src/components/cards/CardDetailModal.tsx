@@ -426,7 +426,11 @@ export default function CardDetailModal({
   }
 
   return (
-    <div className="pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center gap-4 sm:gap-4">
+    <div
+      className={`pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center ${
+        viewMode === "back" ? "gap-5 sm:gap-4" : "gap-4"
+      }`}
+    >
       <div
         className="pointer-events-none relative mx-auto w-full max-w-[min(350px,calc((100dvh-13rem)*0.75),calc(100vw-2rem))] sm:max-w-[460px]"
       >
