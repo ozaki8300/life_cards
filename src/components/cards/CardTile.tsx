@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 
 import type { Card } from "@/lib/types";
 
@@ -9,19 +9,21 @@ const faceBaseClass =
   "absolute inset-0 [-webkit-backface-visibility:hidden] [backface-visibility:hidden]";
 const frontFaceClass = `${faceBaseClass} [transform:rotateY(0deg)]`;
 const backFaceClass = `${faceBaseClass} [transform:rotateY(180deg)]`;
-export default function CardTile({
-  card,
-  deckLabel,
-  isBack,
-  layout = "grid",
-  onFlip,
-}: {
+type Props = {
   card: Card;
   deckLabel: string;
   isBack: boolean;
   layout?: "grid" | "rail";
   onFlip: () => void;
-}) {
+};
+
+function CardTile({
+  card,
+  deckLabel,
+  isBack,
+  layout = "grid",
+  onFlip,
+}: Props) {
   const date = formatDate(card.createdAt);
   const backgroundImage = card.imagePath || defaultImageForCard(card);
   const isRail = layout === "rail";
@@ -93,3 +95,12 @@ export default function CardTile({
     </article>
   );
 }
+
+export default memo(CardTile, (previous, next) => {
+  return (
+    previous.card === next.card &&
+    previous.deckLabel === next.deckLabel &&
+    previous.isBack === next.isBack &&
+    previous.layout === next.layout
+  );
+});

@@ -39,7 +39,7 @@ const RAIL_OUTER_CLASS =
   "w-full overflow-x-auto overflow-y-hidden overscroll-x-contain pb-3";
 const RAIL_INNER_CLASS =
   "flex min-w-full snap-x snap-mandatory flex-nowrap gap-4 sm:gap-5";
-const GRID_PAGE_SIZE = 60;
+const GRID_PAGE_SIZE = 24;
 
 function debugFullscreenImageLoop(payload: Record<string, unknown>) {
   if (process.env.NODE_ENV !== "production") {
@@ -101,9 +101,10 @@ export default function TradingCardGrid({
     [cards, visibleCount],
   );
   const hasMoreCards = shouldLimitCards && visibleCount < cards.length;
-  const activeFavoriteIds = favoriteIds
-    ? new Set(favoriteIds)
-    : localFavoriteIds;
+  const activeFavoriteIds = useMemo(
+    () => (favoriteIds ? new Set(favoriteIds) : localFavoriteIds),
+    [favoriteIds, localFavoriteIds],
+  );
   const rawDisplayCards = useMemo(
     () => visibleSourceCards.map((card) => updatedCardsById.get(card.id) ?? card),
     [updatedCardsById, visibleSourceCards],
@@ -168,18 +169,23 @@ export default function TradingCardGrid({
     onCardViewed,
     onPreviewModeReset: resetPreviewMode,
   });
-  const fullscreenImageIndexes = displayCards
-    .map((card, index) =>
-      card.imagePath?.trim() || card.imageStoragePath?.trim() ? index : -1,
-    )
-    .filter((index) => index >= 0);
+  const fullscreenImageIndexes = useMemo(
+    () =>
+      displayCards
+        .map((card, index) =>
+          card.imagePath?.trim() || card.imageStoragePath?.trim() ? index : -1,
+        )
+        .filter((index) => index >= 0),
+    [displayCards],
+  );
   const canGoNextFullscreenImage = fullscreenImageIndexes.length >= 2;
   const shouldShowCarouselIndicator =
     layout === "rail" && showCarouselIndicator && cards.length > 1;
 
-  function deckLabelFor(card: Card) {
-    return decks.find((deck) => deck.id === card.deckId)?.name ?? "Deck";
-  }
+  const deckLabelFor = useCallback(
+    (card: Card) => decks.find((deck) => deck.id === card.deckId)?.name ?? "Deck",
+    [decks],
+  );
 
   const updateActiveRailIndex = useCallback(() => {
     const rail = railRef.current;
@@ -290,7 +296,7 @@ export default function TradingCardGrid({
     );
   }
 
-  function toggleCard(cardId: string) {
+  const toggleCard = useCallback((cardId: string) => {
     setFlippedIds((current) => {
       const next = new Set(current);
 
@@ -302,26 +308,29 @@ export default function TradingCardGrid({
 
       return next;
     });
-  }
+  }, []);
 
-  function toggleFavorite(cardId: string) {
-    if (onToggleFavorite) {
-      onToggleFavorite(cardId);
-      return;
-    }
-
-    setLocalFavoriteIds((current) => {
-      const next = new Set(current);
-
-      if (next.has(cardId)) {
-        next.delete(cardId);
-      } else {
-        next.add(cardId);
+  const toggleFavorite = useCallback(
+    (cardId: string) => {
+      if (onToggleFavorite) {
+        onToggleFavorite(cardId);
+        return;
       }
 
-      return next;
-    });
-  }
+      setLocalFavoriteIds((current) => {
+        const next = new Set(current);
+
+        if (next.has(cardId)) {
+          next.delete(cardId);
+        } else {
+          next.add(cardId);
+        }
+
+        return next;
+      });
+    },
+    [onToggleFavorite],
+  );
 
   async function imageUrlForFullscreen(card: Card) {
     const directImagePath = card.imagePath?.trim();
@@ -435,7 +444,7 @@ export default function TradingCardGrid({
     }
   }
 
-  function showMoreCards() {
+  const showMoreCards = useCallback(() => {
     setVisibleLimitState((current) => {
       const currentLimit =
         current.signature === cardsSignature ? current.limit : GRID_PAGE_SIZE;
@@ -445,7 +454,7 @@ export default function TradingCardGrid({
         signature: cardsSignature,
       };
     });
-  }
+  }, [cards.length, cardsSignature]);
 
   if (cards.length === 0) {
     return (

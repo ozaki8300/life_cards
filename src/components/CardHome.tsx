@@ -102,7 +102,10 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     }
   }, [isDataReady]);
 
-  const activeFavoriteIds = Array.from(favoriteIds);
+  const activeFavoriteIds = useMemo(
+    () => Array.from(favoriteIds),
+    [favoriteIds],
+  );
   const todayCards = useReencounterCards({
     cards: scopedCards,
     favoriteIds,
