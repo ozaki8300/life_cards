@@ -14,7 +14,9 @@ import CardFace from "./CardFace";
 import CardDetailActionBar from "./CardDetailActionBar";
 import FullscreenImageViewer from "./FullscreenImageViewer";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
-import useCardDetailViewCycle from "./useCardDetailViewCycle";
+import useCardDetailViewCycle, {
+  type CardDetailViewMode,
+} from "./useCardDetailViewCycle";
 
 const sideNavButtonClass =
   "pointer-events-auto absolute top-[54%] z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/38 bg-[#fffaf0]/44 text-3xl font-semibold leading-none text-[#5f513f]/62 opacity-72 shadow-[0_3px_10px_rgba(87,72,52,0.08)] backdrop-blur-md transition hover:bg-[#fffaf0]/72 hover:text-[#5f513f] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:top-1/2 sm:h-12 sm:w-12 sm:border-[#e0d3c0]/80 sm:bg-[#fffaf0]/86 sm:text-4xl sm:text-[#5f513f] sm:opacity-100 sm:shadow-[0_8px_24px_rgba(87,72,52,0.22)] sm:hover:bg-white";
@@ -56,6 +58,7 @@ export default function CardDetailModal({
   onShare,
   onToggleFavorite,
   canGoNextFullscreenImage = false,
+  initialViewMode = "front",
 }: {
   card: Card;
   canGoNextFullscreenImage?: boolean;
@@ -63,6 +66,7 @@ export default function CardDetailModal({
   index: number;
   isFavorite: boolean;
   hasMultipleCards: boolean;
+  initialViewMode?: CardDetailViewMode;
   onClose: () => void;
   onDelete: () => void;
   onEdit: () => void;
@@ -117,7 +121,7 @@ export default function CardDetailModal({
     frontFaceStep,
     backFaceStep,
     cycleViewMode,
-  } = useCardDetailViewCycle();
+  } = useCardDetailViewCycle(initialViewMode);
 
   useEscapeKey(() => {
     onClose();

@@ -1,11 +1,23 @@
 "use client";
 
+import type { MouseEvent, PointerEvent, TouchEvent } from "react";
+
 import type { Card } from "@/lib/types";
 
 import CardTile from "./CardTile";
+import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 const RAIL_ITEM_CLASS =
-  "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-hidden rounded-[18px] [contain:paint] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
+  "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-visible rounded-[18px] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
+const faceControlBaseClass =
+  "absolute z-[10000] flex items-center justify-center rounded-full border backdrop-blur-[2px] transition focus:outline-none focus:ring-2 focus:ring-white/70";
+const openDetailButtonClass = `${faceControlBaseClass} right-3 top-3 h-10 w-10 border-[#d8c8aa]/45 bg-[#f5eee1]/84 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_8px_22px_rgba(87,72,52,0.1)] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]`;
+const favoriteButtonBaseClass = `${faceControlBaseClass} bottom-3 right-3 h-10 w-10 text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
+
+type OverlayButtonEvent =
+  | MouseEvent<HTMLButtonElement>
+  | PointerEvent<HTMLButtonElement>
+  | TouchEvent<HTMLButtonElement>;
 
 type Props = {
   activeFavoriteIds: Set<string>;
@@ -14,7 +26,7 @@ type Props = {
   flippedIds: Set<string>;
   layout: "grid" | "rail";
   onFlip: (cardId: string) => void;
-  onOpen: (index: number) => void;
+  onOpen: (index: number, initialViewMode: CardDetailViewMode) => void;
   onToggleFavorite: (cardId: string) => void;
 };
 
@@ -28,30 +40,76 @@ export default function CardTileList({
   onOpen,
   onToggleFavorite,
 }: Props) {
+  function stopOverlayButtonEvent(event: OverlayButtonEvent) {
+    event.stopPropagation();
+  }
+
   return (
     <>
-      {cards.map((card, index) => (
-        <div
-          key={card.id}
-          className={`card-enter ${
-            layout === "rail"
-              ? RAIL_ITEM_CLASS
-              : "w-full max-w-[22rem] sm:max-w-none"
-          }`}
-          style={{ animationDelay: `${Math.min(index * 45, 360)}ms` }}
-        >
-          <CardTile
-            card={card}
-            deckLabel={deckLabelFor(card)}
-            isBack={flippedIds.has(card.id)}
-            isFavorite={activeFavoriteIds.has(card.id)}
-            layout={layout}
-            onFlip={() => onFlip(card.id)}
-            onOpen={() => onOpen(index)}
-            onToggleFavorite={() => onToggleFavorite(card.id)}
-          />
-        </div>
-      ))}
+      {cards.map((card, index) => {
+        const isBack = flippedIds.has(card.id);
+        const isFavorite = activeFavoriteIds.has(card.id);
+        const favoriteButtonToneClass = isFavorite
+          ? "border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]"
+          : "border-[#d8c8aa]/45 bg-[#f5eee1]/82 text-[#8f806d] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]";
+
+        return (
+          <div
+            key={card.id}
+            className={`card-enter relative overflow-visible ${
+              layout === "rail"
+                ? RAIL_ITEM_CLASS
+                : "w-full max-w-[22rem] sm:max-w-none"
+            }`}
+            style={{ animationDelay: `${Math.min(index * 45, 360)}ms` }}
+          >
+            <CardTile
+              card={card}
+              deckLabel={deckLabelFor(card)}
+              isBack={isBack}
+              layout={layout}
+              onFlip={() => onFlip(card.id)}
+            />
+
+            <div className="pointer-events-none absolute inset-0 z-[9999]">
+              <button
+                type="button"
+                aria-label="Open card detail"
+                data-card-action="true"
+                onMouseDown={stopOverlayButtonEvent}
+                onPointerDown={stopOverlayButtonEvent}
+                onTouchStart={stopOverlayButtonEvent}
+                onClick={(event) => {
+                  stopOverlayButtonEvent(event);
+                  onOpen(index, isBack ? "back" : "front");
+                }}
+                className={`${openDetailButtonClass} pointer-events-auto touch-manipulation`}
+              >
+                ...
+              </button>
+
+              <button
+                type="button"
+                aria-label={
+                  isFavorite ? "Remove from favorites" : "Add to favorites"
+                }
+                aria-pressed={isFavorite}
+                data-card-action="true"
+                onMouseDown={stopOverlayButtonEvent}
+                onPointerDown={stopOverlayButtonEvent}
+                onTouchStart={stopOverlayButtonEvent}
+                onClick={(event) => {
+                  stopOverlayButtonEvent(event);
+                  onToggleFavorite(card.id);
+                }}
+                className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto touch-manipulation`}
+              >
+                {isFavorite ? "★" : "☆"}
+              </button>
+            </div>
+          </div>
+        );
+      })}
     </>
   );
 }

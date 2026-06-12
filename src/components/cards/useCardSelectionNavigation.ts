@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { Card } from "@/lib/types";
+import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 type TouchPoint = {
   x: number;
@@ -28,6 +29,8 @@ export default function useCardSelectionNavigation({
   const [selectedCardSnapshot, setSelectedCardSnapshot] =
     useState<Card | null>(null);
   const [fallbackIndex, setFallbackIndex] = useState<number | null>(null);
+  const [selectedInitialViewMode, setSelectedInitialViewMode] =
+    useState<CardDetailViewMode>("front");
   const [touchStartPoint, setTouchStartPoint] = useState<TouchPoint | null>(
     null,
   );
@@ -55,6 +58,7 @@ export default function useCardSelectionNavigation({
       setSelectedCardId(nextCard.id);
       setSelectedCardSnapshot(nextCard);
       setFallbackIndex(boundedIndex);
+      setSelectedInitialViewMode("front");
       onPreviewModeReset();
       onCardViewed?.(nextCard.id);
     },
@@ -77,6 +81,7 @@ export default function useCardSelectionNavigation({
     setSelectedCardId(null);
     setSelectedCardSnapshot(null);
     setFallbackIndex(null);
+    setSelectedInitialViewMode("front");
     onPreviewModeReset();
   }, [onPreviewModeReset]);
 
@@ -85,7 +90,7 @@ export default function useCardSelectionNavigation({
   }, [closePreview]);
 
   const openCard = useCallback(
-    (index: number) => {
+    (index: number, initialViewMode: CardDetailViewMode = "front") => {
       const card = cards[index];
 
       if (!card) {
@@ -95,6 +100,7 @@ export default function useCardSelectionNavigation({
       setSelectedCardId(card.id);
       setSelectedCardSnapshot(card);
       setFallbackIndex(index);
+      setSelectedInitialViewMode(initialViewMode);
       onPreviewModeReset();
       onCardViewed?.(card.id);
     },
@@ -112,6 +118,7 @@ export default function useCardSelectionNavigation({
       setSelectedCardId(card.id);
       setSelectedCardSnapshot(card);
       setFallbackIndex(index);
+      setSelectedInitialViewMode("front");
       onPreviewModeReset();
       onCardViewed?.(card.id);
     },
@@ -183,6 +190,7 @@ export default function useCardSelectionNavigation({
     hasMultipleCards,
     openCard,
     selectedCard,
+    selectedInitialViewMode,
     selectedIndex,
     selectCardIndex,
     showNext,

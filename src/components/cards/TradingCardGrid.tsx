@@ -156,6 +156,7 @@ export default function TradingCardGrid({
     hasMultipleCards,
     openCard,
     selectedCard,
+    selectedInitialViewMode,
     selectedIndex,
     selectCardIndex,
     showNext,
@@ -553,6 +554,7 @@ export default function TradingCardGrid({
         deckLabel={selectedCard ? deckLabelFor(selectedCard) : ""}
         decks={decks}
         hasMultipleCards={hasMultipleCards}
+        initialViewMode={selectedInitialViewMode}
         index={selectedIndex}
         isEditing={isEditing}
         isFavorite={

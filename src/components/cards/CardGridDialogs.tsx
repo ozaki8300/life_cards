@@ -5,6 +5,7 @@ import type { Card, Deck } from "@/lib/types";
 import CardDetailModal from "./CardDetailModal";
 import CardEditDialog from "./CardEditDialog";
 import CardShareDialog from "./CardShareDialog";
+import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 type Props = {
   canGoNextFullscreenImage: boolean;
@@ -13,6 +14,7 @@ type Props = {
   deckLabel: string;
   decks: Deck[];
   hasMultipleCards: boolean;
+  initialViewMode: CardDetailViewMode;
   index: number | null;
   isEditing: boolean;
   isFavorite: boolean;
@@ -43,6 +45,7 @@ export default function CardGridDialogs({
   deckLabel,
   decks,
   hasMultipleCards,
+  initialViewMode,
   index,
   isEditing,
   isFavorite,
@@ -107,6 +110,7 @@ export default function CardGridDialogs({
               canGoNextFullscreenImage={canGoNextFullscreenImage}
               deckLabel={deckLabel}
               index={index}
+              initialViewMode={initialViewMode}
               isFavorite={isFavorite}
               hasMultipleCards={hasMultipleCards}
               onClose={onDetailClose}
