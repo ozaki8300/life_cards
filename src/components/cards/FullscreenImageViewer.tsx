@@ -47,37 +47,22 @@ export default function FullscreenImageViewer({
   function handleViewerClick(event: MouseEvent<HTMLDivElement>) {
     event.stopPropagation();
 
-    if (!onBackdropClick) {
-      return;
-    }
-
-    if (!naturalImageSize) {
-      if (event.target === event.currentTarget) {
-        onBackdropClick();
-      }
-
-      return;
-    }
-
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const containerRatio = bounds.width / bounds.height;
-    const imageRatio = naturalImageSize.width / naturalImageSize.height;
-    const renderedWidth =
-      imageRatio > containerRatio ? bounds.width : bounds.height * imageRatio;
-    const renderedHeight =
-      imageRatio > containerRatio ? bounds.width / imageRatio : bounds.height;
-    const renderedLeft = bounds.left + (bounds.width - renderedWidth) / 2;
-    const renderedTop = bounds.top + (bounds.height - renderedHeight) / 2;
-    const isInsideImage =
-      event.clientX >= renderedLeft &&
-      event.clientX <= renderedLeft + renderedWidth &&
-      event.clientY >= renderedTop &&
-      event.clientY <= renderedTop + renderedHeight;
-
-    if (!isInsideImage) {
+    if (onBackdropClick && event.target === event.currentTarget) {
       onBackdropClick();
     }
   }
+
+  const imageRatio = naturalImageSize
+    ? naturalImageSize.width / naturalImageSize.height
+    : null;
+  const imageFrameStyle = naturalImageSize
+    ? {
+        aspectRatio: `${naturalImageSize.width} / ${naturalImageSize.height}`,
+        ...(imageRatio !== null && imageRatio >= 1
+          ? { width: "100%" }
+          : { height: "100%" }),
+      }
+    : { inset: 0 };
 
   return (
     <div
@@ -85,7 +70,7 @@ export default function FullscreenImageViewer({
       aria-modal="true"
       aria-label="画像ビューア"
       className="pointer-events-auto fixed inset-0 z-[80] h-[100dvh] w-screen overflow-hidden bg-[#050505] text-white"
-      onClick={handleViewerClick}
+      onClick={(event) => event.stopPropagation()}
       onPointerCancel={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
       onPointerMove={(event) => event.stopPropagation()}
@@ -95,14 +80,21 @@ export default function FullscreenImageViewer({
       onTouchStart={(event) => event.stopPropagation()}
     >
       <div
-        className="relative h-full w-full select-none overflow-hidden"
+        className="relative flex h-full w-full select-none items-center justify-center overflow-hidden"
+        onClick={handleViewerClick}
         style={{
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
         }}
       >
         <div
-          className="absolute inset-0"
+          className={`${
+            naturalImageSize
+              ? "relative max-h-full max-w-full"
+              : "absolute inset-0"
+          }`}
+          onClick={(event) => event.stopPropagation()}
+          style={imageFrameStyle}
         >
           <Image
             src={imageSrc}

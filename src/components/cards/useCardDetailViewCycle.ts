@@ -43,12 +43,17 @@ export default function useCardDetailViewCycle(
     });
   }
 
+  function returnToFront() {
+    setViewMode("front");
+  }
+
   return {
     viewMode,
     rotationAngle,
     frontFaceStep,
     backFaceStep,
     cycleViewMode,
+    returnToFront,
     setViewMode,
   };
 }
