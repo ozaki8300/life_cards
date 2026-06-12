@@ -428,7 +428,7 @@ export default function CardDetailModal({
   return (
     <div
       className={`pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center ${
-        viewMode === "back" ? "gap-5 sm:gap-4" : "gap-4"
+        viewMode === "back" ? "gap-7 sm:gap-5" : "gap-4"
       }`}
     >
       <div
@@ -519,6 +519,7 @@ export default function CardDetailModal({
         <CardDetailActionBar
           copyForAiStatus={copyForAiStatus}
           hasImage={actionBarHasImage}
+          isSubdued={viewMode === "back"}
           onClose={onClose}
           onCopyForAi={handleCopyForAi}
           onDelete={onDelete}

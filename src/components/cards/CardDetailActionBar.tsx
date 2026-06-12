@@ -6,8 +6,12 @@ const copyForAiActionButtonClass =
   `${actionButtonBaseClass} border-[#d9c9b2] bg-white/70 text-[#6f6253] hover:bg-white`;
 const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
-const actionBarClass =
-  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-1rem))] flex-nowrap items-center justify-center gap-1 rounded-[22px] border border-[#e0d3c0] bg-[#fffaf0]/50 p-1.5 shadow-[0_12px_34px_rgba(87,72,52,0.1)] backdrop-blur-md sm:max-w-[460px] sm:gap-2 sm:p-2";
+const actionBarBaseClass =
+  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-1rem))] flex-nowrap items-center justify-center gap-1 rounded-[22px] border p-1.5 backdrop-blur-md sm:max-w-[460px] sm:gap-2 sm:p-2";
+const actionBarToneClass =
+  "border-[#e0d3c0] bg-[#fffaf0]/50 shadow-[0_12px_34px_rgba(87,72,52,0.1)]";
+const actionBarReadingToneClass =
+  "border-[#e0d3c0]/45 bg-[#fffaf0]/34 shadow-[0_6px_18px_rgba(87,72,52,0.055)]";
 
 type IconProps = {
   className?: string;
@@ -121,6 +125,7 @@ type Props = {
   onShare: () => void;
   copyForAiStatus?: "copied" | "failed" | "idle" | "working";
   hasImage: boolean;
+  isSubdued?: boolean;
   showCopyForAi?: boolean;
 };
 
@@ -133,10 +138,15 @@ export default function CardDetailActionBar({
   onShare,
   copyForAiStatus = "idle",
   hasImage,
+  isSubdued = false,
   showCopyForAi = false,
 }: Props) {
   return (
-    <section className={actionBarClass}>
+    <section
+      className={`${actionBarBaseClass} ${
+        isSubdued ? actionBarReadingToneClass : actionBarToneClass
+      }`}
+    >
       <button
         type="button"
         aria-label="QR共有"
