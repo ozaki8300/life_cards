@@ -2,8 +2,9 @@ import type { Card, DefaultCardImageKey } from "./types";
 
 const CARD_DEFAULT_IMAGE_KEYS_STORAGE_KEY =
   "life_cards.card_default_image_keys";
-const DEFAULT_CARD_IMAGE_KEY: DefaultCardImageKey = "night";
+const DEFAULT_CARD_IMAGE_KEY: DefaultCardImageKey = "paper";
 const defaultImageKeys = new Set<DefaultCardImageKey>([
+  "paper",
   "night",
   "sea",
   "mountain",

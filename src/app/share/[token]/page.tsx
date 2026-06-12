@@ -130,6 +130,7 @@ function isCardImageFitMode(value: unknown): value is CardImageFitMode {
 
 function isDefaultCardImageKey(value: unknown): value is DefaultCardImageKey {
   return (
+    value === "paper" ||
     value === "night" ||
     value === "sea" ||
     value === "mountain" ||
@@ -168,7 +169,7 @@ function parseShareCardPayload(value: unknown): ShareCardPayload | null {
       createdAt: cardRecord.createdAt,
       defaultImageKey: isDefaultCardImageKey(cardRecord.defaultImageKey)
         ? cardRecord.defaultImageKey
-        : "night",
+        : "paper",
       frontComment: isString(cardRecord.frontComment)
         ? cardRecord.frontComment
         : "",

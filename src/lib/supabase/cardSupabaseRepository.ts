@@ -26,6 +26,7 @@ type SupabaseCardRow = {
 const cardsTableName = "cards";
 const cardsUpsertOnConflict = "user_id,id";
 const defaultImageKeys = new Set<DefaultCardImageKey>([
+  "paper",
   "night",
   "sea",
   "mountain",

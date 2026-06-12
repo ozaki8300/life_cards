@@ -132,52 +132,54 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         onSearchChange={setSearchQuery}
       >
         <div className="space-y-6">
-          {!isSearching && loadStatus === "ready" ? (
-            <ReencounterSection
-              title="今日の再会"
-              subtitle="久しぶりに見たいカード"
-              cards={todayCards}
-              decks={allDecks}
-              editSeedCards={allCards}
-              favoriteIds={activeFavoriteIds}
-              onCardViewed={recordCardReencounter}
-              onDecksChange={setAllDecks}
-              onDeleteCard={handleDeleteCard}
-              onUpdateCard={handleUpdateCard}
-              onToggleFavorite={toggleFavorite}
-            />
-          ) : null}
-
-          <section>
-            {viewStatus === "loading" ? (
+          {loadStatus !== "ready" ? (
+            <section>
               <CardHomeStatus isLoading message="カードを読み込んでいます" />
-            ) : null}
-            {viewStatus === "error" ? (
-              <CardHomeStatus message="カードを読み込めませんでした。時間をおいてもう一度お試しください。" />
-            ) : null}
-            {viewStatus === "empty" ? (
-              <CardHomeStatus
-                message="最初のカードを作りましょう。"
-                description="右下の＋から、残しておきたい言葉・画像・メモを保存できます。"
-              />
-            ) : null}
-            {viewStatus === "filteredEmpty" ? (
-              <CardHomeStatus message="該当するカードがありません。" />
-            ) : null}
-            {viewStatus === "ready" ? (
-              <TradingCardGrid
-                cards={visibleCards}
-                decks={allDecks}
-                editSeedCards={allCards}
-                favoriteIds={activeFavoriteIds}
-                onCardViewed={recordCardView}
-                onDecksChange={setAllDecks}
-                onDeleteCard={handleDeleteCard}
-                onUpdateCard={handleUpdateCard}
-                onToggleFavorite={toggleFavorite}
-              />
-            ) : null}
-          </section>
+            </section>
+          ) : (
+            <>
+              {!isSearching ? (
+                <ReencounterSection
+                  title="今日の再会"
+                  subtitle="久しぶりに見たいカード"
+                  cards={todayCards}
+                  decks={allDecks}
+                  editSeedCards={allCards}
+                  favoriteIds={activeFavoriteIds}
+                  onCardViewed={recordCardReencounter}
+                  onDecksChange={setAllDecks}
+                  onDeleteCard={handleDeleteCard}
+                  onUpdateCard={handleUpdateCard}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ) : null}
+
+              <section>
+                {viewStatus === "empty" ? (
+                  <CardHomeStatus
+                    message="最初のカードを作りましょう。"
+                    description="右下の＋から、残しておきたい言葉・画像・メモを保存できます。"
+                  />
+                ) : null}
+                {viewStatus === "filteredEmpty" ? (
+                  <CardHomeStatus message="該当するカードがありません。" />
+                ) : null}
+                {viewStatus === "ready" ? (
+                  <TradingCardGrid
+                    cards={visibleCards}
+                    decks={allDecks}
+                    editSeedCards={allCards}
+                    favoriteIds={activeFavoriteIds}
+                    onCardViewed={recordCardView}
+                    onDecksChange={setAllDecks}
+                    onDeleteCard={handleDeleteCard}
+                    onUpdateCard={handleUpdateCard}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ) : null}
+              </section>
+            </>
+          )}
         </div>
       </CardFirstNav>
 

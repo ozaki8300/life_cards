@@ -80,6 +80,16 @@ const blurExtendTopFadeClass = {
   preview: "bg-gradient-to-b from-[#fffaf0]/4 to-transparent",
   tile: "bg-gradient-to-b from-[#fffaf0]/2 to-transparent",
 } as const;
+const paperFrontOverlayClass = {
+  detail: "bg-transparent",
+  preview: "bg-transparent",
+  tile: "bg-transparent",
+} as const;
+const paperTopFadeClass = {
+  detail: "bg-transparent",
+  preview: "bg-transparent",
+  tile: "bg-transparent",
+} as const;
 type TextLayoutVariant = "commentOnly" | "full" | "titleOnly";
 
 const blurExtendTextReserveClass = {
@@ -158,7 +168,11 @@ export default function CardFace({
   };
   const isBlurExtend = imageFitMode === "blurExtend";
   const isBack = face === "back";
-  const isDocumentFront = isBlurExtend && !isBack;
+  const isPaperDefault = backgroundImage.includes("default-paper.webp");
+  const useCssPaperBackground = isPaperDefault;
+  const isDocumentFront = isBlurExtend && !useCssPaperBackground && !isBack;
+  const isPaperFront = isPaperDefault && !isBack;
+  const isLightFront = isDocumentFront || isPaperFront;
   const displayFrontText = frontText.trim();
   const displayFrontComment = frontComment.trim();
   const hasFrontTitle = Boolean(displayFrontText);
@@ -166,21 +180,25 @@ export default function CardFace({
   const linkHref = normalizeLinkUrl(linkUrl);
   const frontOverlayClass = isDocumentFront
     ? blurExtendFrontOverlayClass[size]
-    : "bg-gradient-to-t from-black/56 via-black/18 to-black/5";
+    : isPaperFront
+      ? paperFrontOverlayClass[size]
+      : "bg-gradient-to-t from-black/56 via-black/18 to-black/5";
   const frontTopFadeClass = isDocumentFront
     ? blurExtendTopFadeClass[size]
-    : "bg-gradient-to-b from-black/32 to-transparent";
-  const frontLabelClass = isDocumentFront
+    : isPaperFront
+      ? paperTopFadeClass[size]
+      : "bg-gradient-to-b from-black/32 to-transparent";
+  const frontLabelClass = isLightFront
     ? "bg-[#fffaf0]/54 text-[#5f5346] shadow-sm"
     : "bg-black/16 text-white/70 backdrop-blur-sm";
-  const frontContentClass = isDocumentFront ? "text-[#2f2a23]" : "text-white";
-  const frontDateClass = isDocumentFront
+  const frontContentClass = isLightFront ? "text-[#2f2a23]" : "text-white";
+  const frontDateClass = isLightFront
     ? "text-[#5f5346] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/88 drop-shadow-[0_1px_7px_rgba(0,0,0,0.86)]";
-  const frontTitleClass = isDocumentFront
+  const frontTitleClass = isLightFront
     ? "text-[#231f1a] drop-shadow-[0_1px_4px_rgba(255,250,240,0.82)]"
     : "text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]";
-  const frontCommentClass = isDocumentFront
+  const frontCommentClass = isLightFront
     ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/88 drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]";
   const frontTitleWeightClass = "font-semibold";
@@ -199,6 +217,9 @@ export default function CardFace({
     : blurExtendImageFadeClass[size];
   const frontTitleClampClass = isDocumentFront ? "line-clamp-2" : "";
   const frontCommentClampClass = isDocumentFront ? "line-clamp-2" : "";
+  const baseBackgroundClass = isPaperDefault
+    ? "bg-[#f7f3ea]"
+    : "bg-[#f6efe4]";
   const faceTransform = isBack
     ? preserve3d
       ? "[transform:rotateY(180deg)_translateZ(0)]"
@@ -235,15 +256,19 @@ export default function CardFace({
   return (
     <section
       className={`absolute inset-0 overflow-hidden border bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
-        isBlurExtend
-          ? "border-[#f3eadb]/70 bg-[#f6efe4]"
-          : "border-[#f3eadb]/42 bg-[#f6efe4] bg-cover"
+        isBlurExtend && !useCssPaperBackground
+          ? `border-[#f3eadb]/70 ${baseBackgroundClass}`
+          : `border-[#f3eadb]/42 ${baseBackgroundClass} ${
+              useCssPaperBackground ? "" : "bg-cover"
+            }`
       } ${
         styles.rounded
       } ${faceTransform}`}
-      style={isBlurExtend ? undefined : backgroundStyle}
+      style={
+        isBlurExtend || useCssPaperBackground ? undefined : backgroundStyle
+      }
     >
-      {isBlurExtend ? (
+      {isBlurExtend && !useCssPaperBackground ? (
         <>
           <div
             className="absolute inset-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"

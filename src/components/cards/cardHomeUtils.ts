@@ -36,7 +36,7 @@ export function sortCardsByNewest(cards: Card[]) {
     .sort((a, b) => {
       const dateCompare = b.card.createdAt.localeCompare(a.card.createdAt);
 
-      return dateCompare === 0 ? b.index - a.index : dateCompare;
+      return dateCompare === 0 ? a.index - b.index : dateCompare;
     })
     .map(({ card }) => card);
 }

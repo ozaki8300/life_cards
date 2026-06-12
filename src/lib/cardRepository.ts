@@ -90,11 +90,15 @@ export const CardRepository = {
     try {
       const supabaseCards = await CardSupabaseRepository.getCards();
 
-      return supabaseCards
-        ? hydrateCardDefaultImageKeys(supabaseCards)
-        : options.disableFallback
-          ? []
-          : CardRepository.getCards(seed);
+      if (supabaseCards) {
+        return hydrateCardDefaultImageKeys(supabaseCards);
+      }
+
+      if (options.disableFallback) {
+        return [];
+      }
+
+      return CardRepository.getCards(seed);
     } catch (error) {
       console.warn("Life Cards Supabase cards fetch failed", error);
 

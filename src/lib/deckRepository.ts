@@ -61,10 +61,15 @@ export const DeckRepository = {
     try {
       const supabaseDecks = await DeckSupabaseRepository.seedDecksIfEmpty();
 
-      return (
-        supabaseDecks ??
-        (options.disableFallback ? [] : DeckRepository.getDecks(seed))
-      );
+      if (supabaseDecks) {
+        return supabaseDecks;
+      }
+
+      if (options.disableFallback) {
+        return [];
+      }
+
+      return DeckRepository.getDecks(seed);
     } catch (error) {
       console.warn("Life Cards Supabase decks fetch failed", error);
 

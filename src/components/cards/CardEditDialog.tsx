@@ -80,7 +80,7 @@ export default function CardEditDialog({
         initialValues={{
           backText: card.backText ?? "",
           cardDate: card.createdAt,
-          defaultImageKey: card.defaultImageKey ?? "night",
+          defaultImageKey: card.defaultImageKey ?? "paper",
           deckId: card.deckId,
           frontComment: card.frontComment ?? "",
           frontText: card.frontText ?? "",

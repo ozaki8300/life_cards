@@ -6,8 +6,14 @@ const gradients = [
   "linear-gradient(145deg, #fff7ec 0%, #f4eddf 100%)",
 ];
 
-export const DEFAULT_CARD_IMAGE_KEY = "night";
+export const DEFAULT_CARD_IMAGE_KEY = "paper";
+const DEFAULT_CARD_IMAGE_PATH = "/card-images/default-paper.webp";
 export const DEFAULT_CARD_IMAGE_OPTIONS = [
+  {
+    key: "paper",
+    label: "Paper",
+    path: "/card-images/default-paper.webp",
+  },
   {
     key: "night",
     label: "Night",
@@ -50,7 +56,7 @@ export function defaultImageForKey(key?: DefaultCardImageKey | string | null) {
   const selectedKey = normalizeDefaultImageKey(key);
   return (
     DEFAULT_CARD_IMAGE_OPTIONS.find((option) => option.key === selectedKey)
-      ?.path ?? DEFAULT_CARD_IMAGE_OPTIONS[0].path
+      ?.path ?? DEFAULT_CARD_IMAGE_PATH
   );
 }
 

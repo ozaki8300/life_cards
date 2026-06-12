@@ -22,6 +22,7 @@ import {
   todayInputValue,
 } from "./cardFormUtils";
 import {
+  DEFAULT_CARD_IMAGE_KEY,
   DEFAULT_CARD_IMAGE_OPTIONS,
   normalizeDefaultImageKey,
 } from "./cardUiUtils";
@@ -75,6 +76,7 @@ type Props = {
 export default function CardForm({
   deckOptions,
   initialValues,
+  mode,
   onCancel,
   onDecksChange,
   onSubmit,
@@ -90,7 +92,10 @@ export default function CardForm({
     normalizeDateInputValue(initialValues.cardDate),
   );
   const [defaultImageKey, setDefaultImageKey] = useState<DefaultCardImageKey>(
-    () => normalizeDefaultImageKey(initialValues.defaultImageKey),
+    () =>
+      mode === "new"
+        ? DEFAULT_CARD_IMAGE_KEY
+        : normalizeDefaultImageKey(initialValues.defaultImageKey),
   );
   const [imageLabel, setImageLabel] = useState("");
   const [imageErrorMessage, setImageErrorMessage] = useState("");
@@ -498,7 +503,7 @@ export default function CardForm({
                   <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
                     default画像
                   </span>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                     {DEFAULT_CARD_IMAGE_OPTIONS.map((option) => {
                       const isSelected = defaultImageKey === option.key;
 

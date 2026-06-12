@@ -30,7 +30,7 @@ export function createShareCardPayload(
       frontText: card.frontText,
       frontComment: card.frontComment,
       backText: card.backText,
-      defaultImageKey: card.defaultImageKey ?? "night",
+      defaultImageKey: card.defaultImageKey ?? "paper",
       linkUrl: card.linkUrl,
       imagePath: card.imagePath,
       imageFitMode: card.imageFitMode ?? "cover",

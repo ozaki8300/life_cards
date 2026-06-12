@@ -4,7 +4,7 @@ export const cards: Card[] = [
   {
     id: "demo-open-book",
     deckId: "demo",
-    imagePath: "/card-images/default-library.webp",
+    imagePath: "/card-images/default-paper.webp",
     isFavorite: true,
     frontText: "読みかけの本",
     frontComment: "その時の自分に必要だった一文。",
@@ -16,7 +16,7 @@ export const cards: Card[] = [
   {
     id: "demo-night-note",
     deckId: "demo",
-    imagePath: "/card-images/default-night.webp",
+    imagePath: "/card-images/default-paper.webp",
     isFavorite: true,
     frontText: "夜に残した一言",
     frontComment: "眠る前に、今日の気持ちを一行だけ残す。",
@@ -28,7 +28,7 @@ export const cards: Card[] = [
   {
     id: "demo-small-step",
     deckId: "demo",
-    imagePath: "/card-images/default-mountain.webp",
+    imagePath: "/card-images/default-paper.webp",
     frontText: "小さな達成",
     frontComment: "できなかったことが、少しだけできた日。",
     backText:
@@ -39,7 +39,7 @@ export const cards: Card[] = [
   {
     id: "demo-evening-way-home",
     deckId: "demo",
-    imagePath: "/card-images/default-sea.webp",
+    imagePath: "/card-images/default-paper.webp",
     frontText: "夕方の帰り道",
     frontComment: "何でもない一日が、あとから大切になる。",
     backText:
@@ -50,7 +50,7 @@ export const cards: Card[] = [
   {
     id: "demo-quiet-insight",
     deckId: "demo",
-    imagePath: "/card-images/default-library.webp",
+    imagePath: "/card-images/default-paper.webp",
     frontText: "忘れたくない気づき",
     frontComment: "答えよりも、問いが残った。",
     backText:

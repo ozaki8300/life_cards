@@ -35,4 +35,9 @@ export type Card = {
 };
 
 export type CardImageFitMode = "cover" | "blurExtend";
-export type DefaultCardImageKey = "night" | "sea" | "mountain" | "library";
+export type DefaultCardImageKey =
+  | "paper"
+  | "night"
+  | "sea"
+  | "mountain"
+  | "library";

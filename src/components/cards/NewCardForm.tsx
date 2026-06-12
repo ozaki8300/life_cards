@@ -81,7 +81,7 @@ export default function NewCardForm({
           initialValues={{
             backText: "",
             cardDate: todayInputValue(),
-            defaultImageKey: "night",
+            defaultImageKey: "paper",
             deckId: initialDeckId,
             frontComment: "",
             frontText: "",

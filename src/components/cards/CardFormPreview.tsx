@@ -43,6 +43,7 @@ type PreviewFaceProps = {
   frontText: string;
   imageFitMode?: CardImageFitMode;
   linkUrl: string;
+  useCssPaperBackground?: boolean;
 };
 
 function PreviewFace({
@@ -55,28 +56,37 @@ function PreviewFace({
   frontText,
   imageFitMode = "cover",
   linkUrl,
+  useCssPaperBackground = false,
 }: PreviewFaceProps) {
   const isBack = face === "back";
   const isBlurExtend = imageFitMode === "blurExtend";
-  const isDocumentFront = isBlurExtend && !isBack;
+  const isPaperDefault =
+    useCssPaperBackground || backgroundImage.includes("default-paper.webp");
+  const isDocumentFront = isBlurExtend && !useCssPaperBackground && !isBack;
+  const isPaperFront = isPaperDefault && !isBack;
+  const isLightFront = isDocumentFront || isPaperFront;
   const trimmedLinkUrl = linkUrl.trim();
   const frontOverlayClass = isDocumentFront
     ? "bg-gradient-to-t from-[#fffaf0]/28 via-[#fffaf0]/5 to-transparent"
+    : isPaperFront
+      ? "bg-transparent"
     : "bg-gradient-to-t from-black/60 via-black/18 to-black/5";
   const frontTopFadeClass = isDocumentFront
     ? "bg-gradient-to-b from-[#fffaf0]/4 to-transparent"
+    : isPaperFront
+      ? "bg-transparent"
     : "bg-gradient-to-b from-black/32 to-transparent";
-  const frontLabelClass = isDocumentFront
+  const frontLabelClass = isLightFront
     ? "bg-[#fffaf0]/54 text-[#5f5346] shadow-sm"
     : "bg-black/24 text-white/78";
-  const frontContentClass = isDocumentFront ? "text-[#2f2a23]" : "text-white";
-  const frontDateClass = isDocumentFront
+  const frontContentClass = isLightFront ? "text-[#2f2a23]" : "text-white";
+  const frontDateClass = isLightFront
     ? "text-[#5f5346] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/90";
-  const frontTitleClass = isDocumentFront
+  const frontTitleClass = isLightFront
     ? "text-[#231f1a] drop-shadow-[0_1px_4px_rgba(255,250,240,0.82)]"
     : "text-white";
-  const frontCommentClass = isDocumentFront
+  const frontCommentClass = isLightFront
     ? "text-[#3b352d] drop-shadow-[0_1px_3px_rgba(255,250,240,0.78)]"
     : "text-white/90";
   const displayFrontText = frontText.trim();
@@ -101,6 +111,9 @@ function PreviewFace({
   const backgroundStyle = {
     backgroundImage: `url(${backgroundImage})`,
   };
+  const baseBackgroundClass = isPaperDefault
+    ? "bg-[#f7f3ea]"
+    : "bg-[#f6efe4]";
   const blurExtendImageStyle = {
     ...backgroundStyle,
     backgroundPosition: "center 35%",
@@ -108,11 +121,11 @@ function PreviewFace({
 
   return (
     <div
-      className={`absolute inset-0 isolate overflow-hidden rounded-[22px] border bg-[#f6efe4] ${
-        isBlurExtend ? "border-[#f3eadb]/70 bg-[#f6efe4]" : "border-[#f3eadb]/42"
+      className={`absolute inset-0 isolate overflow-hidden rounded-[22px] border ${baseBackgroundClass} ${
+        isBlurExtend ? `border-[#f3eadb]/70 ${baseBackgroundClass}` : "border-[#f3eadb]/42"
       }`}
     >
-      {isBlurExtend ? (
+      {isBlurExtend && !useCssPaperBackground ? (
         <>
           <div
             className="absolute inset-0 z-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
@@ -127,7 +140,7 @@ function PreviewFace({
             src={backgroundImage}
           />
         </>
-      ) : (
+      ) : useCssPaperBackground ? null : (
         <div
           className="absolute inset-0 z-0 bg-cover bg-center"
           style={backgroundStyle}
@@ -214,6 +227,7 @@ export default function CardFormPreview({
 }: Props) {
   const previewBackground =
     imagePath || defaultImageForCard({ defaultImageKey });
+  const useCssPaperBackground = !imagePath && defaultImageKey === "paper";
   const date = formatDate(cardDate);
   const isBack = previewFace === "back";
   const previewShadowClass =
@@ -239,6 +253,7 @@ export default function CardFormPreview({
           frontText={frontText}
           imageFitMode={imageFitMode}
           linkUrl={linkUrl}
+          useCssPaperBackground={useCssPaperBackground}
         />
       </button>
     </section>
