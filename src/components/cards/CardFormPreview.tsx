@@ -125,7 +125,16 @@ function PreviewFace({
         isBlurExtend ? `border-[#f3eadb]/70 ${baseBackgroundClass}` : "border-[#f3eadb]/42"
       }`}
     >
-      {isBlurExtend && !useCssPaperBackground ? (
+      {isBack && !useCssPaperBackground ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt=""
+          aria-hidden="true"
+          className="absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain object-[center_40%] opacity-[0.34] saturate-[0.9] contrast-[1.03]"
+          src={backgroundImage}
+        />
+      ) : null}
+      {isBlurExtend && !useCssPaperBackground && !isBack ? (
         <>
           <div
             className="absolute inset-0 z-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
@@ -140,7 +149,7 @@ function PreviewFace({
             src={backgroundImage}
           />
         </>
-      ) : useCssPaperBackground ? null : (
+      ) : useCssPaperBackground || isBack ? null : (
         <div
           className="absolute inset-0 z-0 bg-cover bg-center"
           style={backgroundStyle}
@@ -148,7 +157,7 @@ function PreviewFace({
       )}
       <div
         className={`absolute inset-0 z-[2] ${
-          isBack ? "bg-[#f5ecdf]/88" : frontOverlayClass
+          isBack ? "bg-[#fffaf0]/74" : frontOverlayClass
         }`}
       />
       {!isBack ? (

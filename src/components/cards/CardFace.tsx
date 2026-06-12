@@ -90,6 +90,11 @@ const paperTopFadeClass = {
   preview: "bg-transparent",
   tile: "bg-transparent",
 } as const;
+const backWatermarkOverlayClass = {
+  detail: "bg-[#fffaf0]/76",
+  preview: "bg-[#fffaf0]/74",
+  tile: "bg-[#fffaf0]/72",
+} as const;
 type TextLayoutVariant = "commentOnly" | "full" | "titleOnly";
 
 const blurExtendTextReserveClass = {
@@ -226,8 +231,6 @@ export default function CardFace({
       : "[transform:translateZ(0)]"
     : "[transform:translateZ(0)]";
   const backMemoTopMarginClass = size === "detail" ? "mt-2" : "mt-3";
-  const backOverlayClass =
-    size === "detail" ? "bg-[#f5ecdf]/88" : "bg-[#f5ecdf]/84";
 
   function isScrollableBackMemo(element: HTMLElement) {
     return element.scrollHeight > element.clientHeight;
@@ -256,7 +259,7 @@ export default function CardFace({
   return (
     <section
       className={`absolute inset-0 overflow-hidden border bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
-        isBlurExtend && !useCssPaperBackground
+        isBlurExtend && !useCssPaperBackground && !isBack
           ? `border-[#f3eadb]/70 ${baseBackgroundClass}`
           : `border-[#f3eadb]/42 ${baseBackgroundClass} ${
               useCssPaperBackground ? "" : "bg-cover"
@@ -265,10 +268,21 @@ export default function CardFace({
         styles.rounded
       } ${faceTransform}`}
       style={
-        isBlurExtend || useCssPaperBackground ? undefined : backgroundStyle
+        isBack || isBlurExtend || useCssPaperBackground
+          ? undefined
+          : backgroundStyle
       }
     >
-      {isBlurExtend && !useCssPaperBackground ? (
+      {isBack && !useCssPaperBackground ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt=""
+          aria-hidden="true"
+          className="absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain object-[center_40%] opacity-[0.34] saturate-[0.9] contrast-[1.03]"
+          src={backgroundImage}
+        />
+      ) : null}
+      {isBlurExtend && !useCssPaperBackground && !isBack ? (
         <>
           <div
             className="absolute inset-0 z-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
@@ -284,10 +298,9 @@ export default function CardFace({
           />
         </>
       ) : null}
-      {isBack ? <div className="absolute inset-0 z-[2] backdrop-blur-[1px]" /> : null}
       <div
         className={`absolute inset-0 z-[2] ${
-          isBack ? backOverlayClass : frontOverlayClass
+          isBack ? backWatermarkOverlayClass[size] : frontOverlayClass
         }`}
       />
       {!isBack ? (
