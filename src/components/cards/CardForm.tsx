@@ -121,7 +121,6 @@ export default function CardForm({
   const isSavingRef = useRef(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-  const screenshotInputRef = useRef<HTMLInputElement>(null);
   const selectedDeckName =
     availableDecks.find((deck) => deck.id === selectedDeckId)?.name ??
     "Deck";
@@ -311,11 +310,6 @@ export default function CardForm({
       cameraInputRef.current?.click();
       return;
     }
-
-    if (action.id === "screenshot") {
-      screenshotInputRef.current?.click();
-      return;
-    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -471,29 +465,46 @@ export default function CardForm({
               className="hidden"
               onChange={(event) => handleFileChange(event, "カメラ")}
             />
-            <input
-              ref={screenshotInputRef}
-              type="file"
-              accept="image/*"
-              disabled={!isSignedIn}
-              className="hidden"
-              onChange={(event) => handleFileChange(event, "スクショ")}
-            />
 
-            <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={!isSignedIn}
+              onClick={() => photoInputRef.current?.click()}
+              className={`hidden min-h-11 w-fit items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] lg:inline-flex ${
+                hasSelectedImage
+                  ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                  : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
+              }`}
+            >
+              画像を選ぶ
+            </button>
+
+            <div className="grid grid-cols-2 gap-2 lg:hidden">
               {imageActions.map((action) => (
                 <button
                   key={action.id}
                   type="button"
+                  aria-label={`${action.label}: ${action.description}`}
                   disabled={!isSignedIn}
                   onClick={() => handleImageAction(action)}
-                  className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
+                  className={`grid min-h-14 rounded-[14px] border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
                     imageLabel === action.label
                       ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
                       : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
                   }`}
                 >
-                  {action.label}
+                  <span className="text-sm font-semibold leading-5">
+                    {action.label}
+                  </span>
+                  <span
+                    className={`text-xs leading-5 ${
+                      imageLabel === action.label
+                        ? "text-[#fffaf0]/78"
+                        : "text-[#8d7f6e]"
+                    }`}
+                  >
+                    {action.description}
+                  </span>
                 </button>
               ))}
             </div>

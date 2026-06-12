@@ -1,9 +1,8 @@
 export type BackMemoMode = "edit" | "preview";
 
 export const imageActions = [
-  { id: "photo", label: "写真", draftLabel: "写真" },
-  { id: "camera", label: "カメラ", draftLabel: "カメラ" },
-  { id: "screenshot", label: "スクショ", draftLabel: "スクショを追加" },
+  { id: "photo", label: "写真", description: "ライブラリから選ぶ" },
+  { id: "camera", label: "カメラ", description: "撮影する" },
 ] as const;
 
 export function todayInputValue() {
