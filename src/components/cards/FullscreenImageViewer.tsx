@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
@@ -10,6 +11,7 @@ type Props = {
   canGoNextImage?: boolean;
   imageSrc: string;
   isResolvingNextImage?: boolean;
+  onBackdropClick?: () => void;
   onClose: () => void;
   onNextImage?: () => void;
 };
@@ -19,9 +21,14 @@ export default function FullscreenImageViewer({
   canGoNextImage = false,
   imageSrc,
   isResolvingNextImage = false,
+  onBackdropClick,
   onClose,
   onNextImage,
 }: Props) {
+  const [naturalImageSize, setNaturalImageSize] = useState<{
+    height: number;
+    width: number;
+  } | null>(null);
   useEscapeKey(onClose);
 
   useEffect(() => {
@@ -37,13 +44,48 @@ export default function FullscreenImageViewer({
     };
   }, []);
 
+  function handleViewerClick(event: MouseEvent<HTMLDivElement>) {
+    event.stopPropagation();
+
+    if (!onBackdropClick) {
+      return;
+    }
+
+    if (!naturalImageSize) {
+      if (event.target === event.currentTarget) {
+        onBackdropClick();
+      }
+
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const containerRatio = bounds.width / bounds.height;
+    const imageRatio = naturalImageSize.width / naturalImageSize.height;
+    const renderedWidth =
+      imageRatio > containerRatio ? bounds.width : bounds.height * imageRatio;
+    const renderedHeight =
+      imageRatio > containerRatio ? bounds.width / imageRatio : bounds.height;
+    const renderedLeft = bounds.left + (bounds.width - renderedWidth) / 2;
+    const renderedTop = bounds.top + (bounds.height - renderedHeight) / 2;
+    const isInsideImage =
+      event.clientX >= renderedLeft &&
+      event.clientX <= renderedLeft + renderedWidth &&
+      event.clientY >= renderedTop &&
+      event.clientY <= renderedTop + renderedHeight;
+
+    if (!isInsideImage) {
+      onBackdropClick();
+    }
+  }
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="画像ビューア"
       className="pointer-events-auto fixed inset-0 z-[80] h-[100dvh] w-screen overflow-hidden bg-[#050505] text-white"
-      onClick={(event) => event.stopPropagation()}
+      onClick={handleViewerClick}
       onPointerCancel={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
       onPointerMove={(event) => event.stopPropagation()}
@@ -68,6 +110,12 @@ export default function FullscreenImageViewer({
             fill
             sizes="100vw"
             className="object-contain"
+            onLoad={(event) => {
+              setNaturalImageSize({
+                height: event.currentTarget.naturalHeight,
+                width: event.currentTarget.naturalWidth,
+              });
+            }}
             priority
             unoptimized
           />
@@ -78,7 +126,10 @@ export default function FullscreenImageViewer({
         <button
           type="button"
           aria-label="閉じる"
-          onClick={onClose}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClose();
+          }}
           className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/45 text-2xl leading-none text-white shadow-[0_8px_24px_rgba(0,0,0,0.35)] backdrop-blur-md transition hover:bg-black/65 focus:outline-none focus:ring-2 focus:ring-white/70"
         >
           <span aria-hidden="true" className="-translate-y-px">

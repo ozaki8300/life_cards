@@ -109,6 +109,7 @@ export default function CardDetailModal({
     frontFaceStep,
     backFaceStep,
     cycleViewMode,
+    setViewMode,
   } = useCardDetailViewCycle(initialViewMode);
 
   useEscapeKey(() => {
@@ -344,6 +345,11 @@ export default function CardDetailModal({
     }
   }
 
+  function returnFullscreenPhotoToDetail() {
+    setIsFullscreenPhotoOpen(false);
+    setViewMode("front");
+  }
+
   function showCopyForAiStatus(status: "copied" | "failed") {
     if (copyForAiStatusResetTimerRef.current) {
       clearTimeout(copyForAiStatusResetTimerRef.current);
@@ -523,6 +529,7 @@ export default function CardDetailModal({
           canGoNextImage={canGoNextFullscreenImage}
           imageSrc={fullscreenImagePath}
           isResolvingNextImage={isResolvingNextFullscreenImage}
+          onBackdropClick={returnFullscreenPhotoToDetail}
           onClose={() => setIsFullscreenPhotoOpen(false)}
           onNextImage={showNextFullscreenImage}
         />

@@ -31,11 +31,24 @@ export default function useCardDetailViewCycle(
     setRotationStep((current) => current + 1);
   }
 
+  function setViewMode(nextViewMode: CardDetailViewMode) {
+    setRotationStep((current) => {
+      const currentViewIndex = current % viewModes.length;
+      const nextViewIndex = viewModes.indexOf(nextViewMode);
+      const delta =
+        (nextViewIndex - currentViewIndex + viewModes.length) %
+        viewModes.length;
+
+      return current + delta;
+    });
+  }
+
   return {
     viewMode,
     rotationAngle,
     frontFaceStep,
     backFaceStep,
     cycleViewMode,
+    setViewMode,
   };
 }
