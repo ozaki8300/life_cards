@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import type { TouchEvent, WheelEvent } from "react";
 
 import MarkdownMemo from "@/components/MarkdownMemo";
@@ -32,7 +31,7 @@ const faceSize = {
     comment: "line-clamp-2 text-[15px] leading-6 sm:text-sm",
     date: "text-[10px]",
     backContent: "px-5 pb-5 pt-4 sm:px-4 sm:pb-4",
-    backMemo: "card-tile-back-scroll max-h-[calc(100%-4.75rem)] overflow-y-auto overscroll-y-contain pr-2 text-[15px] leading-5 [-webkit-overflow-scrolling:touch] sm:text-sm sm:leading-6",
+    backMemo: "max-h-[calc(100%-4.75rem)] overflow-hidden pr-2 text-[15px] leading-5 sm:text-sm sm:leading-6",
   },
   preview: {
     rounded: "rounded-[22px]",
@@ -151,10 +150,6 @@ export default function CardFace({
   preserve3d = true,
   size,
 }: Props) {
-  const scrollIdleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-  const [isTileBackScrolling, setIsTileBackScrolling] = useState(false);
   const styles = faceSize[size];
   const backgroundStyle = { backgroundImage: `url(${backgroundImage})` };
   const blurExtendImageStyle = {
@@ -209,44 +204,27 @@ export default function CardFace({
       ? "[transform:rotateY(180deg)_translateZ(0)]"
       : "[transform:translateZ(0)]"
     : "[transform:translateZ(0)]";
-  const showsSoftTileScrollbar = isBack && size === "tile";
-
-  useEffect(() => {
-    return () => {
-      if (scrollIdleTimeoutRef.current) {
-        clearTimeout(scrollIdleTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  function handleBackMemoScroll() {
-    if (!showsSoftTileScrollbar) {
-      return;
-    }
-
-    if (scrollIdleTimeoutRef.current) {
-      clearTimeout(scrollIdleTimeoutRef.current);
-    }
-
-    setIsTileBackScrolling(true);
-    scrollIdleTimeoutRef.current = setTimeout(() => {
-      setIsTileBackScrolling(false);
-      scrollIdleTimeoutRef.current = null;
-    }, 650);
-  }
 
   function isScrollableBackMemo(element: HTMLElement) {
     return element.scrollHeight > element.clientHeight;
   }
 
   function handleBackMemoTouch(event: TouchEvent<HTMLDivElement>) {
-    if (isBack && size === "detail" && isScrollableBackMemo(event.currentTarget)) {
+    if (
+      isBack &&
+      size === "detail" &&
+      isScrollableBackMemo(event.currentTarget)
+    ) {
       event.stopPropagation();
     }
   }
 
   function handleBackMemoWheel(event: WheelEvent<HTMLDivElement>) {
-    if (isBack && size === "detail" && isScrollableBackMemo(event.currentTarget)) {
+    if (
+      isBack &&
+      size === "detail" &&
+      isScrollableBackMemo(event.currentTarget)
+    ) {
       event.stopPropagation();
     }
   }
@@ -340,21 +318,11 @@ export default function CardFace({
           </div>
 
           <div
-            onClick={
-              showsSoftTileScrollbar
-                ? (event) => event.stopPropagation()
-                : undefined
-            }
-            onScroll={handleBackMemoScroll}
             onTouchEnd={handleBackMemoTouch}
             onTouchMove={handleBackMemoTouch}
             onTouchStart={handleBackMemoTouch}
             onWheel={handleBackMemoWheel}
-            className={`mt-3 min-h-0 flex-1 ${styles.backMemo} ${
-              showsSoftTileScrollbar && isTileBackScrolling
-                ? "is-scrolling"
-                : ""
-            }`}
+            className={`mt-3 min-h-0 flex-1 ${styles.backMemo}`}
           >
             <MarkdownMemo
               compact={size !== "detail"}

@@ -486,26 +486,26 @@ export default function TradingCardGrid({
 
           {shouldShowCarouselIndicator ? (
             <div
-              className="relative z-20 mx-auto mt-3 flex min-h-10 w-fit items-center justify-center gap-3 rounded-full border border-[#d8c8aa]/80 bg-[#fffaf0]/92 px-2 py-1.5 shadow-[0_6px_16px_rgba(87,72,52,0.14)] sm:mt-4"
+              className="relative z-20 mx-auto mt-2 flex min-h-7 w-fit items-center justify-center gap-1.5 rounded-full border border-[#d8c8aa]/15 bg-[#fffaf0]/20 px-1 py-0.5 shadow-none sm:mt-2.5"
               aria-label="今日の再会カードの位置"
             >
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e0d3c0] bg-white/78 text-lg font-semibold leading-none text-[#5f513f] shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-white/18 text-base font-semibold leading-none text-[#5f513f]/75 transition hover:bg-white/52 hover:text-[#5f513f] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]/70"
                 aria-label="前の再会カードへ移動"
                 onClick={() => scrollToAdjacentRailItem(-1)}
               >
                 ‹
               </button>
-              <div className="flex min-h-5 items-center justify-center gap-2 px-1">
+              <div className="flex min-h-3 items-center justify-center gap-1 px-0.5">
                 {cards.map((card, index) => (
                   <button
                     key={card.id}
                     type="button"
-                    className={`h-2 rounded-full transition-all ${
+                    className={`h-1.5 w-1.5 rounded-full transition-colors ${
                       index === activeRailIndex
-                        ? "w-5 bg-[#8f806d]"
-                        : "w-2 bg-[#d8cdbd]"
+                        ? "bg-[#8f806d]/80"
+                        : "bg-[#d8cdbd]/55"
                     }`}
                     aria-label={`${index + 1}枚目のカードへ移動`}
                     aria-current={index === activeRailIndex ? "true" : undefined}
@@ -515,7 +515,7 @@ export default function TradingCardGrid({
               </div>
               <button
                 type="button"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#e0d3c0] bg-white/78 text-lg font-semibold leading-none text-[#5f513f] shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-white/18 text-base font-semibold leading-none text-[#5f513f]/75 transition hover:bg-white/52 hover:text-[#5f513f] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]/70"
                 aria-label="次の再会カードへ移動"
                 onClick={() => scrollToAdjacentRailItem(1)}
               >
