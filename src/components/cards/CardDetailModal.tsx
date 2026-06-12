@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MouseEvent, PointerEvent, TouchEvent } from "react";
+import type { MouseEvent, TouchEvent } from "react";
 
 import { createCopyForAiMarkdown } from "@/lib/copyForAi";
 import { useCopyForAiFeatureFlag } from "@/lib/featureFlags";
@@ -22,21 +22,9 @@ const sideNavButtonClass =
   "pointer-events-auto absolute top-[54%] z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/38 bg-[#fffaf0]/44 text-3xl font-semibold leading-none text-[#5f513f]/62 opacity-72 shadow-[0_3px_10px_rgba(87,72,52,0.08)] backdrop-blur-md transition hover:bg-[#fffaf0]/72 hover:text-[#5f513f] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:top-1/2 sm:h-12 sm:w-12 sm:border-[#e0d3c0]/80 sm:bg-[#fffaf0]/86 sm:text-4xl sm:text-[#5f513f] sm:opacity-100 sm:shadow-[0_8px_24px_rgba(87,72,52,0.22)] sm:hover:bg-white";
 const shutterButtonClass =
   "relative flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
-const favoriteButtonBaseClass =
-  "absolute bottom-5 right-5 flex h-11 w-11 items-center justify-center rounded-full border text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] backdrop-blur-[2px] transition focus:outline-none focus:ring-2 focus:ring-white/70 focus:ring-offset-2 focus:ring-offset-[#fffaf0]";
-const faceControlLayerClass =
-  "pointer-events-none absolute inset-0 z-20 [transform-style:preserve-3d]";
-const frontControlTransformClass = "[transform:translateZ(1px)]";
-const backControlTransformClass =
-  "[-webkit-backface-visibility:hidden] [backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)]";
 const detailCardFrameClass =
   "w-full max-w-[min(350px,calc((100dvh-13rem)*0.69),calc(100vw-2rem))] sm:max-w-[460px]";
 const detailCardAspectClass = "aspect-[3/4.35] sm:aspect-[3/4]";
-
-type OverlayButtonEvent =
-  | MouseEvent<HTMLButtonElement>
-  | PointerEvent<HTMLButtonElement>
-  | TouchEvent<HTMLButtonElement>;
 
 function debugImageState(message: string, payload: Record<string, unknown>) {
   if (process.env.NODE_ENV !== "production") {
@@ -402,36 +390,6 @@ export default function CardDetailModal({
       : copyForAiStatus === "failed"
         ? "コピーできませんでした"
         : null;
-  const favoriteButtonToneClass = isFavorite
-    ? "border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]"
-    : "border-[#d8c8aa]/45 bg-[#f5eee1]/82 text-[#8f806d] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]";
-
-  function stopOverlayButtonEvent(event: OverlayButtonEvent) {
-    event.stopPropagation();
-  }
-
-  function renderFavoriteButton(transformClass: string) {
-    return (
-      <div className={`${faceControlLayerClass} ${transformClass}`}>
-        <button
-          type="button"
-          aria-label={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
-          aria-pressed={isFavorite}
-          onMouseDown={stopOverlayButtonEvent}
-          onPointerDown={stopOverlayButtonEvent}
-          onTouchStart={stopOverlayButtonEvent}
-          onClick={(event) => {
-            stopOverlayButtonEvent(event);
-            onToggleFavorite();
-          }}
-          className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto`}
-        >
-          {isFavorite ? "★" : "☆"}
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="pointer-events-none mx-auto flex w-full max-w-3xl flex-col items-center gap-5 sm:gap-5">
       <div
@@ -465,7 +423,6 @@ export default function CardDetailModal({
                 linkUrl={card.linkUrl}
                 size="detail"
               />
-              {renderFavoriteButton(frontControlTransformClass)}
             </div>
             <div
               className={`absolute inset-0 [transform-style:preserve-3d] ${
@@ -485,7 +442,6 @@ export default function CardDetailModal({
                 linkUrl={card.linkUrl}
                 size="detail"
               />
-              {renderFavoriteButton(backControlTransformClass)}
             </div>
           </div>
         </article>
@@ -522,6 +478,7 @@ export default function CardDetailModal({
         <CardDetailActionBar
           copyForAiStatus={copyForAiStatus}
           hasImage={actionBarHasImage}
+          isFavorite={isFavorite}
           isSubdued={viewMode === "back"}
           onClose={onClose}
           onCopyForAi={handleCopyForAi}
@@ -529,6 +486,7 @@ export default function CardDetailModal({
           onEdit={onEdit}
           onOpenPhoto={openFullscreenPhoto}
           onShare={onShare}
+          onToggleFavorite={onToggleFavorite}
           showCopyForAi={isCopyForAiVisible}
         />
         {copyForAiToastMessage ? (

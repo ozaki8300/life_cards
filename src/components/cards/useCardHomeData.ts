@@ -15,11 +15,40 @@ import type { Card, Deck } from "@/lib/types";
 import { recordUsageEvent } from "@/lib/usageEvents";
 
 export type CardHomeLoadStatus = "loading" | "ready" | "empty" | "error";
+type CardHomeAuthStatus = "anonymous" | "authenticated" | "checking";
 
 type Params = {
   initialCards: Card[];
   initialDecks: Deck[];
 };
+
+const ANONYMOUS_AUTH_SETTLE_MS = 250;
+
+function hasStoredSupabaseAuthState() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const hasLocalStorageAuth = Object.keys(window.localStorage).some(
+      (key) => key.startsWith("sb-") && key.includes("auth-token"),
+    );
+
+    if (hasLocalStorageAuth) {
+      return true;
+    }
+  } catch {
+    // Storage access can fail in restricted browser modes.
+  }
+
+  return document.cookie
+    .split(";")
+    .some((cookie) => {
+      const cookieName = cookie.trim().split("=")[0] ?? "";
+
+      return cookieName.startsWith("sb-") && cookieName.includes("auth-token");
+    });
+}
 
 export default function useCardHomeData({
   initialCards,
@@ -27,6 +56,9 @@ export default function useCardHomeData({
 }: Params) {
   const [allCards, setAllCards] = useState<Card[]>([]);
   const [allDecks, setAllDecks] = useState<Deck[]>([]);
+  const [authStatus, setAuthStatus] =
+    useState<CardHomeAuthStatus>("checking");
+  const [authUserId, setAuthUserId] = useState("");
   const [loadStatus, setLoadStatus] =
     useState<CardHomeLoadStatus>("loading");
   const [encounterMetadataByCardId, setEncounterMetadataByCardId] = useState<
@@ -38,6 +70,105 @@ export default function useCardHomeData({
 
   useEffect(() => {
     let isActive = true;
+    let anonymousTimer: ReturnType<typeof setTimeout> | null = null;
+
+    function clearAnonymousTimer() {
+      if (anonymousTimer) {
+        clearTimeout(anonymousTimer);
+        anonymousTimer = null;
+      }
+    }
+
+    function resolveAnonymousAfterSettle() {
+      clearAnonymousTimer();
+      anonymousTimer = setTimeout(() => {
+        if (isActive) {
+          setAuthUserId("");
+          setAuthStatus("anonymous");
+        }
+      }, ANONYMOUS_AUTH_SETTLE_MS);
+    }
+
+    function handleSession(session: Awaited<ReturnType<typeof getSupabaseSessionSafely>>) {
+      if (!isActive) {
+        return;
+      }
+
+      const userId = session?.user?.id ?? "";
+
+      if (userId) {
+        clearAnonymousTimer();
+        setAuthUserId(userId);
+        setAuthStatus("authenticated");
+        return;
+      }
+
+      setAuthUserId("");
+
+      if (hasStoredSupabaseAuthState()) {
+        clearAnonymousTimer();
+        setAuthStatus("checking");
+        return;
+      }
+
+      resolveAnonymousAfterSettle();
+    }
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+
+      getSupabaseSessionSafely(supabase)
+        .then(handleSession)
+        .catch(() => {
+          if (!isActive) {
+            return;
+          }
+
+          if (hasStoredSupabaseAuthState()) {
+            clearAnonymousTimer();
+            setAuthUserId("");
+            setAuthStatus("checking");
+            return;
+          }
+
+          resolveAnonymousAfterSettle();
+        });
+
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_OUT") {
+          clearAnonymousTimer();
+          setAuthUserId("");
+          setAuthStatus("anonymous");
+          return;
+        }
+
+        handleSession(session);
+      });
+
+      return () => {
+        isActive = false;
+        clearAnonymousTimer();
+        subscription.unsubscribe();
+      };
+    } catch {
+      queueMicrotask(() => {
+        if (isActive) {
+          setAuthUserId("");
+          setAuthStatus("anonymous");
+        }
+      });
+    }
+
+    return () => {
+      isActive = false;
+      clearAnonymousTimer();
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
 
     queueMicrotask(async () => {
       if (!isActive) {
@@ -46,14 +177,29 @@ export default function useCardHomeData({
 
       setLoadStatus("loading");
 
+      if (authStatus === "checking") {
+        setAllCards([]);
+        setAllDecks([]);
+        setEncounterMetadataByCardId({});
+        setFavoriteIds(new Set());
+        return;
+      }
+
       try {
-        const supabase = createSupabaseBrowserClient();
-        await getSupabaseSessionSafely(supabase);
+        const repositoryReadOptions = {
+          disableFallback: authStatus === "authenticated",
+        };
 
         const [repositoryDecks, repositoryCards, repositoryEncounterMetadata] =
           await Promise.all([
-            DeckRepository.getDecksForCurrentUser(initialDecks),
-            CardRepository.getCardsForCurrentUser(initialCards),
+            DeckRepository.getDecksForCurrentUser(
+              initialDecks,
+              repositoryReadOptions,
+            ),
+            CardRepository.getCardsForCurrentUser(
+              initialCards,
+              repositoryReadOptions,
+            ),
             EncounterRepository.getMetadataMapForCurrentUser(),
           ]);
 
@@ -88,7 +234,7 @@ export default function useCardHomeData({
     return () => {
       isActive = false;
     };
-  }, [initialCards, initialDecks]);
+  }, [authStatus, authUserId, initialCards, initialDecks]);
 
   useEffect(() => {
     let isActive = true;

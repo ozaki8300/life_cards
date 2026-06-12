@@ -13,6 +13,10 @@ type CardSaveOptions = {
   expectsCloudSave?: boolean;
 };
 
+type CurrentUserReadOptions = {
+  disableFallback?: boolean;
+};
+
 function errorCauseLog(error: unknown) {
   if (!error || typeof error !== "object") {
     return undefined;
@@ -79,15 +83,25 @@ export const CardRepository = {
     return hydrateCardDefaultImageKeys(readStoredCards() ?? seed);
   },
 
-  async getCardsForCurrentUser(seed: Card[] = seedCards) {
+  async getCardsForCurrentUser(
+    seed: Card[] = seedCards,
+    options: CurrentUserReadOptions = {},
+  ) {
     try {
       const supabaseCards = await CardSupabaseRepository.getCards();
 
       return supabaseCards
         ? hydrateCardDefaultImageKeys(supabaseCards)
-        : CardRepository.getCards(seed);
+        : options.disableFallback
+          ? []
+          : CardRepository.getCards(seed);
     } catch (error) {
       console.warn("Life Cards Supabase cards fetch failed", error);
+
+      if (options.disableFallback) {
+        throw error;
+      }
+
       return CardRepository.getCards(seed);
     }
   },

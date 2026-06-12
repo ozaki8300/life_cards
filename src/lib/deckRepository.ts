@@ -6,6 +6,10 @@ import type { Deck } from "@/lib/types";
 
 import { STORAGE_KEYS } from "./storageKeys";
 
+type CurrentUserReadOptions = {
+  disableFallback?: boolean;
+};
+
 function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
@@ -50,14 +54,24 @@ export const DeckRepository = {
     return localOrSeedDecks(seed);
   },
 
-  async getDecksForCurrentUser(seed: Deck[] = seedDecks) {
+  async getDecksForCurrentUser(
+    seed: Deck[] = seedDecks,
+    options: CurrentUserReadOptions = {},
+  ) {
     try {
+      const supabaseDecks = await DeckSupabaseRepository.seedDecksIfEmpty();
+
       return (
-        (await DeckSupabaseRepository.seedDecksIfEmpty()) ??
-        DeckRepository.getDecks(seed)
+        supabaseDecks ??
+        (options.disableFallback ? [] : DeckRepository.getDecks(seed))
       );
     } catch (error) {
       console.warn("Life Cards Supabase decks fetch failed", error);
+
+      if (options.disableFallback) {
+        throw error;
+      }
+
       return DeckRepository.getDecks(seed);
     }
   },

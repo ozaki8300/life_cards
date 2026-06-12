@@ -1,9 +1,15 @@
 const actionButtonBaseClass =
-  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-sm font-semibold shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:w-14 sm:text-lg";
+  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold shadow-[0_4px_12px_rgba(87,72,52,0.08)] backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:opacity-35 sm:h-14 sm:w-14 sm:text-lg";
 const actionButtonClass =
   `${actionButtonBaseClass} border-[#e0d3c0] bg-white/70 text-[#6f6253] hover:bg-white`;
 const copyForAiActionButtonClass =
   `${actionButtonBaseClass} border-[#d9c9b2] bg-white/70 text-[#6f6253] hover:bg-white`;
+const favoriteActionButtonBaseClass =
+  `${actionButtonBaseClass} text-lg leading-none sm:text-xl`;
+const favoriteActionButtonActiveClass =
+  `${favoriteActionButtonBaseClass} border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]`;
+const favoriteActionButtonInactiveClass =
+  `${favoriteActionButtonBaseClass} border-[#e0d3c0] bg-white/70 text-[#8f806d] hover:bg-white hover:text-[#756750]`;
 const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
 const actionBarBaseClass =
@@ -120,11 +126,13 @@ type Props = {
   onClose: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onToggleFavorite: () => void;
   onCopyForAi?: () => void;
   onOpenPhoto: () => void;
   onShare: () => void;
   copyForAiStatus?: "copied" | "failed" | "idle" | "working";
   hasImage: boolean;
+  isFavorite: boolean;
   isSubdued?: boolean;
   showCopyForAi?: boolean;
 };
@@ -133,14 +141,20 @@ export default function CardDetailActionBar({
   onClose,
   onDelete,
   onEdit,
+  onToggleFavorite,
   onCopyForAi,
   onOpenPhoto,
   onShare,
   copyForAiStatus = "idle",
   hasImage,
+  isFavorite,
   isSubdued = false,
   showCopyForAi = false,
 }: Props) {
+  const favoriteActionButtonClass = isFavorite
+    ? favoriteActionButtonActiveClass
+    : favoriteActionButtonInactiveClass;
+
   return (
     <section
       className={`${actionBarBaseClass} ${
@@ -183,6 +197,15 @@ export default function CardDetailActionBar({
         className={actionButtonClass}
       >
         <ImageIcon />
+      </button>
+      <button
+        type="button"
+        aria-label={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
+        aria-pressed={isFavorite}
+        onClick={onToggleFavorite}
+        className={favoriteActionButtonClass}
+      >
+        {isFavorite ? "★" : "☆"}
       </button>
       <button
         type="button"
