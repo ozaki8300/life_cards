@@ -400,140 +400,167 @@ export default function CardForm({
         <input type="hidden" name="imageFitMode" value={imageFitMode} />
         <input type="hidden" name="imagePath" value={imagePath} />
 
-        <CardFormPreview
-          backText={backText}
-          cardDate={cardDate}
-          defaultImageKey={defaultImageKey}
-          frontComment={frontComment}
-          frontText={frontText}
-          imageFitMode={imageFitMode}
-          imagePath={imagePath}
-          linkUrl={linkUrl}
-          onPreviewFaceChange={setPreviewFace}
-          previewFace={previewFace}
-          selectedDeckName={selectedDeckName}
-        />
-
-        <section className="grid min-w-0 gap-4 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5">
+        <section className="order-1 grid min-w-0 gap-4 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5 lg:order-2 lg:col-start-2">
           {saveErrorMessage ? (
             <p className="rounded-[14px] border border-[#e7b8a9] bg-[#fff2ee] px-4 py-3 text-sm font-semibold text-[#a24d3c]">
               {saveErrorMessage}
             </p>
           ) : null}
 
-          <section className="rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
-            <div className="grid gap-2">
-              {!isSignedIn ? (
-                <p className="text-xs leading-5 text-[#7d705f]">
-                  {imageLoginMessage}
-                </p>
-              ) : null}
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                disabled={!isSignedIn}
-                className="hidden"
-                onChange={(event) => handleFileChange(event, "写真")}
-              />
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                disabled={!isSignedIn}
-                className="hidden"
-                onChange={(event) => handleFileChange(event, "カメラ")}
-              />
-              <input
-                ref={screenshotInputRef}
-                type="file"
-                accept="image/*"
-                disabled={!isSignedIn}
-                className="hidden"
-                onChange={(event) => handleFileChange(event, "スクショ")}
-              />
+          <label className="block min-w-0">
+            <input
+              name="frontText"
+              value={frontText}
+              onChange={(event) => setFrontText(event.target.value)}
+              onFocus={() => requestPreviewFace("front")}
+              placeholder="表面タイトル"
+              className="box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base font-semibold leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+            />
+          </label>
 
-              <div className="flex flex-wrap gap-2">
-                {imageActions.map((action) => (
+          <label className="block min-w-0">
+            <textarea
+              name="frontComment"
+              value={frontComment}
+              onChange={(event) => setFrontComment(event.target.value)}
+              onFocus={() => requestPreviewFace("front")}
+              rows={3}
+              placeholder="表面に添える数行コメント"
+              className="box-border block w-full min-w-0 max-w-full resize-none rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+            />
+          </label>
+        </section>
+
+        <div className="order-2 lg:order-1 lg:row-span-3 lg:row-start-1">
+          <CardFormPreview
+            backText={backText}
+            cardDate={cardDate}
+            defaultImageKey={defaultImageKey}
+            frontComment={frontComment}
+            frontText={frontText}
+            imageFitMode={imageFitMode}
+            imagePath={imagePath}
+            linkUrl={linkUrl}
+            onPreviewFaceChange={setPreviewFace}
+            previewFace={previewFace}
+            selectedDeckName={selectedDeckName}
+          />
+        </div>
+
+        <section className="order-3 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5 lg:col-start-2">
+          <div className="grid gap-2 rounded-[16px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
+            {!isSignedIn ? (
+              <p className="text-xs leading-5 text-[#7d705f]">
+                {imageLoginMessage}
+              </p>
+            ) : null}
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              disabled={!isSignedIn}
+              className="hidden"
+              onChange={(event) => handleFileChange(event, "写真")}
+            />
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              disabled={!isSignedIn}
+              className="hidden"
+              onChange={(event) => handleFileChange(event, "カメラ")}
+            />
+            <input
+              ref={screenshotInputRef}
+              type="file"
+              accept="image/*"
+              disabled={!isSignedIn}
+              className="hidden"
+              onChange={(event) => handleFileChange(event, "スクショ")}
+            />
+
+            <div className="flex flex-wrap gap-2">
+              {imageActions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  disabled={!isSignedIn}
+                  onClick={() => handleImageAction(action)}
+                  className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
+                    imageLabel === action.label
+                      ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                      : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
+                  }`}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+            {imageErrorMessage ? (
+              <p className="text-xs font-semibold leading-5 text-[#a24d3c]">
+                {imageErrorMessage}
+              </p>
+            ) : null}
+            <div className="grid gap-2 pt-1">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
+                画像表示
+              </span>
+              <div className="grid grid-cols-2 overflow-hidden rounded-full border border-[#e0d3c0] bg-white/52 p-1">
+                {imageFitModeOptions.map((option) => (
                   <button
-                    key={action.id}
+                    key={option.id}
                     type="button"
-                    disabled={!isSignedIn}
-                    onClick={() => handleImageAction(action)}
-                    className={`shrink-0 rounded-full border px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
-                      imageLabel === action.label
-                        ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-                        : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
+                    aria-pressed={imageFitMode === option.id}
+                    onClick={() => setImageFitMode(option.id)}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                      imageFitMode === option.id
+                        ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
+                        : "text-[#6f6253] hover:bg-white/78"
                     }`}
                   >
-                    {action.label}
+                    {option.label}
                   </button>
                 ))}
               </div>
-              {imageErrorMessage ? (
-                <p className="text-xs font-semibold leading-5 text-[#a24d3c]">
-                  {imageErrorMessage}
-                </p>
-              ) : null}
+            </div>
+            {!hasSelectedImage ? (
               <div className="grid gap-2 pt-1">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
-                  画像表示
+                  default画像
                 </span>
-                <div className="grid grid-cols-2 overflow-hidden rounded-full border border-[#e0d3c0] bg-white/52 p-1">
-                  {imageFitModeOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      aria-pressed={imageFitMode === option.id}
-                      onClick={() => setImageFitMode(option.id)}
-                      className={`rounded-full px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
-                        imageFitMode === option.id
-                          ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
-                          : "text-[#6f6253] hover:bg-white/78"
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                  {DEFAULT_CARD_IMAGE_OPTIONS.map((option) => {
+                    const isSelected = defaultImageKey === option.key;
+
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => setDefaultImageKey(option.key)}
+                        className={`rounded-[14px] border p-2 text-left text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                          isSelected
+                            ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                            : "border-[#e0d3c0] bg-white/60 text-[#7d705f] hover:bg-white"
+                        }`}
+                      >
+                        <span
+                          className="mb-2 block aspect-[4/3] rounded-[10px] border border-white/45 bg-cover bg-center"
+                          style={{ backgroundImage: `url(${option.path})` }}
+                          aria-hidden="true"
+                        />
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              {!hasSelectedImage ? (
-                <div className="grid gap-2 pt-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
-                    default画像
-                  </span>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                    {DEFAULT_CARD_IMAGE_OPTIONS.map((option) => {
-                      const isSelected = defaultImageKey === option.key;
+            ) : null}
+          </div>
+        </section>
 
-                      return (
-                        <button
-                          key={option.key}
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() => setDefaultImageKey(option.key)}
-                          className={`rounded-[14px] border p-2 text-left text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
-                            isSelected
-                              ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-                              : "border-[#e0d3c0] bg-white/60 text-[#7d705f] hover:bg-white"
-                          }`}
-                        >
-                          <span
-                            className="mb-2 block aspect-[4/3] rounded-[10px] border border-white/45 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${option.path})` }}
-                            aria-hidden="true"
-                          />
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </section>
-
+        <section className="order-4 grid min-w-0 gap-4 rounded-[22px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_18px_52px_rgba(122,105,82,0.16)] sm:p-5 lg:col-start-2">
           <section className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
               <select
@@ -541,7 +568,7 @@ export default function CardForm({
                 aria-label="Deck"
                 value={selectedDeckId}
                 onChange={(event) => setSelectedDeckId(event.target.value)}
-                className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+                className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
               >
                 {availableDecks.map((deck) => (
                   <option key={deck.id} value={deck.id}>
@@ -564,32 +591,9 @@ export default function CardForm({
               aria-label="Date"
               value={cardDate}
               onChange={(event) => setCardDate(event.target.value)}
-              className="box-border block w-full min-w-0 max-w-full appearance-none rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+              className="box-border block w-full min-w-0 max-w-full appearance-none rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </section>
-
-          <label className="block min-w-0">
-            <input
-              name="frontText"
-              value={frontText}
-              onChange={(event) => setFrontText(event.target.value)}
-              onFocus={() => requestPreviewFace("front")}
-              placeholder="表面タイトル"
-              className="box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base font-semibold leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
-            />
-          </label>
-
-          <label className="block min-w-0">
-            <textarea
-              name="frontComment"
-              value={frontComment}
-              onChange={(event) => setFrontComment(event.target.value)}
-              onFocus={() => requestPreviewFace("front")}
-              rows={3}
-              placeholder="表面に添える数行コメント"
-              className="box-border block w-full min-w-0 max-w-full resize-none rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
-            />
-          </label>
 
           <BackMemoEditor
             backMode={backMode}
@@ -609,7 +613,7 @@ export default function CardForm({
               value={linkUrl}
               onChange={(event) => setLinkUrl(event.target.value)}
               placeholder="https://example.com"
-              className="mt-2 box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-sm leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+              className="mt-2 box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
             />
           </label>
 
@@ -631,24 +635,24 @@ export default function CardForm({
                   閉じる
                 </button>
               ) : null}
-            <button
-              type="submit"
-              disabled={
-                !isAuthResolved ||
-                !isDecksResolved ||
-                isSaving ||
-                saveStatus === "success"
-              }
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-[0_10px_24px_rgba(87,72,52,0.16)] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none sm:w-auto sm:justify-self-start"
-            >
-              {isSaving ? (
-                <span
-                  aria-hidden="true"
-                  className="h-4 w-4 rounded-full border-2 border-[#fffaf0]/45 border-t-[#fffaf0] motion-safe:animate-spin"
-                />
-              ) : null}
-              {submitButtonLabel}
-            </button>
+              <button
+                type="submit"
+                disabled={
+                  !isAuthResolved ||
+                  !isDecksResolved ||
+                  isSaving ||
+                  saveStatus === "success"
+                }
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-[#2f2a23] px-6 py-3 text-sm font-semibold text-[#fffaf0] shadow-[0_10px_24px_rgba(87,72,52,0.16)] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e] disabled:shadow-none sm:w-auto sm:justify-self-start"
+              >
+                {isSaving ? (
+                  <span
+                    aria-hidden="true"
+                    className="h-4 w-4 rounded-full border-2 border-[#fffaf0]/45 border-t-[#fffaf0] motion-safe:animate-spin"
+                  />
+                ) : null}
+                {submitButtonLabel}
+              </button>
             </div>
             <MobileDesktopHint isVisible={isAuthResolved && isSignedIn} />
           </div>
