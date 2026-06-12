@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card, Deck } from "@/lib/types";
 import { recordDailyAppOpened } from "@/lib/usageEvents";
 
@@ -15,6 +16,7 @@ import {
   keywordsFor,
   sortCardsByNewest,
 } from "./cards/cardHomeUtils";
+import { defaultImageForCard } from "./cards/cardUiUtils";
 import useCardHomeData, {
   type CardHomeLoadStatus,
 } from "./cards/useCardHomeData";
@@ -28,9 +30,62 @@ type Props = {
   activeDeckId?: string;
 };
 
+type CardImagePreloadState = {
+  isReady: boolean;
+  signature: string;
+  urlsByStoragePath: Record<string, string>;
+};
+
+function cardImagePreloadSignature(cards: Card[]) {
+  return cards
+    .map(
+      (card) =>
+        [
+          card.id,
+          card.imagePath ?? "",
+          card.imageStoragePath ?? "",
+          card.defaultImageKey ?? "",
+        ].join(":"),
+    )
+    .join("|");
+}
+
+function uniqueCardsById(cards: Card[]) {
+  const seenCardIds = new Set<string>();
+
+  return cards.filter((card) => {
+    if (seenCardIds.has(card.id)) {
+      return false;
+    }
+
+    seenCardIds.add(card.id);
+    return true;
+  });
+}
+
+function preloadImageUrl(url: string) {
+  if (!url || typeof window === "undefined") {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve) => {
+    const image = new Image();
+
+    image.onload = () => resolve();
+    image.onerror = () => resolve();
+    image.src = url;
+  });
+}
+
 export default function CardHome({ cards, decks, activeDeckId }: Props) {
   const [activeTab, setActiveTab] = useState("すべて");
   const [searchQuery, setSearchQuery] = useState("");
+  const [cardImagePreloadState, setCardImagePreloadState] =
+    useState<CardImagePreloadState>({
+      isReady: false,
+      signature: "",
+      urlsByStoragePath: {},
+    });
   const {
     allCards,
     allDecks,
@@ -108,6 +163,133 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     favoriteIds,
     metadataByCardId: encounterMetadataByCardId,
   });
+  const preloadCards = useMemo(
+    () =>
+      loadStatus === "ready"
+        ? uniqueCardsById(isSearching ? visibleCards : [...visibleCards, ...todayCards])
+        : [],
+    [isSearching, loadStatus, todayCards, visibleCards],
+  );
+  const preloadSignature = useMemo(
+    () => cardImagePreloadSignature(preloadCards),
+    [preloadCards],
+  );
+  const areCardImagesReady =
+    loadStatus === "ready" &&
+    cardImagePreloadState.signature === preloadSignature &&
+    cardImagePreloadState.isReady;
+  const preparedCardsById = useMemo(() => {
+    if (!areCardImagesReady) {
+      return new Map<string, Card>();
+    }
+
+    return new Map(
+      allCards.map((card) => {
+        const imageStoragePath = card.imageStoragePath?.trim();
+        const signedImagePath = imageStoragePath
+          ? cardImagePreloadState.urlsByStoragePath[imageStoragePath]
+          : "";
+
+        return [
+          card.id,
+          signedImagePath ? { ...card, imagePath: signedImagePath } : card,
+        ];
+      }),
+    );
+  }, [
+    allCards,
+    areCardImagesReady,
+    cardImagePreloadState.urlsByStoragePath,
+  ]);
+  const preparedAllCards = useMemo(
+    () =>
+      allCards.map((card) => preparedCardsById.get(card.id) ?? card),
+    [allCards, preparedCardsById],
+  );
+  const preparedVisibleCards = useMemo(
+    () =>
+      visibleCards.map((card) => preparedCardsById.get(card.id) ?? card),
+    [preparedCardsById, visibleCards],
+  );
+  const preparedTodayCards = useMemo(
+    () =>
+      todayCards.map((card) => preparedCardsById.get(card.id) ?? card),
+    [preparedCardsById, todayCards],
+  );
+
+  useEffect(() => {
+    if (loadStatus !== "ready") {
+      return;
+    }
+
+    let isActive = true;
+
+    async function preloadCardImages() {
+      const storagePaths = Array.from(
+        new Set(
+          preloadCards
+            .map((card) => card.imageStoragePath?.trim() ?? "")
+            .filter(Boolean),
+        ),
+      );
+      const signedEntries = await Promise.all(
+        storagePaths.map(async (path) => {
+          try {
+            return [
+              path,
+              (await CardImageStorageRepository.getCachedSignedImageUrl(path)) ??
+                "",
+            ] as const;
+          } catch (error) {
+            console.warn("Life Cards card image preload failed", error);
+            return [path, ""] as const;
+          }
+        }),
+      );
+      const urlsByStoragePath = Object.fromEntries(
+        signedEntries.filter(([, signedUrl]) => signedUrl),
+      );
+      const imageUrls = Array.from(
+        new Set(
+          preloadCards.map((card) => {
+            const directImagePath = card.imagePath?.trim();
+
+            if (directImagePath) {
+              return directImagePath;
+            }
+
+            const imageStoragePath = card.imageStoragePath?.trim();
+            const signedImagePath = imageStoragePath
+              ? urlsByStoragePath[imageStoragePath]
+              : "";
+
+            return signedImagePath || defaultImageForCard(card);
+          }),
+        ),
+      );
+
+      await Promise.all(imageUrls.map(preloadImageUrl));
+
+      if (!isActive) {
+        return;
+      }
+
+      setCardImagePreloadState((current) => ({
+        isReady: true,
+        signature: preloadSignature,
+        urlsByStoragePath: {
+          ...current.urlsByStoragePath,
+          ...urlsByStoragePath,
+        },
+      }));
+    }
+
+    void preloadCardImages();
+
+    return () => {
+      isActive = false;
+    };
+  }, [loadStatus, preloadCards, preloadSignature]);
 
   return (
     <>
@@ -132,9 +314,9 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         onSearchChange={setSearchQuery}
       >
         <div className="space-y-6">
-          {loadStatus !== "ready" ? (
+          {loadStatus !== "ready" || !areCardImagesReady ? (
             <section>
-              <CardHomeStatus isLoading message="カードを読み込んでいます" />
+              <CardHomeStatus isLoading message="カードを読み込んでいます..." />
             </section>
           ) : (
             <>
@@ -142,9 +324,9 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
                 <ReencounterSection
                   title="今日の再会"
                   subtitle="久しぶりに見たいカード"
-                  cards={todayCards}
+                  cards={preparedTodayCards}
                   decks={allDecks}
-                  editSeedCards={allCards}
+                  editSeedCards={preparedAllCards}
                   favoriteIds={activeFavoriteIds}
                   onCardViewed={recordCardReencounter}
                   onDecksChange={setAllDecks}
@@ -166,9 +348,9 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
                 ) : null}
                 {viewStatus === "ready" ? (
                   <TradingCardGrid
-                    cards={visibleCards}
+                    cards={preparedVisibleCards}
                     decks={allDecks}
-                    editSeedCards={allCards}
+                    editSeedCards={preparedAllCards}
                     favoriteIds={activeFavoriteIds}
                     onCardViewed={recordCardView}
                     onDecksChange={setAllDecks}
