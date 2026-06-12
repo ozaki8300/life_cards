@@ -118,8 +118,6 @@ export default function CardForm({
   );
   const [imageLabel, setImageLabel] = useState("");
   const [imageErrorMessage, setImageErrorMessage] = useState("");
-  const [isScreenshotPasteWaiting, setIsScreenshotPasteWaiting] =
-    useState(false);
   const [imagePath, setImagePath] = useState(initialValues.imagePath);
   const [imageStoragePath, setImageStoragePath] = useState(
     initialValues.imageStoragePath ?? "",
@@ -169,12 +167,10 @@ export default function CardForm({
         setImagePath(result.dataUrl);
         setImageStoragePath("");
         setImageLabel(label);
-        setIsScreenshotPasteWaiting(false);
       } catch (error) {
         console.warn("Life Cards image compression failed", error);
         setImagePath("");
         setImageLabel("");
-        setIsScreenshotPasteWaiting(false);
         setImageErrorMessage(
           "画像を準備できませんでした。別の写真を選んでください。",
         );
@@ -493,10 +489,7 @@ export default function CardForm({
               <button
                 type="button"
                 disabled={!isSignedIn}
-                onClick={() => {
-                  setIsScreenshotPasteWaiting(false);
-                  photoInputRef.current?.click();
-                }}
+                onClick={() => photoInputRef.current?.click()}
                 className={`inline-flex min-h-11 w-fit items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
                   hasSelectedImage
                     ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
@@ -505,24 +498,10 @@ export default function CardForm({
               >
                 画像を選ぶ
               </button>
-              <button
-                type="button"
-                disabled={!isSignedIn}
-                onClick={() => setIsScreenshotPasteWaiting(true)}
-                className={`inline-flex min-h-11 w-fit items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
-                  isScreenshotPasteWaiting
-                    ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-                    : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
-                }`}
-              >
-                スクショを貼る
-              </button>
             </div>
-            {isScreenshotPasteWaiting ? (
-              <p className="hidden text-xs font-semibold leading-5 text-[#7d705f] lg:block">
-                スクショをコピーした状態で Ctrl+V / ⌘V してください
-              </p>
-            ) : null}
+            <p className="hidden text-xs font-semibold leading-5 text-[#7d705f] lg:block">
+              スクショは Ctrl+V / ⌘V で貼り付けできます
+            </p>
 
             <div className="grid grid-cols-2 gap-2 lg:hidden">
               {imageActions.map((action) => (
