@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { TouchEvent, WheelEvent } from "react";
 
 import MarkdownMemo from "@/components/MarkdownMemo";
 import type { CardImageFitMode } from "@/lib/types";
@@ -234,6 +235,22 @@ export default function CardFace({
     }, 650);
   }
 
+  function isScrollableBackMemo(element: HTMLElement) {
+    return element.scrollHeight > element.clientHeight;
+  }
+
+  function handleBackMemoTouch(event: TouchEvent<HTMLDivElement>) {
+    if (isBack && size === "detail" && isScrollableBackMemo(event.currentTarget)) {
+      event.stopPropagation();
+    }
+  }
+
+  function handleBackMemoWheel(event: WheelEvent<HTMLDivElement>) {
+    if (isBack && size === "detail" && isScrollableBackMemo(event.currentTarget)) {
+      event.stopPropagation();
+    }
+  }
+
   return (
     <section
       className={`absolute inset-0 overflow-hidden border bg-center [-webkit-backface-visibility:hidden] [backface-visibility:hidden] ${
@@ -329,6 +346,10 @@ export default function CardFace({
                 : undefined
             }
             onScroll={handleBackMemoScroll}
+            onTouchEnd={handleBackMemoTouch}
+            onTouchMove={handleBackMemoTouch}
+            onTouchStart={handleBackMemoTouch}
+            onWheel={handleBackMemoWheel}
             className={`mt-3 min-h-0 flex-1 ${styles.backMemo} ${
               showsSoftTileScrollbar && isTileBackScrolling
                 ? "is-scrolling"

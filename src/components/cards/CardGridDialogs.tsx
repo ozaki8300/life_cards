@@ -32,8 +32,8 @@ type Props = {
   onShare: () => void;
   onShareClose: () => void;
   onToggleFavorite: () => void;
-  onTouchEnd: (touchEndX: number) => void;
-  onTouchStart: (touchStartX: number) => void;
+  onTouchEnd: (touchEndX: number, touchEndY: number) => void;
+  onTouchStart: (touchStartX: number, touchStartY: number) => void;
 };
 
 export default function CardGridDialogs({
@@ -70,8 +70,18 @@ export default function CardGridDialogs({
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-[#3b3126]/45 px-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-5 backdrop-blur-md sm:px-6 sm:py-6"
-      onTouchStart={(event) => onTouchStart(event.changedTouches[0].clientX)}
-      onTouchEnd={(event) => onTouchEnd(event.changedTouches[0].clientX)}
+      onTouchStart={(event) =>
+        onTouchStart(
+          event.changedTouches[0].clientX,
+          event.changedTouches[0].clientY,
+        )
+      }
+      onTouchEnd={(event) =>
+        onTouchEnd(
+          event.changedTouches[0].clientX,
+          event.changedTouches[0].clientY,
+        )
+      }
     >
       <button
         type="button"

@@ -4,6 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { Card } from "@/lib/types";
 
+type TouchPoint = {
+  x: number;
+  y: number;
+};
+
 type Params = {
   cards: Card[];
   isEditing: boolean;
@@ -23,7 +28,9 @@ export default function useCardSelectionNavigation({
   const [selectedCardSnapshot, setSelectedCardSnapshot] =
     useState<Card | null>(null);
   const [fallbackIndex, setFallbackIndex] = useState<number | null>(null);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartPoint, setTouchStartPoint] = useState<TouchPoint | null>(
+    null,
+  );
   const selectedCardIndex =
     selectedCardId === null
       ? -1
@@ -111,20 +118,23 @@ export default function useCardSelectionNavigation({
     [cards, onCardViewed, onPreviewModeReset],
   );
 
-  const handlePreviewTouchStart = useCallback((touchStartXValue: number) => {
-    setTouchStartX(touchStartXValue);
+  const handlePreviewTouchStart = useCallback((x: number, y: number) => {
+    setTouchStartPoint({ x, y });
   }, []);
 
   const handlePreviewTouchEnd = useCallback(
-    (touchEndX: number) => {
-      if (touchStartX === null || isEditing || isSharing) {
+    (touchEndX: number, touchEndY: number) => {
+      if (touchStartPoint === null || isEditing || isSharing) {
         return;
       }
 
-      const deltaX = touchEndX - touchStartX;
+      const deltaX = touchEndX - touchStartPoint.x;
+      const deltaY = touchEndY - touchStartPoint.y;
+      const absDeltaX = Math.abs(deltaX);
+      const absDeltaY = Math.abs(deltaY);
 
-      if (Math.abs(deltaX) < 50) {
-        setTouchStartX(null);
+      if (absDeltaX < 50 || absDeltaX < absDeltaY * 1.25) {
+        setTouchStartPoint(null);
         return;
       }
 
@@ -134,9 +144,9 @@ export default function useCardSelectionNavigation({
         showPrevious();
       }
 
-      setTouchStartX(null);
+      setTouchStartPoint(null);
     },
-    [isEditing, isSharing, showNext, showPrevious, touchStartX],
+    [isEditing, isSharing, showNext, showPrevious, touchStartPoint],
   );
 
   useEffect(() => {
