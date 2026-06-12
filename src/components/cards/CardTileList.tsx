@@ -11,8 +11,8 @@ const RAIL_ITEM_CLASS =
   "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-visible rounded-[18px] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
 const faceControlBaseClass =
   "absolute z-[10000] flex items-center justify-center rounded-full border backdrop-blur-[2px] transition focus:outline-none focus:ring-2 focus:ring-white/70";
-const openDetailButtonClass = `${faceControlBaseClass} right-3 top-3 h-10 w-10 border-[#d8c8aa]/45 bg-[#f5eee1]/84 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_8px_22px_rgba(87,72,52,0.1)] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]`;
-const favoriteButtonBaseClass = `${faceControlBaseClass} bottom-3 right-3 h-10 w-10 text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
+const openDetailButtonClass = `${faceControlBaseClass} bottom-3 right-3 h-10 w-10 border-[#d8c8aa]/45 bg-[#f5eee1]/84 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_8px_22px_rgba(87,72,52,0.1)] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]`;
+const favoriteButtonBaseClass = `${faceControlBaseClass} right-3 top-3 h-10 w-10 text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
 
 type OverlayButtonEvent =
   | MouseEvent<HTMLButtonElement>
