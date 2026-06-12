@@ -3,7 +3,7 @@ import type { Card } from "@/lib/types";
 import type { ReencounterPickInput, ReencounterPickOptions } from "./types";
 import { calculateReencounterScore } from "./score";
 
-const DEFAULT_REENCOUNTER_LIMIT = 5;
+const DEFAULT_REENCOUNTER_LIMIT = 4;
 
 function pick(
   input: ReencounterPickInput,

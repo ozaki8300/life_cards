@@ -6,6 +6,8 @@ import type { Card, Deck } from "@/lib/types";
 
 import TradingCardGrid from "./TradingCardGrid";
 
+const REENCOUNTER_DISPLAY_LIMIT = 4;
+
 type Props = {
   title: string;
   subtitle: string;
@@ -34,13 +36,15 @@ export default function ReencounterSection({
   onToggleFavorite,
 }: Props) {
   const displayCards = useMemo(() => {
+    const limitedCards = cards.slice(0, REENCOUNTER_DISPLAY_LIMIT);
+
     if (!editSeedCards) {
-      return cards;
+      return limitedCards;
     }
 
     const latestCardsById = new Map(editSeedCards.map((card) => [card.id, card]));
 
-    return cards.map((card) => latestCardsById.get(card.id) ?? card);
+    return limitedCards.map((card) => latestCardsById.get(card.id) ?? card);
   }, [cards, editSeedCards]);
 
   if (displayCards.length === 0) {
