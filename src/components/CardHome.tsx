@@ -156,7 +156,10 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
               <CardHomeStatus message="カードを読み込めませんでした。時間をおいてもう一度お試しください。" />
             ) : null}
             {viewStatus === "empty" ? (
-              <CardHomeStatus message="No cards yet." />
+              <CardHomeStatus
+                message="最初のカードを作りましょう。"
+                description="右下の＋から、残しておきたい言葉・画像・メモを保存できます。"
+              />
             ) : null}
             {viewStatus === "filteredEmpty" ? (
               <CardHomeStatus message="該当するカードがありません。" />
@@ -198,9 +201,11 @@ function LoadingSpinner() {
 }
 
 function CardHomeStatus({
+  description,
   isLoading = false,
   message,
 }: {
+  description?: string;
   isLoading?: boolean;
   message: string;
 }) {
@@ -212,6 +217,11 @@ function CardHomeStatus({
     >
       {isLoading ? <LoadingSpinner /> : null}
       <span>{message}</span>
+      {description ? (
+        <span className="max-w-md text-xs font-medium leading-relaxed text-[#a09280]">
+          {description}
+        </span>
+      ) : null}
     </div>
   );
 }

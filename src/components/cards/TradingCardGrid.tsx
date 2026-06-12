@@ -448,8 +448,11 @@ export default function TradingCardGrid({
 
   if (cards.length === 0) {
     return (
-      <div className="rounded-[12px] border border-[#e8ddcb] bg-[#fffaf0] p-8 text-sm text-[#8d7f6e] shadow-lg shadow-[#d7cab8]">
-        No cards yet.
+      <div className="flex flex-col items-center gap-4 rounded-[12px] border border-[#e8ddcb] bg-[#fffaf0] p-8 text-center text-sm font-semibold text-[#8d7f6e] shadow-lg shadow-[#d7cab8]">
+        <span>最初のカードを作りましょう。</span>
+        <span className="max-w-md text-xs font-medium leading-relaxed text-[#a09280]">
+          右下の＋から、残しておきたい言葉・画像・メモを保存できます。
+        </span>
       </div>
     );
   }
