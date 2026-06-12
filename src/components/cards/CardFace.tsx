@@ -205,6 +205,8 @@ export default function CardFace({
       : "[transform:translateZ(0)]"
     : "[transform:translateZ(0)]";
   const backMemoTopMarginClass = size === "detail" ? "mt-2" : "mt-3";
+  const backOverlayClass =
+    size === "detail" ? "bg-[#f5ecdf]/88" : "bg-[#f5ecdf]/84";
 
   function isScrollableBackMemo(element: HTMLElement) {
     return element.scrollHeight > element.clientHeight;
@@ -260,7 +262,7 @@ export default function CardFace({
       {isBack ? <div className="absolute inset-0 backdrop-blur-[1px]" /> : null}
       <div
         className={`absolute inset-0 ${
-          isBack ? "bg-[#f5ecdf]/84" : frontOverlayClass
+          isBack ? backOverlayClass : frontOverlayClass
         }`}
       />
       {!isBack ? (
