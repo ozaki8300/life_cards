@@ -190,6 +190,13 @@ export default function useCardHomeData({
           disableFallback: authStatus === "authenticated",
         };
 
+        if (authStatus === "authenticated") {
+          setAllCards([]);
+          setAllDecks([]);
+          setEncounterMetadataByCardId({});
+          setFavoriteIds(new Set());
+        }
+
         const [repositoryDecks, repositoryCards, repositoryEncounterMetadata] =
           await Promise.all([
             DeckRepository.getDecksForCurrentUser(

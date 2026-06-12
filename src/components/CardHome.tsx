@@ -132,7 +132,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         onSearchChange={setSearchQuery}
       >
         <div className="space-y-6">
-          {!isSearching ? (
+          {!isSearching && loadStatus === "ready" ? (
             <ReencounterSection
               title="今日の再会"
               subtitle="久しぶりに見たいカード"
