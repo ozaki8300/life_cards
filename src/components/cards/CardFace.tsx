@@ -66,9 +66,9 @@ const blurExtendImageFadeClass = {
     "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain brightness-[1.01] contrast-[1.05] [mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_20px,black_calc(100%-20px),transparent_100%)]",
 } as const;
 const blurExtendBackgroundWashClass = {
-  detail: "absolute inset-0 bg-[#fff7ec]/34",
-  preview: "absolute inset-0 bg-[#fff7ec]/34",
-  tile: "absolute inset-0 bg-[#fff7ec]/22",
+  detail: "absolute inset-0 z-[1] bg-[#fff7ec]/34",
+  preview: "absolute inset-0 z-[1] bg-[#fff7ec]/34",
+  tile: "absolute inset-0 z-[1] bg-[#fff7ec]/22",
 } as const;
 const blurExtendFrontOverlayClass = {
   detail: "bg-gradient-to-t from-[#fffaf0]/28 via-[#fffaf0]/5 to-transparent",
@@ -271,7 +271,7 @@ export default function CardFace({
       {isBlurExtend && !useCssPaperBackground ? (
         <>
           <div
-            className="absolute inset-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
+            className="absolute inset-0 z-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
             style={blurExtendImageStyle}
           />
           <div className={blurExtendBackgroundWashClass[size]} />
@@ -279,33 +279,33 @@ export default function CardFace({
           <img
             alt=""
             aria-hidden="true"
-            className={blurExtendImageClass}
+            className={`${blurExtendImageClass} z-[3]`}
             src={backgroundImage}
           />
         </>
       ) : null}
-      {isBack ? <div className="absolute inset-0 backdrop-blur-[1px]" /> : null}
+      {isBack ? <div className="absolute inset-0 z-[2] backdrop-blur-[1px]" /> : null}
       <div
-        className={`absolute inset-0 ${
+        className={`absolute inset-0 z-[2] ${
           isBack ? backOverlayClass : frontOverlayClass
         }`}
       />
       {!isBack ? (
         <div
-          className={`absolute inset-x-0 top-0 ${frontTopFadeClass} ${styles.topFade}`}
+          className={`absolute inset-x-0 top-0 z-[4] ${frontTopFadeClass} ${styles.topFade}`}
         />
       ) : null}
 
       {!isBack ? (
         <>
           <p
-            className={`absolute truncate rounded-full font-semibold uppercase tracking-[0.16em] ${frontLabelClass} ${styles.label}`}
+            className={`absolute z-[5] truncate rounded-full font-semibold uppercase tracking-[0.16em] ${frontLabelClass} ${styles.label}`}
           >
             {deckLabel}
           </p>
 
           <div
-            className={`absolute inset-x-0 bottom-0 ${frontContentClass} ${styles.frontContent} ${frontContentReserveClass}`}
+            className={`absolute inset-x-0 bottom-0 z-[5] ${frontContentClass} ${styles.frontContent} ${frontContentReserveClass}`}
           >
             <p
               className={`font-medium ${frontDateClass} ${styles.date}`}
@@ -332,7 +332,7 @@ export default function CardFace({
         </>
       ) : (
         <div
-          className={`relative flex h-full min-h-0 flex-col text-[#332d25] ${styles.backContent}`}
+          className={`relative z-[5] flex h-full min-h-0 flex-col text-[#332d25] ${styles.backContent}`}
         >
           <div className="flex items-center justify-between gap-3 pr-12">
             <p className="max-w-[55%] truncate rounded-full bg-white/54 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6f6253] backdrop-blur-sm">

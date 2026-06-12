@@ -4,7 +4,7 @@ import type { CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
 const blurExtendImageFadeClass =
-  "absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]";
+  "absolute left-1/2 top-1/2 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_32px,black_calc(100%-32px),transparent_100%)]";
 const blurExtendPreviewTextReserveClass = {
   commentOnly: "min-h-[6.5rem]",
   full: "min-h-[11.5rem]",
@@ -12,11 +12,11 @@ const blurExtendPreviewTextReserveClass = {
 } as const;
 const blurExtendPreviewTextAnchoredImageClass = {
   commentOnly:
-    "absolute bottom-[calc(6.5rem-0.625rem)] left-1/2 z-0 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    "absolute bottom-[calc(6.5rem-0.625rem)] left-1/2 max-h-[64%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
   full:
-    "absolute bottom-[calc(11.5rem-0.625rem)] left-1/2 z-0 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    "absolute bottom-[calc(11.5rem-0.625rem)] left-1/2 max-h-[54%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
   titleOnly:
-    "absolute bottom-[calc(7.75rem-0.625rem)] left-1/2 z-0 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
+    "absolute bottom-[calc(7.75rem-0.625rem)] left-1/2 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
 } as const;
 
 type Props = {
@@ -131,12 +131,12 @@ function PreviewFace({
             className="absolute inset-0 z-0 scale-110 bg-cover opacity-30 blur-2xl brightness-[1.12] saturate-[0.72]"
             style={blurExtendImageStyle}
           />
-          <div className="absolute inset-0 z-0 bg-[#fff7ec]/38" />
+          <div className="absolute inset-0 z-[1] bg-[#fff7ec]/38" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt=""
             aria-hidden="true"
-            className={blurExtendImageClass}
+            className={`${blurExtendImageClass} z-[3]`}
             src={backgroundImage}
           />
         </>
@@ -147,12 +147,12 @@ function PreviewFace({
         />
       )}
       <div
-        className={`absolute inset-0 z-0 ${
+        className={`absolute inset-0 z-[2] ${
           isBack ? "bg-[#f5ecdf]/88" : frontOverlayClass
         }`}
       />
       {!isBack ? (
-        <div className={`absolute inset-x-0 top-0 z-0 h-28 ${frontTopFadeClass}`} />
+        <div className={`absolute inset-x-0 top-0 z-[4] h-28 ${frontTopFadeClass}`} />
       ) : null}
 
       {!isBack ? (
@@ -236,7 +236,7 @@ export default function CardFormPreview({
       : "shadow-[0_20px_54px_rgba(87,72,52,0.24)]";
 
   return (
-    <section className="mx-auto w-full max-w-[360px] lg:sticky lg:top-4">
+    <section className="mx-auto w-full max-w-[300px] sm:max-w-[340px] lg:sticky lg:top-4 lg:max-w-[360px]">
       <button
         type="button"
         onClick={() => onPreviewFaceChange(isBack ? "front" : "back")}
