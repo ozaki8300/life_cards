@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CardRepository } from "@/lib/cardRepository";
 import type { Card, Deck } from "@/lib/types";
@@ -29,6 +29,10 @@ export default function NewCardForm({
   const router = useRouter();
   const initialDeckId = deckId ?? deckOptions[0]?.id ?? "";
   const [draftCardId] = useState(() => `card_${Date.now()}`);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   async function handleSubmit(
     values: CardFormValues,

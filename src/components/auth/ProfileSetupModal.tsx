@@ -102,7 +102,7 @@ export default function ProfileSetupModal({
             value={displayName}
             onChange={(event) => setDisplayName(event.target.value)}
             placeholder="Life Cardsで表示する名前"
-            className="mt-2 w-full rounded-[14px] border border-[#e8ddcb] bg-white/72 px-4 py-3 text-sm font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+            className="mt-2 w-full rounded-[14px] border border-[#e8ddcb] bg-white/72 px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#d8c8aa]"
           />
         </label>
 
