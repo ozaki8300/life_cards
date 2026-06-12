@@ -18,6 +18,10 @@ const blurExtendPreviewTextAnchoredImageClass = {
   titleOnly:
     "absolute bottom-[calc(7.75rem-0.625rem)] left-1/2 max-h-[60%] max-w-[calc(100%-1.5rem)] -translate-x-1/2 object-contain [mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0,black_28px,black_calc(100%-20px),transparent_100%)]",
 } as const;
+const blurExtendPaperBackdropClass =
+  "absolute inset-2 z-[2] rounded-[18px] border border-white/74 bg-[#fffefa]/92 shadow-[0_18px_42px_rgba(87,72,52,0.18)]";
+
+export type BlurExtendPaperMode = "none" | "paper";
 
 type Props = {
   backText: string;
@@ -26,6 +30,7 @@ type Props = {
   frontComment: string;
   frontText: string;
   imageFitMode?: CardImageFitMode;
+  blurExtendPaperMode?: BlurExtendPaperMode;
   imagePath: string;
   linkUrl: string;
   onPreviewFaceChange: (face: "front" | "back") => void;
@@ -42,6 +47,7 @@ type PreviewFaceProps = {
   frontComment: string;
   frontText: string;
   imageFitMode?: CardImageFitMode;
+  blurExtendPaperMode?: BlurExtendPaperMode;
   linkUrl: string;
   useCssPaperBackground?: boolean;
 };
@@ -55,6 +61,7 @@ function PreviewFace({
   frontComment,
   frontText,
   imageFitMode = "cover",
+  blurExtendPaperMode = "none",
   linkUrl,
   useCssPaperBackground = false,
 }: PreviewFaceProps) {
@@ -141,6 +148,9 @@ function PreviewFace({
             style={blurExtendImageStyle}
           />
           <div className="absolute inset-0 z-[1] bg-[#fff7ec]/38" />
+          {blurExtendPaperMode === "paper" ? (
+            <div className={blurExtendPaperBackdropClass} />
+          ) : null}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt=""
@@ -227,6 +237,7 @@ export default function CardFormPreview({
   defaultImageKey,
   frontComment,
   frontText,
+  blurExtendPaperMode = "none",
   imageFitMode = "cover",
   imagePath,
   linkUrl,
@@ -260,6 +271,7 @@ export default function CardFormPreview({
           face={isBack ? "back" : "front"}
           frontComment={frontComment}
           frontText={frontText}
+          blurExtendPaperMode={blurExtendPaperMode}
           imageFitMode={imageFitMode}
           linkUrl={linkUrl}
           useCssPaperBackground={useCssPaperBackground}

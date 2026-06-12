@@ -12,7 +12,9 @@ import {
 import type { CardImageFitMode, Deck, DefaultCardImageKey } from "@/lib/types";
 
 import BackMemoEditor from "./BackMemoEditor";
-import CardFormPreview from "./CardFormPreview";
+import CardFormPreview, {
+  type BlurExtendPaperMode,
+} from "./CardFormPreview";
 import DeckCreateModal from "./DeckCreateModal";
 import MobileDesktopHint from "./MobileDesktopHint";
 import {
@@ -40,6 +42,19 @@ const imageFitModeOptions = [
   },
 ] as const satisfies ReadonlyArray<{
   id: CardImageFitMode;
+  label: string;
+}>;
+const blurExtendPaperModeOptions = [
+  {
+    id: "none",
+    label: "台紙なし",
+  },
+  {
+    id: "paper",
+    label: "白台紙あり",
+  },
+] as const satisfies ReadonlyArray<{
+  id: BlurExtendPaperMode;
   label: string;
 }>;
 
@@ -106,6 +121,8 @@ export default function CardForm({
   const [imageFitMode, setImageFitMode] = useState<CardImageFitMode>(
     initialValues.imageFitMode ?? "cover",
   );
+  const [blurExtendPaperMode, setBlurExtendPaperMode] =
+    useState<BlurExtendPaperMode>("none");
   const [linkUrl, setLinkUrl] = useState(initialValues.linkUrl);
   const [previewFace, setPreviewFace] = useState<"front" | "back">("front");
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
@@ -432,6 +449,7 @@ export default function CardForm({
             defaultImageKey={defaultImageKey}
             frontComment={frontComment}
             frontText={frontText}
+            blurExtendPaperMode={blurExtendPaperMode}
             imageFitMode={imageFitMode}
             imagePath={imagePath}
             linkUrl={linkUrl}
@@ -534,6 +552,30 @@ export default function CardForm({
                   </button>
                 ))}
               </div>
+              {imageFitMode === "blurExtend" ? (
+                <div className="grid gap-2 pt-1">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#a19380]">
+                    台紙
+                  </span>
+                  <div className="grid grid-cols-2 overflow-hidden rounded-full border border-[#e0d3c0] bg-white/52 p-1">
+                    {blurExtendPaperModeOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={blurExtendPaperMode === option.id}
+                        onClick={() => setBlurExtendPaperMode(option.id)}
+                        className={`rounded-full px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                          blurExtendPaperMode === option.id
+                            ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
+                            : "text-[#6f6253] hover:bg-white/78"
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
             {!hasSelectedImage ? (
               <div className="grid gap-2 pt-1">
