@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import type { ChangeEvent, ClipboardEvent, FormEvent } from "react";
 
 import { DeckRepository } from "@/lib/deckRepository";
 import { compressImage } from "@/lib/imageCompression";
@@ -118,6 +118,8 @@ export default function CardForm({
   );
   const [imageLabel, setImageLabel] = useState("");
   const [imageErrorMessage, setImageErrorMessage] = useState("");
+  const [isScreenshotPasteWaiting, setIsScreenshotPasteWaiting] =
+    useState(false);
   const [imagePath, setImagePath] = useState(initialValues.imagePath);
   const [imageStoragePath, setImageStoragePath] = useState(
     initialValues.imageStoragePath ?? "",
@@ -167,10 +169,12 @@ export default function CardForm({
         setImagePath(result.dataUrl);
         setImageStoragePath("");
         setImageLabel(label);
+        setIsScreenshotPasteWaiting(false);
       } catch (error) {
         console.warn("Life Cards image compression failed", error);
         setImagePath("");
         setImageLabel("");
+        setIsScreenshotPasteWaiting(false);
         setImageErrorMessage(
           "画像を準備できませんでした。別の写真を選んでください。",
         );
@@ -249,28 +253,22 @@ export default function CardForm({
     };
   }, [deckOptions]);
 
-  useEffect(() => {
-    function handlePaste(event: ClipboardEvent) {
-      const imageItem = Array.from(event.clipboardData?.items ?? []).find((item) =>
-        item.type.startsWith("image/"),
-      );
-      const file = imageItem?.getAsFile();
+  function handlePaste(event: ClipboardEvent<HTMLFormElement>) {
+    const imageItem = Array.from(event.clipboardData.items).find((item) =>
+      item.type.startsWith("image/"),
+    );
+    const file = imageItem?.getAsFile();
 
-      if (file) {
-        event.preventDefault();
-        if (!isSignedIn) {
-          alert(imageLoginMessage);
-          return;
-        }
-
-        applyImageFile(file, "貼り付け画像");
+    if (file) {
+      event.preventDefault();
+      if (!isSignedIn) {
+        alert(imageLoginMessage);
+        return;
       }
+
+      applyImageFile(file, "貼り付け画像");
     }
-
-    window.addEventListener("paste", handlePaste);
-
-    return () => window.removeEventListener("paste", handlePaste);
-  }, [applyImageFile, isSignedIn]);
+  }
 
   function handleFileChange(
     event: ChangeEvent<HTMLInputElement>,
@@ -409,6 +407,7 @@ export default function CardForm({
   return (
     <>
       <form
+        onPaste={handlePaste}
         onSubmit={handleSubmit}
         className="grid min-w-0 gap-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:grid-cols-[minmax(280px,0.42fr)_minmax(0,0.58fr)] lg:items-start"
       >
@@ -490,18 +489,40 @@ export default function CardForm({
               onChange={(event) => handleFileChange(event, "カメラ")}
             />
 
-            <button
-              type="button"
-              disabled={!isSignedIn}
-              onClick={() => photoInputRef.current?.click()}
-              className={`hidden min-h-11 w-fit items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] lg:inline-flex ${
-                hasSelectedImage
-                  ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
-                  : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
-              }`}
-            >
-              画像を選ぶ
-            </button>
+            <div className="hidden flex-wrap gap-2 lg:flex">
+              <button
+                type="button"
+                disabled={!isSignedIn}
+                onClick={() => {
+                  setIsScreenshotPasteWaiting(false);
+                  photoInputRef.current?.click();
+                }}
+                className={`inline-flex min-h-11 w-fit items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
+                  hasSelectedImage
+                    ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                    : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
+                }`}
+              >
+                画像を選ぶ
+              </button>
+              <button
+                type="button"
+                disabled={!isSignedIn}
+                onClick={() => setIsScreenshotPasteWaiting(true)}
+                className={`inline-flex min-h-11 w-fit items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:border-[#e6ddcf] disabled:bg-[#f3eadc]/70 disabled:text-[#b0a392] ${
+                  isScreenshotPasteWaiting
+                    ? "border-[#2f2a23] bg-[#2f2a23] text-[#fffaf0]"
+                    : "border-[#e0d3c0] bg-white/72 text-[#5f5346] hover:bg-white"
+                }`}
+              >
+                スクショを貼る
+              </button>
+            </div>
+            {isScreenshotPasteWaiting ? (
+              <p className="hidden text-xs font-semibold leading-5 text-[#7d705f] lg:block">
+                スクショをコピーした状態で Ctrl+V / ⌘V してください
+              </p>
+            ) : null}
 
             <div className="grid grid-cols-2 gap-2 lg:hidden">
               {imageActions.map((action) => (
