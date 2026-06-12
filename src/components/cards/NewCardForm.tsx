@@ -43,6 +43,7 @@ export default function NewCardForm({
       deckId: values.deckId,
       defaultImageKey: values.defaultImageKey,
       imageFitMode: values.imageFitMode,
+      imageFrameMode: values.imageFrameMode,
       imagePath: values.imagePath,
       linkUrl: values.linkUrl,
       frontText: values.frontText,
@@ -90,6 +91,7 @@ export default function NewCardForm({
             frontComment: "",
             frontText: "",
             imageFitMode: "cover",
+            imageFrameMode: "none",
             imagePath: "",
             linkUrl: "",
           }}

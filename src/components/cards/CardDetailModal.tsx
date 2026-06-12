@@ -420,6 +420,7 @@ export default function CardDetailModal({
                 frontComment={card.frontComment}
                 frontText={card.frontText}
                 imageFitMode={card.imageFitMode}
+                imageFrameMode={card.imageFrameMode}
                 linkUrl={card.linkUrl}
                 size="detail"
               />
@@ -439,6 +440,7 @@ export default function CardDetailModal({
                 frontComment={card.frontComment}
                 frontText={card.frontText}
                 imageFitMode={card.imageFitMode}
+                imageFrameMode={card.imageFrameMode}
                 linkUrl={card.linkUrl}
                 size="detail"
               />

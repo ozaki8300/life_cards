@@ -209,6 +209,7 @@ export default function CardShareDialog({
                     frontComment={card.frontComment}
                     frontText={card.frontText}
                     imageFitMode={card.imageFitMode}
+                    imageFrameMode={card.imageFrameMode}
                     linkUrl={card.linkUrl}
                     preserve3d={false}
                     size="preview"

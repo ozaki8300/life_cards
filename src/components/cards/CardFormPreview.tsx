@@ -1,5 +1,9 @@
 import MarkdownMemo from "@/components/MarkdownMemo";
-import type { CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
+import type {
+  CardImageFitMode,
+  CardImageFrameMode,
+  DefaultCardImageKey,
+} from "@/lib/types";
 
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
@@ -21,8 +25,6 @@ const blurExtendPreviewTextAnchoredImageClass = {
 const blurExtendPaperBackdropClass =
   "absolute inset-2 z-[2] rounded-[18px] border border-white/74 bg-[#fffefa]/92 shadow-[0_18px_42px_rgba(87,72,52,0.18)]";
 
-export type BlurExtendPaperMode = "none" | "paper";
-
 type Props = {
   backText: string;
   cardDate: string;
@@ -30,7 +32,7 @@ type Props = {
   frontComment: string;
   frontText: string;
   imageFitMode?: CardImageFitMode;
-  blurExtendPaperMode?: BlurExtendPaperMode;
+  imageFrameMode?: CardImageFrameMode;
   imagePath: string;
   linkUrl: string;
   onPreviewFaceChange: (face: "front" | "back") => void;
@@ -47,7 +49,7 @@ type PreviewFaceProps = {
   frontComment: string;
   frontText: string;
   imageFitMode?: CardImageFitMode;
-  blurExtendPaperMode?: BlurExtendPaperMode;
+  imageFrameMode?: CardImageFrameMode;
   linkUrl: string;
   useCssPaperBackground?: boolean;
 };
@@ -61,12 +63,13 @@ function PreviewFace({
   frontComment,
   frontText,
   imageFitMode = "cover",
-  blurExtendPaperMode = "none",
+  imageFrameMode = "none",
   linkUrl,
   useCssPaperBackground = false,
 }: PreviewFaceProps) {
   const isBack = face === "back";
   const isBlurExtend = imageFitMode === "blurExtend";
+  const hasPaperFrame = isBlurExtend && imageFrameMode === "paper";
   const isPaperDefault =
     useCssPaperBackground || backgroundImage.includes("default-paper.webp");
   const isDocumentFront = isBlurExtend && !useCssPaperBackground && !isBack;
@@ -133,13 +136,20 @@ function PreviewFace({
       }`}
     >
       {isBack && !useCssPaperBackground ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt=""
-          aria-hidden="true"
-          className="absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain object-[center_40%] opacity-[0.34] saturate-[0.9] contrast-[1.03]"
-          src={backgroundImage}
-        />
+        isBlurExtend ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt=""
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain object-[center_40%] opacity-[0.34] saturate-[0.9] contrast-[1.03]"
+            src={backgroundImage}
+          />
+        ) : (
+          <div
+            className="absolute inset-0 z-0 bg-cover bg-center opacity-[0.34] saturate-[0.9] contrast-[1.03]"
+            style={backgroundStyle}
+          />
+        )
       ) : null}
       {isBlurExtend && !useCssPaperBackground && !isBack ? (
         <>
@@ -148,7 +158,7 @@ function PreviewFace({
             style={blurExtendImageStyle}
           />
           <div className="absolute inset-0 z-[1] bg-[#fff7ec]/38" />
-          {blurExtendPaperMode === "paper" ? (
+          {hasPaperFrame ? (
             <div className={blurExtendPaperBackdropClass} />
           ) : null}
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -237,7 +247,7 @@ export default function CardFormPreview({
   defaultImageKey,
   frontComment,
   frontText,
-  blurExtendPaperMode = "none",
+  imageFrameMode = "none",
   imageFitMode = "cover",
   imagePath,
   linkUrl,
@@ -271,7 +281,7 @@ export default function CardFormPreview({
           face={isBack ? "back" : "front"}
           frontComment={frontComment}
           frontText={frontText}
-          blurExtendPaperMode={blurExtendPaperMode}
+          imageFrameMode={imageFrameMode}
           imageFitMode={imageFitMode}
           linkUrl={linkUrl}
           useCssPaperBackground={useCssPaperBackground}

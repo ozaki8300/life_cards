@@ -9,12 +9,15 @@ import {
   createSupabaseBrowserClient,
   getSupabaseSessionSafely,
 } from "@/lib/supabase/client";
-import type { CardImageFitMode, Deck, DefaultCardImageKey } from "@/lib/types";
+import type {
+  CardImageFitMode,
+  CardImageFrameMode,
+  Deck,
+  DefaultCardImageKey,
+} from "@/lib/types";
 
 import BackMemoEditor from "./BackMemoEditor";
-import CardFormPreview, {
-  type BlurExtendPaperMode,
-} from "./CardFormPreview";
+import CardFormPreview from "./CardFormPreview";
 import DeckCreateModal from "./DeckCreateModal";
 import MobileDesktopHint from "./MobileDesktopHint";
 import {
@@ -54,7 +57,7 @@ const blurExtendPaperModeOptions = [
     label: "白台紙あり",
   },
 ] as const satisfies ReadonlyArray<{
-  id: BlurExtendPaperMode;
+  id: CardImageFrameMode;
   label: string;
 }>;
 
@@ -66,6 +69,7 @@ export type CardFormValues = {
   frontComment: string;
   frontText: string;
   imageFitMode?: CardImageFitMode;
+  imageFrameMode?: CardImageFrameMode;
   imagePath: string;
   imageStoragePath?: string;
   linkUrl: string;
@@ -121,8 +125,9 @@ export default function CardForm({
   const [imageFitMode, setImageFitMode] = useState<CardImageFitMode>(
     initialValues.imageFitMode ?? "cover",
   );
-  const [blurExtendPaperMode, setBlurExtendPaperMode] =
-    useState<BlurExtendPaperMode>("none");
+  const [imageFrameMode, setImageFrameMode] = useState<CardImageFrameMode>(
+    initialValues.imageFrameMode ?? "none",
+  );
   const [linkUrl, setLinkUrl] = useState(initialValues.linkUrl);
   const [previewFace, setPreviewFace] = useState<"front" | "back">("front");
   const [backMode, setBackMode] = useState<BackMemoMode>("edit");
@@ -373,6 +378,7 @@ export default function CardForm({
       frontComment,
       frontText,
       imageFitMode,
+      imageFrameMode,
       imagePath,
       imageStoragePath,
       linkUrl: linkUrl.trim(),
@@ -449,7 +455,7 @@ export default function CardForm({
             defaultImageKey={defaultImageKey}
             frontComment={frontComment}
             frontText={frontText}
-            blurExtendPaperMode={blurExtendPaperMode}
+            imageFrameMode={imageFrameMode}
             imageFitMode={imageFitMode}
             imagePath={imagePath}
             linkUrl={linkUrl}
@@ -562,10 +568,10 @@ export default function CardForm({
                       <button
                         key={option.id}
                         type="button"
-                        aria-pressed={blurExtendPaperMode === option.id}
-                        onClick={() => setBlurExtendPaperMode(option.id)}
+                        aria-pressed={imageFrameMode === option.id}
+                        onClick={() => setImageFrameMode(option.id)}
                         className={`rounded-full px-3 py-2 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
-                          blurExtendPaperMode === option.id
+                          imageFrameMode === option.id
                             ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
                             : "text-[#6f6253] hover:bg-white/78"
                         }`}

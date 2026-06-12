@@ -7,7 +7,11 @@ import LoginButton from "@/components/auth/LoginButton";
 import { formatDate } from "@/components/cards/cardUiUtils";
 import type { ShareCardPayload } from "@/lib/shareCardPayload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
+import type {
+  CardImageFitMode,
+  CardImageFrameMode,
+  DefaultCardImageKey,
+} from "@/lib/types";
 
 import SharedCardPreview from "./SharedCardPreview";
 
@@ -128,6 +132,10 @@ function isCardImageFitMode(value: unknown): value is CardImageFitMode {
   return value === "cover" || value === "blurExtend";
 }
 
+function isCardImageFrameMode(value: unknown): value is CardImageFrameMode {
+  return value === "none" || value === "paper";
+}
+
 function isDefaultCardImageKey(value: unknown): value is DefaultCardImageKey {
   return (
     value === "paper" ||
@@ -157,6 +165,9 @@ function parseShareCardPayload(value: unknown): ShareCardPayload | null {
   const imageFitMode = isCardImageFitMode(cardRecord.imageFitMode)
     ? cardRecord.imageFitMode
     : "cover";
+  const imageFrameMode = isCardImageFrameMode(cardRecord.imageFrameMode)
+    ? cardRecord.imageFrameMode
+    : "none";
 
   if (!isString(cardRecord.createdAt) || !isString(cardRecord.updatedAt)) {
     return null;
@@ -174,6 +185,7 @@ function parseShareCardPayload(value: unknown): ShareCardPayload | null {
         ? cardRecord.frontComment
         : "",
       frontText: isString(cardRecord.frontText) ? cardRecord.frontText : "",
+      imageFrameMode,
       imageFitMode,
       imagePath: isString(cardRecord.imagePath) ? cardRecord.imagePath : "",
       linkUrl: isString(cardRecord.linkUrl) ? cardRecord.linkUrl : "",

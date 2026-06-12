@@ -20,6 +20,8 @@ export type Card = {
 
   imageFitMode?: CardImageFitMode;
 
+  imageFrameMode?: CardImageFrameMode;
+
   linkUrl?: string;
 
   isFavorite?: boolean;
@@ -34,6 +36,7 @@ export type Card = {
   updatedAt: string;
 };
 
+export type CardImageFrameMode = "none" | "paper";
 export type CardImageFitMode = "cover" | "blurExtend";
 export type DefaultCardImageKey =
   | "paper"

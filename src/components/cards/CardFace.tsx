@@ -3,7 +3,7 @@
 import type { TouchEvent, WheelEvent } from "react";
 
 import MarkdownMemo from "@/components/MarkdownMemo";
-import type { CardImageFitMode } from "@/lib/types";
+import type { CardImageFitMode, CardImageFrameMode } from "@/lib/types";
 
 type CardFaceSize = "tile" | "preview" | "detail";
 
@@ -16,6 +16,7 @@ type Props = {
   frontComment?: string;
   frontText?: string;
   imageFitMode?: CardImageFitMode;
+  imageFrameMode?: CardImageFrameMode;
   linkUrl?: string;
   preserve3d?: boolean;
   size: CardFaceSize;
@@ -79,6 +80,14 @@ const blurExtendTopFadeClass = {
   detail: "bg-gradient-to-b from-[#fffaf0]/4 to-transparent",
   preview: "bg-gradient-to-b from-[#fffaf0]/4 to-transparent",
   tile: "bg-gradient-to-b from-[#fffaf0]/2 to-transparent",
+} as const;
+const blurExtendPaperFrameClass = {
+  detail:
+    "absolute inset-3 z-[2] rounded-[20px] border border-white/74 bg-[#fffefa]/92 shadow-[0_18px_42px_rgba(87,72,52,0.18)]",
+  preview:
+    "absolute inset-2 z-[2] rounded-[18px] border border-white/74 bg-[#fffefa]/92 shadow-[0_18px_42px_rgba(87,72,52,0.18)]",
+  tile:
+    "absolute inset-1.5 z-[2] rounded-[14px] border border-white/74 bg-[#fffefa]/92 shadow-[0_12px_28px_rgba(87,72,52,0.16)]",
 } as const;
 const paperFrontOverlayClass = {
   detail: "bg-transparent",
@@ -161,6 +170,7 @@ export default function CardFace({
   frontComment = "",
   frontText = "",
   imageFitMode = "cover",
+  imageFrameMode = "none",
   linkUrl = "",
   preserve3d = true,
   size,
@@ -176,6 +186,7 @@ export default function CardFace({
   const isPaperDefault = backgroundImage.includes("default-paper.webp");
   const useCssPaperBackground = isPaperDefault;
   const isDocumentFront = isBlurExtend && !useCssPaperBackground && !isBack;
+  const hasPaperFrame = isDocumentFront && imageFrameMode === "paper";
   const isPaperFront = isPaperDefault && !isBack;
   const isLightFront = isDocumentFront || isPaperFront;
   const displayFrontText = frontText.trim();
@@ -274,13 +285,20 @@ export default function CardFace({
       }
     >
       {isBack && !useCssPaperBackground ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt=""
-          aria-hidden="true"
-          className="absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain object-[center_40%] opacity-[0.34] saturate-[0.9] contrast-[1.03]"
-          src={backgroundImage}
-        />
+        isBlurExtend ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt=""
+            aria-hidden="true"
+            className="absolute left-1/2 top-1/2 z-0 max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 object-contain object-[center_40%] opacity-[0.34] saturate-[0.9] contrast-[1.03]"
+            src={backgroundImage}
+          />
+        ) : (
+          <div
+            className="absolute inset-0 z-0 bg-cover bg-center opacity-[0.34] saturate-[0.9] contrast-[1.03]"
+            style={backgroundStyle}
+          />
+        )
       ) : null}
       {isBlurExtend && !useCssPaperBackground && !isBack ? (
         <>
@@ -289,6 +307,9 @@ export default function CardFace({
             style={blurExtendImageStyle}
           />
           <div className={blurExtendBackgroundWashClass[size]} />
+          {hasPaperFrame ? (
+            <div className={blurExtendPaperFrameClass[size]} />
+          ) : null}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             alt=""

@@ -4,7 +4,7 @@ import {
   rememberCardDefaultImageKey,
 } from "@/lib/cardDefaultImageKeys";
 import { CardSupabaseRepository } from "@/lib/supabase/cardSupabaseRepository";
-import type { Card } from "@/lib/types";
+import type { Card, CardImageFrameMode } from "@/lib/types";
 
 import { CardSaveError } from "./cardSaveErrors";
 import { STORAGE_KEYS } from "./storageKeys";
@@ -50,6 +50,99 @@ function readStoredCards() {
   }
 }
 
+function normalizeImageFrameMode(
+  value: string | null | undefined,
+): CardImageFrameMode {
+  return value === "paper" ? "paper" : "none";
+}
+
+function readStoredImageFrameModes() {
+  if (!canUseStorage()) {
+    return {};
+  }
+
+  const storedValue = window.localStorage.getItem(STORAGE_KEYS.imageFrameModes);
+
+  if (!storedValue) {
+    return {};
+  }
+
+  try {
+    const parsedValue = JSON.parse(storedValue);
+
+    if (!parsedValue || typeof parsedValue !== "object" || Array.isArray(parsedValue)) {
+      return {};
+    }
+
+    return Object.fromEntries(
+      Object.entries(parsedValue as Record<string, unknown>).flatMap(
+        ([cardId, value]) =>
+          typeof cardId === "string" && value === "paper"
+            ? [[cardId, "paper" as CardImageFrameMode]]
+            : [],
+      ),
+    );
+  } catch (error) {
+    console.warn("Life Cards image frame mode storage parse failed", error);
+    return {};
+  }
+}
+
+function writeStoredImageFrameModes(
+  imageFrameModes: Record<string, CardImageFrameMode>,
+) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  const paperModes = Object.fromEntries(
+    Object.entries(imageFrameModes).filter(([, mode]) => mode === "paper"),
+  );
+
+  window.localStorage.setItem(
+    STORAGE_KEYS.imageFrameModes,
+    JSON.stringify(paperModes),
+  );
+}
+
+function rememberCardImageFrameMode(card: Card) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  const imageFrameModes = readStoredImageFrameModes();
+  const imageFrameMode = normalizeImageFrameMode(card.imageFrameMode);
+
+  if (imageFrameMode === "paper") {
+    imageFrameModes[card.id] = "paper";
+  } else {
+    delete imageFrameModes[card.id];
+  }
+
+  writeStoredImageFrameModes(imageFrameModes);
+}
+
+function forgetCardImageFrameMode(cardId: string) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  const imageFrameModes = readStoredImageFrameModes();
+  delete imageFrameModes[cardId];
+  writeStoredImageFrameModes(imageFrameModes);
+}
+
+function hydrateCardImageFrameModes(cards: Card[]) {
+  const imageFrameModes = readStoredImageFrameModes();
+
+  return cards.map((card) => ({
+    ...card,
+    imageFrameMode: normalizeImageFrameMode(
+      card.imageFrameMode ?? imageFrameModes[card.id],
+    ),
+  }));
+}
+
 function writeStoredCards(cards: Card[]) {
   if (!canUseStorage()) {
     return;
@@ -80,7 +173,9 @@ function todayInputValue() {
 
 export const CardRepository = {
   getCards(seed: Card[] = seedCards) {
-    return hydrateCardDefaultImageKeys(readStoredCards() ?? seed);
+    return hydrateCardImageFrameModes(
+      hydrateCardDefaultImageKeys(readStoredCards() ?? seed),
+    );
   },
 
   async getCardsForCurrentUser(
@@ -91,7 +186,9 @@ export const CardRepository = {
       const supabaseCards = await CardSupabaseRepository.getCards();
 
       if (supabaseCards) {
-        return hydrateCardDefaultImageKeys(supabaseCards);
+        return hydrateCardImageFrameModes(
+          hydrateCardDefaultImageKeys(supabaseCards),
+        );
       }
 
       if (options.disableFallback) {
@@ -112,6 +209,7 @@ export const CardRepository = {
 
   saveCard(card: Card, seed: Card[] = seedCards) {
     rememberCardDefaultImageKey(card);
+    rememberCardImageFrameMode(card);
     const cards = CardRepository.getCards(seed);
     const nextCards = cards.some((item) => item.id === card.id)
       ? cards.map((item) => (item.id === card.id ? card : item))
@@ -131,7 +229,8 @@ export const CardRepository = {
 
       if (savedCards) {
         rememberCardDefaultImageKey(card);
-        return hydrateCardDefaultImageKeys(savedCards);
+        rememberCardImageFrameMode(card);
+        return hydrateCardImageFrameModes(hydrateCardDefaultImageKeys(savedCards));
       }
 
       if (options.expectsCloudSave) {
@@ -161,6 +260,7 @@ export const CardRepository = {
 
   updateCard(card: Card, seed: Card[] = seedCards) {
     rememberCardDefaultImageKey(card);
+    rememberCardImageFrameMode(card);
     const cards = CardRepository.getCards(seed);
     const nextCards = cards.map((item) => (item.id === card.id ? card : item));
 
@@ -178,7 +278,8 @@ export const CardRepository = {
 
       if (savedCards) {
         rememberCardDefaultImageKey(card);
-        return hydrateCardDefaultImageKeys(savedCards);
+        rememberCardImageFrameMode(card);
+        return hydrateCardImageFrameModes(hydrateCardDefaultImageKeys(savedCards));
       }
 
       if (options.expectsCloudSave) {
@@ -210,17 +311,21 @@ export const CardRepository = {
     const cards = CardRepository.getCards(seed);
     const nextCards = cards.filter((card) => card.id !== cardId);
 
+    forgetCardImageFrameMode(cardId);
     writeStoredCards(nextCards);
     return nextCards;
   },
 
   async deleteCardForCurrentUser(cardId: string, seed: Card[] = seedCards) {
     try {
-      return (
-        (await CardSupabaseRepository.deleteCard(
-          cardId,
-        )) ?? CardRepository.deleteCard(cardId, seed)
-      );
+      const deletedCards = await CardSupabaseRepository.deleteCard(cardId);
+
+      if (deletedCards) {
+        forgetCardImageFrameMode(cardId);
+        return hydrateCardImageFrameModes(hydrateCardDefaultImageKeys(deletedCards));
+      }
+
+      return CardRepository.deleteCard(cardId, seed);
     } catch (error) {
       console.warn("Life Cards Supabase card delete failed", error);
       return CardRepository.deleteCard(cardId, seed);

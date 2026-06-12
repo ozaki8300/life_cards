@@ -48,6 +48,7 @@ function SharedCardFacePreview({
             frontComment={card.frontComment}
             frontText={card.frontText}
             imageFitMode={card.imageFitMode}
+            imageFrameMode={card.imageFrameMode}
             linkUrl={card.linkUrl}
             preserve3d={false}
             size="detail"

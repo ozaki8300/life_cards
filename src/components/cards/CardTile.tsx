@@ -71,6 +71,7 @@ function CardTile({
             frontComment={card.frontComment}
             frontText={card.frontText}
             imageFitMode={card.imageFitMode}
+            imageFrameMode={card.imageFrameMode}
             linkUrl={card.linkUrl}
             preserve3d={false}
             size="tile"
@@ -86,6 +87,7 @@ function CardTile({
             frontComment={card.frontComment}
             frontText={card.frontText}
             imageFitMode={card.imageFitMode}
+            imageFrameMode={card.imageFrameMode}
             linkUrl={card.linkUrl}
             preserve3d={false}
             size="tile"
