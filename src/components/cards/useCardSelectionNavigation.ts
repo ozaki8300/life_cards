@@ -19,19 +19,37 @@ export default function useCardSelectionNavigation({
   onCardViewed,
   onPreviewModeReset,
 }: Params) {
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [selectedCardSnapshot, setSelectedCardSnapshot] =
+    useState<Card | null>(null);
+  const [fallbackIndex, setFallbackIndex] = useState<number | null>(null);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const selectedCardIndex =
+    selectedCardId === null
+      ? -1
+      : cards.findIndex((card) => card.id === selectedCardId);
+  const selectedIndex =
+    selectedCardIndex >= 0 ? selectedCardIndex : fallbackIndex;
   const selectedCard =
-    selectedIndex === null ? null : cards[selectedIndex] ?? null;
+    selectedCardIndex >= 0
+      ? cards[selectedCardIndex]
+      : selectedCardSnapshot;
   const hasMultipleCards = cards.length > 1;
 
   const showCard = useCallback(
     (nextIndex: number) => {
-      const boundedIndex = (nextIndex + cards.length) % cards.length;
+      if (cards.length === 0) {
+        return;
+      }
 
-      setSelectedIndex(boundedIndex);
+      const boundedIndex = (nextIndex + cards.length) % cards.length;
+      const nextCard = cards[boundedIndex];
+
+      setSelectedCardId(nextCard.id);
+      setSelectedCardSnapshot(nextCard);
+      setFallbackIndex(boundedIndex);
       onPreviewModeReset();
-      onCardViewed?.(cards[boundedIndex].id);
+      onCardViewed?.(nextCard.id);
     },
     [cards, onCardViewed, onPreviewModeReset],
   );
@@ -49,7 +67,9 @@ export default function useCardSelectionNavigation({
   }, [hasMultipleCards, selectedIndex, showCard]);
 
   const closePreview = useCallback(() => {
-    setSelectedIndex(null);
+    setSelectedCardId(null);
+    setSelectedCardSnapshot(null);
+    setFallbackIndex(null);
     onPreviewModeReset();
   }, [onPreviewModeReset]);
 
@@ -59,18 +79,34 @@ export default function useCardSelectionNavigation({
 
   const openCard = useCallback(
     (index: number) => {
-      setSelectedIndex(index);
+      const card = cards[index];
+
+      if (!card) {
+        return;
+      }
+
+      setSelectedCardId(card.id);
+      setSelectedCardSnapshot(card);
+      setFallbackIndex(index);
       onPreviewModeReset();
-      onCardViewed?.(cards[index].id);
+      onCardViewed?.(card.id);
     },
     [cards, onCardViewed, onPreviewModeReset],
   );
 
   const selectCardIndex = useCallback(
     (index: number) => {
-      setSelectedIndex(index);
+      const card = cards[index];
+
+      if (!card) {
+        return;
+      }
+
+      setSelectedCardId(card.id);
+      setSelectedCardSnapshot(card);
+      setFallbackIndex(index);
       onPreviewModeReset();
-      onCardViewed?.(cards[index].id);
+      onCardViewed?.(card.id);
     },
     [cards, onCardViewed, onPreviewModeReset],
   );
@@ -104,7 +140,7 @@ export default function useCardSelectionNavigation({
   );
 
   useEffect(() => {
-    if (selectedIndex === null) {
+    if (selectedCard === null || selectedIndex === null) {
       return;
     }
 
@@ -127,7 +163,7 @@ export default function useCardSelectionNavigation({
     window.addEventListener("keydown", handleKeyDown);
 
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEditing, isSharing, selectedIndex, showNext, showPrevious]);
+  }, [isEditing, isSharing, selectedCard, selectedIndex, showNext, showPrevious]);
 
   return {
     closePreview,

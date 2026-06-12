@@ -19,6 +19,10 @@ export default function useReencounterCards({
   metadataByCardId,
 }: Params) {
   const today = new Date().toISOString().slice(0, 10);
+  const selectionKey = useMemo(
+    () => `${today}:${cards.map((card) => card.id).join("|")}`,
+    [cards, today],
+  );
 
   return useMemo(
     () =>
@@ -28,6 +32,8 @@ export default function useReencounterCards({
         metadataByCardId,
         today,
       }),
-    [cards, favoriteIds, metadataByCardId, today],
+    // Keep today's picks stable while encounter metadata changes during viewing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectionKey],
   );
 }
