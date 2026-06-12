@@ -3,7 +3,7 @@ import { Deck } from "@/lib/types";
 export const decks: Deck[] = [
   {
     id: "demo",
-    name: "Demo Deck",
+    name: "LIFE",
     cardCount: 5,
     isShared: false,
     createdAt: "2026-06-06",
