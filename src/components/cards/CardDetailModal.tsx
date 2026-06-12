@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MouseEvent, TouchEvent } from "react";
+import type { MouseEvent, PointerEvent, TouchEvent } from "react";
 
 import { createCopyForAiMarkdown } from "@/lib/copyForAi";
 import { useCopyForAiFeatureFlag } from "@/lib/featureFlags";
@@ -27,6 +27,11 @@ const faceControlLayerClass =
 const frontControlTransformClass = "[transform:translateZ(1px)]";
 const backControlTransformClass =
   "[-webkit-backface-visibility:hidden] [backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)]";
+
+type OverlayButtonEvent =
+  | MouseEvent<HTMLButtonElement>
+  | PointerEvent<HTMLButtonElement>
+  | TouchEvent<HTMLButtonElement>;
 
 function debugImageState(message: string, payload: Record<string, unknown>) {
   if (process.env.NODE_ENV !== "production") {
@@ -394,6 +399,10 @@ export default function CardDetailModal({
     ? "border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]"
     : "border-[#d8c8aa]/45 bg-[#f5eee1]/82 text-[#8f806d] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]";
 
+  function stopOverlayButtonEvent(event: OverlayButtonEvent) {
+    event.stopPropagation();
+  }
+
   function renderFavoriteButton(transformClass: string) {
     return (
       <div className={`${faceControlLayerClass} ${transformClass}`}>
@@ -401,8 +410,11 @@ export default function CardDetailModal({
           type="button"
           aria-label={isFavorite ? "お気に入りを解除" : "お気に入りに追加"}
           aria-pressed={isFavorite}
+          onMouseDown={stopOverlayButtonEvent}
+          onPointerDown={stopOverlayButtonEvent}
+          onTouchStart={stopOverlayButtonEvent}
           onClick={(event) => {
-            event.stopPropagation();
+            stopOverlayButtonEvent(event);
             onToggleFavorite();
           }}
           className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto`}

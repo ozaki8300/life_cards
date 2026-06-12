@@ -1,3 +1,5 @@
+import type { MouseEvent, PointerEvent, TouchEvent } from "react";
+
 import type { Card } from "@/lib/types";
 
 import CardFace from "./CardFace";
@@ -18,8 +20,13 @@ const faceControlLayerClass =
 const frontControlTransformClass = "[transform:translateZ(1px)]";
 const backControlTransformClass =
   "[-webkit-backface-visibility:hidden] [backface-visibility:hidden] [transform:rotateY(180deg)_translateZ(1px)]";
-const openDetailButtonClass = `${faceControlBaseClass} right-4 top-4 h-8 w-8 border-[#d8c8aa]/45 bg-[#f5eee1]/84 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_8px_22px_rgba(87,72,52,0.1)] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]`;
-const favoriteButtonBaseClass = `${faceControlBaseClass} bottom-4 right-4 h-9 w-9 text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
+const openDetailButtonClass = `${faceControlBaseClass} right-3 top-3 h-10 w-10 border-[#d8c8aa]/45 bg-[#f5eee1]/84 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_8px_22px_rgba(87,72,52,0.1)] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]`;
+const favoriteButtonBaseClass = `${faceControlBaseClass} bottom-3 right-3 h-10 w-10 text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
+
+type OverlayButtonEvent =
+  | MouseEvent<HTMLButtonElement>
+  | PointerEvent<HTMLButtonElement>
+  | TouchEvent<HTMLButtonElement>;
 
 export default function CardTile({
   card,
@@ -55,14 +62,21 @@ export default function CardTile({
     ? "border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]"
     : "border-[#d8c8aa]/45 bg-[#f5eee1]/82 text-[#8f806d] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]";
 
+  function stopOverlayButtonEvent(event: OverlayButtonEvent) {
+    event.stopPropagation();
+  }
+
   function renderFaceControls(transformClass: string) {
     return (
       <div className={`${faceControlLayerClass} ${transformClass}`}>
         <button
           type="button"
           aria-label="Open card detail"
+          onMouseDown={stopOverlayButtonEvent}
+          onPointerDown={stopOverlayButtonEvent}
+          onTouchStart={stopOverlayButtonEvent}
           onClick={(event) => {
-            event.stopPropagation();
+            stopOverlayButtonEvent(event);
             onOpen();
           }}
           className={`${openDetailButtonClass} pointer-events-auto`}
@@ -74,8 +88,11 @@ export default function CardTile({
           type="button"
           aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
           aria-pressed={isFavorite}
+          onMouseDown={stopOverlayButtonEvent}
+          onPointerDown={stopOverlayButtonEvent}
+          onTouchStart={stopOverlayButtonEvent}
           onClick={(event) => {
-            event.stopPropagation();
+            stopOverlayButtonEvent(event);
             onToggleFavorite();
           }}
           className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto`}
