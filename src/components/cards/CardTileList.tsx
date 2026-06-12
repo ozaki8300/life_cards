@@ -11,8 +11,8 @@ const RAIL_ITEM_CLASS =
   "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-visible rounded-[18px] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] xl:w-[calc((100%-5rem)/5)]";
 const faceControlBaseClass =
   "absolute z-[10000] flex items-center justify-center rounded-full border backdrop-blur-[2px] transition focus:outline-none focus:ring-2 focus:ring-white/70";
-const openDetailButtonClass = `${faceControlBaseClass} bottom-3 right-3 h-10 w-10 border-[#d8c8aa]/45 bg-[#f5eee1]/84 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_8px_22px_rgba(87,72,52,0.1)] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]`;
-const favoriteButtonBaseClass = `${faceControlBaseClass} right-3 top-3 h-10 w-10 text-lg leading-none shadow-[0_8px_22px_rgba(87,72,52,0.1)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
+const openDetailButtonClass = `${faceControlBaseClass} bottom-3 right-3 h-10 w-10 border-[#d8c8aa]/32 bg-[#f5eee1]/60 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_6px_16px_rgba(87,72,52,0.075)] hover:border-[#d8c8aa]/48 hover:bg-[#fffaf0]/76 hover:text-[#756750]`;
+const favoriteButtonBaseClass = `${faceControlBaseClass} right-3 top-3 h-10 w-10 text-lg leading-none shadow-[0_6px_16px_rgba(87,72,52,0.075)] focus:ring-offset-2 focus:ring-offset-[#fffaf0]`;
 
 type OverlayButtonEvent =
   | MouseEvent<HTMLButtonElement>
@@ -50,8 +50,8 @@ export default function CardTileList({
         const isBack = flippedIds.has(card.id);
         const isFavorite = activeFavoriteIds.has(card.id);
         const favoriteButtonToneClass = isFavorite
-          ? "border-[#d8c8aa]/55 bg-[#fff2c8]/84 text-[#8a6f24] hover:bg-[#fff0b5]/92 hover:text-[#765d19]"
-          : "border-[#d8c8aa]/45 bg-[#f5eee1]/82 text-[#8f806d] hover:border-[#d8c8aa]/58 hover:bg-[#fffaf0]/90 hover:text-[#756750]";
+          ? "border-[#d8c8aa]/42 bg-[#fff2c8]/66 text-[#8a6f24] hover:bg-[#fff0b5]/80 hover:text-[#765d19]"
+          : "border-[#d8c8aa]/32 bg-[#f5eee1]/60 text-[#8f806d] hover:border-[#d8c8aa]/48 hover:bg-[#fffaf0]/76 hover:text-[#756750]";
 
         return (
           <div

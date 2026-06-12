@@ -6,13 +6,9 @@ import CardFace from "./CardFace";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 
 const faceBaseClass =
-  "absolute inset-0 transition-opacity duration-150";
-const frontFaceClass = `${faceBaseClass} ${
-  "visible opacity-100 group-data-[side=back]:invisible group-data-[side=back]:opacity-0 group-data-[side=back]:pointer-events-none"
-}`;
-const backFaceClass = `${faceBaseClass} ${
-  "invisible opacity-0 pointer-events-none group-data-[side=back]:visible group-data-[side=back]:opacity-100 group-data-[side=back]:pointer-events-auto"
-}`;
+  "absolute inset-0 [-webkit-backface-visibility:hidden] [backface-visibility:hidden]";
+const frontFaceClass = `${faceBaseClass} [transform:rotateY(0deg)]`;
+const backFaceClass = `${faceBaseClass} [transform:rotateY(180deg)]`;
 export default function CardTile({
   card,
   deckLabel,
@@ -54,12 +50,14 @@ export default function CardTile({
     <article
       onClick={handleCardClick}
       data-side={isBack ? "back" : "front"}
-      className={`group relative isolate aspect-[3/4] cursor-pointer overflow-hidden rounded-[18px] ring-1 ring-[#d8c8aa]/48 transition duration-200 focus-within:ring-2 focus-within:ring-[#d8c8aa] focus-within:ring-offset-2 focus-within:ring-offset-[#fffaf0] ${
+      className={`group relative isolate aspect-[3/4] cursor-pointer overflow-hidden rounded-[18px] ring-1 ring-[#d8c8aa]/48 transition duration-200 [perspective:1200px] focus-within:ring-2 focus-within:ring-[#d8c8aa] focus-within:ring-offset-2 focus-within:ring-offset-[#fffaf0] ${
         isRail ? "" : "hover:-translate-y-1"
       } ${cardShadowClass}`}
     >
       <div
-        className="pointer-events-none absolute inset-0 rounded-[18px]"
+        className={`pointer-events-none absolute inset-0 rounded-[18px] [transform-style:preserve-3d] transition-transform duration-500 ease-out ${
+          isBack ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]"
+        }`}
       >
         <div className={frontFaceClass}>
           <CardFace
