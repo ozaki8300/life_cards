@@ -138,7 +138,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
         onSearchChange={setSearchQuery}
       >
         <div className="space-y-6">
-          {loadStatus !== "ready" ? (
+          {loadStatus === "loading" ? (
             <section>
               <CardHomeStatus isLoading message="カードを読み込んでいます..." />
             </section>
@@ -200,6 +200,12 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
                 ) : null}
                 {viewStatus === "filteredEmpty" ? (
                   <CardHomeStatus message="該当するカードがありません。" />
+                ) : null}
+                {viewStatus === "error" ? (
+                  <CardHomeStatus
+                    message="カードを読み込めませんでした。"
+                    description="時間をおいてもう一度開いてください。"
+                  />
                 ) : null}
                 {viewStatus === "ready" && viewMode === "list" ? (
                   <TradingCardGrid
