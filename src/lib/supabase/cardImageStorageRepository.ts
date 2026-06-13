@@ -7,6 +7,7 @@ import {
 } from "@/lib/supabase/client";
 
 const CARD_IMAGES_BUCKET = "card-images";
+const CARD_IMAGE_CONTENT_TYPE = "image/webp";
 const SIGNED_URL_EXPIRES_IN_SECONDS = 60 * 60 * 24;
 
 type SignedImageUrlCacheEntry = {
@@ -18,6 +19,21 @@ const signedImageUrlCache = new Map<string, SignedImageUrlCacheEntry>();
 
 function isDataUrl(value: string) {
   return value.startsWith("data:");
+}
+
+function userStoragePrefix(userId: string) {
+  return `users/${userId}/`;
+}
+
+function assertUserStoragePath(path: string, userId: string) {
+  const normalizedPath = path.trim().replace(/^\/+/, "");
+  const expectedPrefix = userStoragePrefix(userId);
+
+  if (!normalizedPath.startsWith(expectedPrefix)) {
+    throw new Error("Card image storage path is outside the current user scope.");
+  }
+
+  return normalizedPath;
 }
 
 function supabaseErrorLog(error: unknown) {
@@ -71,12 +87,20 @@ export const CardImageStorageRepository = {
     }
 
     const blob = imageBodyToBlob(image);
-    const path = cardImagePath(client.userId, cardId);
+
+    if (blob.type !== CARD_IMAGE_CONTENT_TYPE) {
+      throw new Error("Card image upload requires image/webp content.");
+    }
+
+    const path = assertUserStoragePath(
+      cardImagePath(client.userId, cardId),
+      client.userId,
+    );
 
     const { error } = await client.supabase.storage
       .from(CARD_IMAGES_BUCKET)
       .upload(path, blob, {
-        contentType: blob.type || "image/webp",
+        contentType: CARD_IMAGE_CONTENT_TYPE,
         upsert: true,
       });
 
@@ -100,9 +124,11 @@ export const CardImageStorageRepository = {
       return null;
     }
 
+    const scopedPath = assertUserStoragePath(path, client.userId);
+
     const { data, error } = await client.supabase.storage
       .from(CARD_IMAGES_BUCKET)
-      .createSignedUrl(path, SIGNED_URL_EXPIRES_IN_SECONDS);
+      .createSignedUrl(scopedPath, SIGNED_URL_EXPIRES_IN_SECONDS);
 
     if (error) {
       throw error;
@@ -137,9 +163,11 @@ export const CardImageStorageRepository = {
       return null;
     }
 
+    const scopedPath = assertUserStoragePath(path, client.userId);
+
     const { error } = await client.supabase.storage
       .from(CARD_IMAGES_BUCKET)
-      .remove([path]);
+      .remove([scopedPath]);
 
     if (error) {
       throw error;

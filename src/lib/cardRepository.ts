@@ -328,7 +328,7 @@ export const CardRepository = {
       return CardRepository.deleteCard(cardId, seed);
     } catch (error) {
       console.warn("Life Cards Supabase card delete failed", error);
-      return CardRepository.deleteCard(cardId, seed);
+      throw error;
     }
   },
 

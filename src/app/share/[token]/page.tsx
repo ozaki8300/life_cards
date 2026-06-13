@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import sharp from "sharp";
 
 import { formatDate } from "@/components/cards/cardUiUtils";
 import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
@@ -17,6 +18,9 @@ import SharedCardReceiveActions from "./SharedCardReceiveActions";
 import SharedCardPreview from "./SharedCardPreview";
 
 const cardImagesBucket = "card-images";
+const cardImageContentType = "image/webp";
+const sharedImageMaxLongEdge = 1600;
+const sharedImageWebpQuality = 72;
 
 type Props = {
   params: Promise<{
@@ -47,6 +51,7 @@ type ImportImageMode = "withImage" | "withoutImage";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
+export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   title: "Shared Life Card",
@@ -84,6 +89,27 @@ function importedCardImagePath(userId: string, cardId: string) {
   return `users/${userId}/cards/${cardId}/front.webp`;
 }
 
+function isRecipientStoragePath(path: string, userId: string) {
+  return path.trim().replace(/^\/+/, "").startsWith(`users/${userId}/`);
+}
+
+async function recompressSharedImageToWebp(imageBody: ArrayBuffer) {
+  return sharp(Buffer.from(imageBody), {
+    limitInputPixels: 32_000_000,
+  })
+    .rotate()
+    .resize({
+      fit: "inside",
+      height: sharedImageMaxLongEdge,
+      width: sharedImageMaxLongEdge,
+      withoutEnlargement: true,
+    })
+    .webp({
+      quality: sharedImageWebpQuality,
+    })
+    .toBuffer();
+}
+
 async function copySharedImageToRecipientStorage({
   cardId,
   imagePath,
@@ -106,13 +132,13 @@ async function copySharedImageToRecipientStorage({
       throw new Error(`Image fetch failed: ${response.status}`);
     }
 
-    const contentType = response.headers.get("content-type") ?? "image/webp";
     const imageBody = await response.arrayBuffer();
+    const webpImageBody = await recompressSharedImageToWebp(imageBody);
     const storagePath = importedCardImagePath(userId, cardId);
     const { error } = await supabase.storage
       .from(cardImagesBucket)
-      .upload(storagePath, imageBody, {
-        contentType,
+      .upload(storagePath, webpImageBody, {
+        contentType: cardImageContentType,
         upsert: true,
       });
 
@@ -124,6 +150,38 @@ async function copySharedImageToRecipientStorage({
   } catch (error) {
     console.warn("Life Cards shared card image copy failed", error);
     return null;
+  }
+}
+
+async function cleanupImportedCardImage({
+  imagePath,
+  supabase,
+  userId,
+}: {
+  imagePath: string | null;
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  userId: string;
+}) {
+  if (!imagePath) {
+    return;
+  }
+
+  const normalizedPath = imagePath.trim().replace(/^\/+/, "");
+
+  if (!isRecipientStoragePath(normalizedPath, userId)) {
+    console.warn("Life Cards shared card image cleanup skipped for out-of-scope path", {
+      imagePath,
+      userId,
+    });
+    return;
+  }
+
+  const { error } = await supabase.storage
+    .from(cardImagesBucket)
+    .remove([normalizedPath]);
+
+  if (error) {
+    console.warn("Life Cards shared card image cleanup failed", error);
   }
 }
 
@@ -391,6 +449,11 @@ async function importSharedCard(formData: FormData) {
 
   if (deckError) {
     console.warn("Life Cards shared card deck upsert failed", deckError);
+    await cleanupImportedCardImage({
+      imagePath: importedImagePath,
+      supabase,
+      userId: user.id,
+    });
     redirect(`/share/${token}?import=failed`);
   }
 
@@ -412,6 +475,11 @@ async function importSharedCard(formData: FormData) {
 
   if (cardError) {
     console.warn("Life Cards shared card import failed", cardError);
+    await cleanupImportedCardImage({
+      imagePath: importedImagePath,
+      supabase,
+      userId: user.id,
+    });
     redirect(`/share/${token}?import=failed`);
   }
 

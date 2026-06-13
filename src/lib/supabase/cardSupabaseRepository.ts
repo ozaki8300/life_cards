@@ -141,11 +141,11 @@ async function getStoredImagePath(
 }
 
 async function removeStoredImagePath(path: string) {
-  try {
-    await CardImageStorageRepository.removeCardImage(path);
-  } catch (error) {
-    console.warn("Life Cards Supabase image remove failed", error);
+  if (imagePathKind(path.trim()) !== "storage-path") {
+    return;
   }
+
+  await CardImageStorageRepository.removeCardImage(path);
 }
 
 async function resolveImagePathForSave(
@@ -158,12 +158,6 @@ async function resolveImagePathForSave(
   if (!imagePath) {
     if (imageStoragePath) {
       return imageStoragePath;
-    }
-
-    const storedPath = await getStoredImagePath(client, card.id);
-
-    if (storedPath) {
-      await removeStoredImagePath(storedPath);
     }
 
     return "";
@@ -294,6 +288,7 @@ export const CardSupabaseRepository = {
       return null;
     }
 
+    const previousImagePath = await getStoredImagePath(client, card.id);
     const row = await cardToRow(card, client);
 
     const { error } = await client.supabase
@@ -308,10 +303,25 @@ export const CardSupabaseRepository = {
         error: supabaseErrorLog(error),
         imagePathKind: imagePathKind(row.image_path),
       });
+      if (row.image_path && row.image_path !== previousImagePath) {
+        try {
+          await removeStoredImagePath(row.image_path);
+        } catch (removeError) {
+          console.warn("Life Cards Supabase new image cleanup failed", {
+            cardId: row.id,
+            error: supabaseErrorLog(removeError),
+            imagePathKind: imagePathKind(row.image_path),
+          });
+        }
+      }
       throw error;
     }
 
     await persistImageFitMode(client, row.id, row.image_fit_mode);
+
+    if (previousImagePath && previousImagePath !== row.image_path) {
+      await removeStoredImagePath(previousImagePath);
+    }
 
     return fetchCards(client);
   },
@@ -329,6 +339,10 @@ export const CardSupabaseRepository = {
 
     const storedPath = await getStoredImagePath(client, cardId);
 
+    if (storedPath) {
+      await removeStoredImagePath(storedPath);
+    }
+
     const { error } = await client.supabase
       .from("cards")
       .delete()
@@ -337,10 +351,6 @@ export const CardSupabaseRepository = {
 
     if (error) {
       throw error;
-    }
-
-    if (storedPath) {
-      await removeStoredImagePath(storedPath);
     }
 
     return fetchCards(client);
