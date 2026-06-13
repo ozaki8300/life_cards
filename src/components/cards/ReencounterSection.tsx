@@ -72,6 +72,7 @@ export default function ReencounterSection({
         onDeleteCard={onDeleteCard}
         onUpdateCard={onUpdateCard}
         onToggleFavorite={onToggleFavorite}
+        railLoop
         showCarouselIndicator
       />
     </section>

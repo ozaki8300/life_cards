@@ -20,6 +20,7 @@ type Props = {
   onDeleteCard?: (cardId: string) => void;
   onUpdateCard?: (card: Card) => void;
   onToggleFavorite?: (cardId: string) => void;
+  railLoop?: boolean;
   showCarouselIndicator?: boolean;
 };
 
@@ -58,6 +59,7 @@ export default function TradingCardGrid({
   onDeleteCard,
   onUpdateCard,
   onToggleFavorite,
+  railLoop = false,
   showCarouselIndicator = false,
 }: Props) {
   const railRef = useRef<HTMLDivElement | null>(null);
@@ -181,6 +183,8 @@ export default function TradingCardGrid({
   const canGoNextFullscreenImage = fullscreenImageIndexes.length >= 2;
   const shouldShowCarouselIndicator =
     layout === "rail" && showCarouselIndicator && cards.length > 1;
+  const shouldLoopRail =
+    layout === "rail" && railLoop && displayCards.length > 1;
 
   const deckLabelFor = useCallback(
     (card: Card) => decks.find((deck) => deck.id === card.deckId)?.name ?? "Deck",
@@ -275,7 +279,12 @@ export default function TradingCardGrid({
       window.cancelAnimationFrame(frame);
       window.removeEventListener("resize", updateActiveRailIndex);
     };
-  }, [cards.length, shouldShowCarouselIndicator, updateActiveRailIndex]);
+  }, [
+    cardsSignature,
+    cards.length,
+    shouldShowCarouselIndicator,
+    updateActiveRailIndex,
+  ]);
 
   function scrollToRailIndex(index: number) {
     const rail = railRef.current;
@@ -291,10 +300,24 @@ export default function TradingCardGrid({
   }
 
   function scrollToAdjacentRailItem(direction: -1 | 1) {
-    scrollToRailIndex(
-      (activeRailIndex + direction + cards.length) % cards.length,
-    );
+    if (displayCards.length === 0) {
+      return;
+    }
+
+    const nextIndex = shouldLoopRail
+      ? (activeRailIndex + direction + displayCards.length) %
+        displayCards.length
+      : Math.min(
+          Math.max(activeRailIndex + direction, 0),
+          displayCards.length - 1,
+        );
+
+    scrollToRailIndex(nextIndex);
   }
+
+  const handleRailScroll = useCallback(() => {
+    updateActiveRailIndex();
+  }, [updateActiveRailIndex]);
 
   const toggleCard = useCallback((cardId: string) => {
     setFlippedIds((current) => {
@@ -488,7 +511,7 @@ export default function TradingCardGrid({
             <div
               ref={railRef}
               className={RAIL_OUTER_CLASS}
-              onScroll={shouldShowCarouselIndicator ? updateActiveRailIndex : undefined}
+              onScroll={shouldShowCarouselIndicator ? handleRailScroll : undefined}
             >
               <div className={RAIL_INNER_CLASS}>{cardTiles}</div>
             </div>
