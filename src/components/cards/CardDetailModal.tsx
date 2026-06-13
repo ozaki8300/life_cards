@@ -109,6 +109,7 @@ export default function CardDetailModal({
     frontFaceStep,
     backFaceStep,
     cycleViewMode,
+    isShowingBack,
     returnToFront,
   } = useCardDetailViewCycle(initialViewMode);
 
@@ -256,7 +257,7 @@ export default function CardDetailModal({
       return;
     }
 
-    if (viewMode === "back") {
+    if (isShowingBack()) {
       returnToFront();
     }
   }
