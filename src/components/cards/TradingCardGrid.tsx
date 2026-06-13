@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { TouchEvent, WheelEvent } from "react";
 
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card, Deck } from "@/lib/types";
@@ -34,6 +35,11 @@ type SignedImageUrlState = {
   urlsByPath: Record<string, string>;
 };
 
+type RailTouchStart = {
+  scrollLeft: number;
+  x: number;
+};
+
 const GRID_CLASS =
   "grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-3 sm:justify-items-stretch lg:grid-cols-4";
 const RAIL_OUTER_CLASS =
@@ -63,6 +69,7 @@ export default function TradingCardGrid({
   showCarouselIndicator = false,
 }: Props) {
   const railRef = useRef<HTMLDivElement | null>(null);
+  const railTouchStartRef = useRef<RailTouchStart | null>(null);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -315,9 +322,96 @@ export default function TradingCardGrid({
     scrollToRailIndex(nextIndex);
   }
 
+  function maxRailScrollLeft(rail: HTMLDivElement) {
+    return Math.max(rail.scrollWidth - rail.clientWidth, 0);
+  }
+
+  function isRailAtStart(rail: HTMLDivElement) {
+    return rail.scrollLeft <= 2;
+  }
+
+  function isRailAtEnd(rail: HTMLDivElement) {
+    return rail.scrollLeft >= maxRailScrollLeft(rail) - 2;
+  }
+
+  function loopRailFromEdge(direction: -1 | 1) {
+    if (!shouldLoopRail) {
+      return false;
+    }
+
+    if (direction === -1) {
+      scrollToRailIndex(displayCards.length - 1);
+      return true;
+    }
+
+    scrollToRailIndex(0);
+    return true;
+  }
+
   const handleRailScroll = useCallback(() => {
     updateActiveRailIndex();
   }, [updateActiveRailIndex]);
+
+  function handleRailTouchStart(event: TouchEvent<HTMLDivElement>) {
+    const rail = railRef.current;
+
+    if (!rail || !shouldLoopRail) {
+      railTouchStartRef.current = null;
+      return;
+    }
+
+    railTouchStartRef.current = {
+      scrollLeft: rail.scrollLeft,
+      x: event.changedTouches[0].clientX,
+    };
+  }
+
+  function handleRailTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    const rail = railRef.current;
+    const touchStart = railTouchStartRef.current;
+
+    railTouchStartRef.current = null;
+
+    if (!rail || !touchStart || !shouldLoopRail) {
+      return;
+    }
+
+    const deltaX = event.changedTouches[0].clientX - touchStart.x;
+
+    if (Math.abs(deltaX) < 40) {
+      return;
+    }
+
+    if (touchStart.scrollLeft <= 2 && deltaX > 0) {
+      event.preventDefault();
+      loopRailFromEdge(-1);
+      return;
+    }
+
+    if (touchStart.scrollLeft >= maxRailScrollLeft(rail) - 2 && deltaX < 0) {
+      event.preventDefault();
+      loopRailFromEdge(1);
+    }
+  }
+
+  function handleRailWheel(event: WheelEvent<HTMLDivElement>) {
+    const rail = railRef.current;
+
+    if (!rail || !shouldLoopRail || Math.abs(event.deltaX) < 2) {
+      return;
+    }
+
+    if (event.deltaX < 0 && isRailAtStart(rail)) {
+      event.preventDefault();
+      loopRailFromEdge(-1);
+      return;
+    }
+
+    if (event.deltaX > 0 && isRailAtEnd(rail)) {
+      event.preventDefault();
+      loopRailFromEdge(1);
+    }
+  }
 
   const toggleCard = useCallback((cardId: string) => {
     setFlippedIds((current) => {
@@ -512,6 +606,9 @@ export default function TradingCardGrid({
               ref={railRef}
               className={RAIL_OUTER_CLASS}
               onScroll={shouldShowCarouselIndicator ? handleRailScroll : undefined}
+              onTouchEnd={shouldLoopRail ? handleRailTouchEnd : undefined}
+              onTouchStart={shouldLoopRail ? handleRailTouchStart : undefined}
+              onWheel={shouldLoopRail ? handleRailWheel : undefined}
             >
               <div className={RAIL_INNER_CLASS}>{cardTiles}</div>
             </div>

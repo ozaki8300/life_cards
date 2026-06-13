@@ -93,6 +93,7 @@ export default function CardMatrixView({
             onDeleteCard={onDeleteCard}
             onUpdateCard={onUpdateCard}
             onToggleFavorite={onToggleFavorite}
+            railLoop
           />
         </section>
       ))}

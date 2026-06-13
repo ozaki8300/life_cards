@@ -161,19 +161,19 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
               ) : null}
 
               <section>
-                <div className="mb-4 flex justify-center sm:justify-start">
+                <div className="mb-3 flex justify-center sm:justify-start">
                   <div
-                    className="inline-flex rounded-full border border-[#e0d3c0] bg-[#fffaf0]/78 p-1 shadow-sm"
+                    className="inline-flex rounded-full border border-[#e0d3c0]/70 bg-[#fffaf0]/36 p-0.5"
                     aria-label="カード表示切替"
                   >
                     <button
                       type="button"
                       aria-pressed={viewMode === "list"}
                       onClick={() => setViewMode("list")}
-                      className={`h-9 rounded-full px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                      className={`min-h-8 rounded-full px-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]/70 ${
                         viewMode === "list"
-                          ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
-                          : "text-[#6f6253] hover:bg-white/70 hover:text-[#2f2a23]"
+                          ? "bg-[#6f6253]/88 text-[#fffaf0]"
+                          : "text-[#8d7f6e] hover:bg-white/42 hover:text-[#5f5346]"
                       }`}
                     >
                       一覧
@@ -182,10 +182,10 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
                       type="button"
                       aria-pressed={viewMode === "matrix"}
                       onClick={() => setViewMode("matrix")}
-                      className={`h-9 rounded-full px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                      className={`min-h-8 rounded-full px-3 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]/70 ${
                         viewMode === "matrix"
-                          ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
-                          : "text-[#6f6253] hover:bg-white/70 hover:text-[#2f2a23]"
+                          ? "bg-[#6f6253]/88 text-[#fffaf0]"
+                          : "text-[#8d7f6e] hover:bg-white/42 hover:text-[#5f5346]"
                       }`}
                     >
                       マトリクス
