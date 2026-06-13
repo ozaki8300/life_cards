@@ -244,6 +244,37 @@ next-env.d.ts
 .vercel/
 ```
 
+## Storage orphan cleanup 確認
+
+月1回、または App Store 提出前に、Supabase Storage の孤児カード画像を確認する。
+
+実行環境には以下が必要:
+
+```txt
+NEXT_PUBLIC_SUPABASE_URL
+SUPABASE_SERVICE_ROLE_KEY
+```
+
+まず dry-run で削除候補を確認する。
+
+```bash
+npm run storage:orphan:dry-run
+```
+
+`orphan candidate count` が `0` でない場合のみ、削除を実行する。
+
+```bash
+npm run storage:orphan:delete
+```
+
+削除後、もう一度 dry-run で `orphan candidate count` が `0` になったことを確認する。
+
+```bash
+npm run storage:orphan:dry-run
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` は管理用の秘密鍵なので、Vercel の client bundle や `NEXT_PUBLIC_` 付き環境変数には入れない。
+
 ## デプロイ手順
 
 1. Vercel で repository を import する。
