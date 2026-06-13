@@ -23,6 +23,7 @@ type Params = {
 };
 
 const ANONYMOUS_AUTH_SETTLE_MS = 250;
+const STALE_AUTH_STATE_SETTLE_MS = 1500;
 
 function hasStoredSupabaseAuthState() {
   if (typeof window === "undefined") {
@@ -71,6 +72,7 @@ export default function useCardHomeData({
   useEffect(() => {
     let isActive = true;
     let anonymousTimer: ReturnType<typeof setTimeout> | null = null;
+    let staleAuthStateTimer: ReturnType<typeof setTimeout> | null = null;
 
     function clearAnonymousTimer() {
       if (anonymousTimer) {
@@ -79,14 +81,36 @@ export default function useCardHomeData({
       }
     }
 
+    function clearStaleAuthStateTimer() {
+      if (staleAuthStateTimer) {
+        clearTimeout(staleAuthStateTimer);
+        staleAuthStateTimer = null;
+      }
+    }
+
+    function resolveAnonymous() {
+      if (isActive) {
+        setAuthUserId("");
+        setAuthStatus("anonymous");
+      }
+    }
+
     function resolveAnonymousAfterSettle() {
       clearAnonymousTimer();
       anonymousTimer = setTimeout(() => {
-        if (isActive) {
-          setAuthUserId("");
-          setAuthStatus("anonymous");
-        }
+        resolveAnonymous();
       }, ANONYMOUS_AUTH_SETTLE_MS);
+    }
+
+    function resolveStaleAuthStateAfterSettle() {
+      if (staleAuthStateTimer) {
+        return;
+      }
+
+      staleAuthStateTimer = setTimeout(() => {
+        staleAuthStateTimer = null;
+        resolveAnonymous();
+      }, STALE_AUTH_STATE_SETTLE_MS);
     }
 
     function handleSession(session: Awaited<ReturnType<typeof getSupabaseSessionSafely>>) {
@@ -98,6 +122,7 @@ export default function useCardHomeData({
 
       if (userId) {
         clearAnonymousTimer();
+        clearStaleAuthStateTimer();
         setAuthUserId(userId);
         setAuthStatus("authenticated");
         return;
@@ -108,9 +133,11 @@ export default function useCardHomeData({
       if (hasStoredSupabaseAuthState()) {
         clearAnonymousTimer();
         setAuthStatus("checking");
+        resolveStaleAuthStateAfterSettle();
         return;
       }
 
+      clearStaleAuthStateTimer();
       resolveAnonymousAfterSettle();
     }
 
@@ -128,9 +155,11 @@ export default function useCardHomeData({
             clearAnonymousTimer();
             setAuthUserId("");
             setAuthStatus("checking");
+            resolveStaleAuthStateAfterSettle();
             return;
           }
 
+          clearStaleAuthStateTimer();
           resolveAnonymousAfterSettle();
         });
 
@@ -139,8 +168,8 @@ export default function useCardHomeData({
       } = supabase.auth.onAuthStateChange((event, session) => {
         if (event === "SIGNED_OUT") {
           clearAnonymousTimer();
-          setAuthUserId("");
-          setAuthStatus("anonymous");
+          clearStaleAuthStateTimer();
+          resolveAnonymous();
           return;
         }
 
@@ -150,6 +179,7 @@ export default function useCardHomeData({
       return () => {
         isActive = false;
         clearAnonymousTimer();
+        clearStaleAuthStateTimer();
         subscription.unsubscribe();
       };
     } catch {
@@ -164,6 +194,7 @@ export default function useCardHomeData({
     return () => {
       isActive = false;
       clearAnonymousTimer();
+      clearStaleAuthStateTimer();
     };
   }, []);
 

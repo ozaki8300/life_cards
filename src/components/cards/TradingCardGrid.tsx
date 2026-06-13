@@ -31,6 +31,7 @@ type VisibleLimitState = {
 };
 
 type SignedImageUrlState = {
+  failedPaths: Record<string, true>;
   signature: string;
   urlsByPath: Record<string, string>;
 };
@@ -84,6 +85,7 @@ export default function TradingCardGrid({
     });
   const [signedImageUrlState, setSignedImageUrlState] =
     useState<SignedImageUrlState>({
+      failedPaths: {},
       signature: "",
       urlsByPath: {},
     });
@@ -228,7 +230,9 @@ export default function TradingCardGrid({
 
     async function resolveVisibleImageUrls() {
       const unresolvedPaths = displayImageStoragePaths.filter(
-        (path) => !signedImageUrlState.urlsByPath[path],
+        (path) =>
+          !signedImageUrlState.urlsByPath[path] &&
+          !signedImageUrlState.failedPaths[path],
       );
 
       if (unresolvedPaths.length === 0) {
@@ -254,6 +258,14 @@ export default function TradingCardGrid({
       }
 
       setSignedImageUrlState((current) => ({
+        failedPaths: {
+          ...current.failedPaths,
+          ...Object.fromEntries(
+            entries
+              .filter(([, signedUrl]) => !signedUrl)
+              .map(([path]) => [path, true]),
+          ),
+        },
         signature: displayImageStorageSignature,
         urlsByPath: {
           ...current.urlsByPath,
@@ -270,6 +282,7 @@ export default function TradingCardGrid({
   }, [
     displayImageStoragePaths,
     displayImageStorageSignature,
+    signedImageUrlState.failedPaths,
     signedImageUrlState.urlsByPath,
   ]);
 
@@ -473,11 +486,21 @@ export default function TradingCardGrid({
 
     if (signedUrl) {
       setSignedImageUrlState((current) => ({
+        failedPaths: current.failedPaths,
         signature: displayImageStorageSignature,
         urlsByPath: {
           ...current.urlsByPath,
           [imageStoragePath]: signedUrl,
         },
+      }));
+    } else {
+      setSignedImageUrlState((current) => ({
+        failedPaths: {
+          ...current.failedPaths,
+          [imageStoragePath]: true,
+        },
+        signature: displayImageStorageSignature,
+        urlsByPath: current.urlsByPath,
       }));
     }
 

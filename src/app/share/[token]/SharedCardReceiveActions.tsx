@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import LoginButton from "@/components/auth/LoginButton";
 import { CardRepository } from "@/lib/cardRepository";
+import { DeckRepository } from "@/lib/deckRepository";
 import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
 import type { Card } from "@/lib/types";
 
@@ -41,6 +42,17 @@ function createTextOnlyCard(card: ShareCardPayload["card"]): Card {
   };
 }
 
+function saveUncategorizedDeckForReceivedCard() {
+  const now = new Date().toISOString();
+
+  DeckRepository.saveDeck({
+    createdAt: now,
+    id: "uncategorized",
+    isShared: false,
+    name: "未分類",
+  });
+}
+
 export default function SharedCardReceiveActions({ card, shareMode }: Props) {
   const router = useRouter();
   const [statusMessage, setStatusMessage] = useState("");
@@ -55,6 +67,7 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
     setIsSaving(true);
 
     try {
+      saveUncategorizedDeckForReceivedCard();
       CardRepository.saveCard(createTextOnlyCard(card), []);
       router.push("/cards");
     } catch (error) {
