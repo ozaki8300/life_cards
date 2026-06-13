@@ -47,6 +47,10 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
   const [isSaving, setIsSaving] = useState(false);
 
   function saveTextOnlyCard() {
+    if (isSaving) {
+      return;
+    }
+
     setStatusMessage("");
     setIsSaving(true);
 
@@ -72,7 +76,7 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
         <p className="mt-3 text-sm leading-6 text-[#6f6253]">
           画像はこの画面で見られます。
           <br />
-          保存されるのは文字だけです。
+          保存すると、文字だけのカードとして追加されます。
         </p>
       ) : null}
 
@@ -82,13 +86,17 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
         disabled={isSaving}
         className="mt-4 w-full rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0] disabled:cursor-not-allowed disabled:bg-[#8d7f6e]"
       >
-        {isSaving ? "受け取り中..." : "文字だけ受け取る"}
+        {isSaving
+          ? "保存中..."
+          : shareMode === "withImage"
+            ? "文字だけ保存する"
+            : "保存する"}
       </button>
 
       {shareMode === "withImage" ? (
         <div className="mt-4 grid gap-2">
           <p className="text-xs font-semibold leading-5 text-[#6f6253]">
-            画像も受け取りたい場合はログインしてください
+            画像も保存するにはログインしてください
           </p>
           <div className="flex justify-center">
             <LoginButton />

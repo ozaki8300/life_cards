@@ -12,6 +12,7 @@ import type {
   DefaultCardImageKey,
 } from "@/lib/types";
 
+import SharedCardImportSubmitButton from "./SharedCardImportSubmitButton";
 import SharedCardReceiveActions from "./SharedCardReceiveActions";
 import SharedCardPreview from "./SharedCardPreview";
 
@@ -475,28 +476,20 @@ function ImportPanel({
         どう受け取りますか？
       </h2>
 
-      <div className={`mt-4 grid gap-3 ${shareMode === "withImage" ? "sm:grid-cols-2" : ""}`}>
-        {shareMode === "withImage" ? (
-          <form action={importSharedCard}>
-            <input type="hidden" name="token" value={token} />
-            <input type="hidden" name="importImageMode" value="withImage" />
-            <button
-              type="submit"
-              className="w-full rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
-            >
-              画像付きで登録
-            </button>
-          </form>
-        ) : null}
+      <div className="mt-4 grid gap-3">
         <form action={importSharedCard}>
           <input type="hidden" name="token" value={token} />
-          <input type="hidden" name="importImageMode" value="withoutImage" />
-          <button
-            type="submit"
-            className="w-full rounded-full border border-[#d8c8aa] bg-white/76 px-5 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
-          >
-            文字だけ登録
-          </button>
+          <input
+            type="hidden"
+            name="importImageMode"
+            value={shareMode === "withImage" ? "withImage" : "withoutImage"}
+          />
+          <SharedCardImportSubmitButton
+            idleLabel={
+              shareMode === "withImage" ? "画像付きで登録" : "文字だけ登録"
+            }
+            tone={shareMode === "withImage" ? "primary" : "secondary"}
+          />
         </form>
       </div>
       {statusMessage ? (
