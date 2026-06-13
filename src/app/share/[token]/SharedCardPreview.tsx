@@ -2,11 +2,12 @@
 
 import CardFace from "@/components/cards/CardFace";
 import { defaultImageForCard } from "@/components/cards/cardUiUtils";
-import type { ShareCardPayload } from "@/lib/shareCardPayload";
+import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
 
 type Props = {
   card: ShareCardPayload["card"];
   date: string;
+  shareMode: ShareCardMode;
 };
 
 type SharedCardFacePreviewProps = {
@@ -59,8 +60,11 @@ function SharedCardFacePreview({
   );
 }
 
-export default function SharedCardPreview({ card, date }: Props) {
-  const backgroundImage = card.imagePath || defaultImageForCard(card);
+export default function SharedCardPreview({ card, date, shareMode }: Props) {
+  const backgroundImage =
+    shareMode === "withImage" && card.imagePath
+      ? card.imagePath
+      : defaultImageForCard(card);
 
   return (
     <div className="grid gap-5 lg:grid-cols-2 lg:items-start">

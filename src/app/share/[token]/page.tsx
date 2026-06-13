@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import LoginButton from "@/components/auth/LoginButton";
 import { formatDate } from "@/components/cards/cardUiUtils";
-import type { ShareCardPayload } from "@/lib/shareCardPayload";
+import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   CardImageFitMode,
@@ -41,6 +41,8 @@ type ShareCardState =
   | { status: "available"; creatorLabel: string; expiresAt: string; payload: ShareCardPayload }
   | { status: "expired" }
   | { status: "not-found" };
+
+type ImportImageMode = "withImage" | "withoutImage";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -146,6 +148,14 @@ function isDefaultCardImageKey(value: unknown): value is DefaultCardImageKey {
   );
 }
 
+function isShareCardMode(value: unknown): value is ShareCardMode {
+  return value === "withImage" || value === "textOnly";
+}
+
+function isImportImageMode(value: unknown): value is ImportImageMode {
+  return value === "withImage" || value === "withoutImage";
+}
+
 function parseShareCardPayload(value: unknown): ShareCardPayload | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -175,6 +185,9 @@ function parseShareCardPayload(value: unknown): ShareCardPayload | null {
 
   return {
     schemaVersion: 1,
+    shareMode: isShareCardMode(payload.shareMode)
+      ? payload.shareMode
+      : "withImage",
     card: {
       backText: isString(cardRecord.backText) ? cardRecord.backText : "",
       createdAt: cardRecord.createdAt,
@@ -233,7 +246,7 @@ async function getShareCardState(token: string): Promise<ShareCardState> {
   }
 
   return {
-    creatorLabel: row.creator_label,
+    creatorLabel: row.creator_label || payload.creator.label,
     expiresAt: row.expires_at,
     payload,
     status: "available",
@@ -322,8 +335,9 @@ async function importSharedCard(formData: FormData) {
   "use server";
 
   const token = String(formData.get("token") ?? "");
+  const importImageModeValue = String(formData.get("importImageMode") ?? "");
 
-  if (!token) {
+  if (!token || !isImportImageMode(importImageModeValue)) {
     redirect("/cards");
   }
 
@@ -342,15 +356,25 @@ async function importSharedCard(formData: FormData) {
     redirect(`/share/${token}?import=unavailable`);
   }
 
+  if (
+    shareCard.payload.shareMode === "textOnly" &&
+    importImageModeValue === "withImage"
+  ) {
+    redirect(`/share/${token}?import=unavailable`);
+  }
+
   const now = new Date().toISOString();
   const card = shareCard.payload.card;
   const newCardId = generateImportedCardId();
-  const importedImagePath = await copySharedImageToRecipientStorage({
-    cardId: newCardId,
-    imagePath: card.imagePath ?? "",
-    supabase,
-    userId: user.id,
-  });
+  const importedImagePath =
+    importImageModeValue === "withImage"
+      ? await copySharedImageToRecipientStorage({
+          cardId: newCardId,
+          imagePath: card.imagePath ?? "",
+          supabase,
+          userId: user.id,
+        })
+      : null;
   const { error: deckError } = await supabase.from("decks").upsert(
     {
       created_at: now,
@@ -429,10 +453,12 @@ function MessagePanel({ message }: { message: string }) {
 function ImportPanel({
   importStatus,
   isSignedIn,
+  shareMode,
   token,
 }: {
   importStatus?: string;
   isSignedIn: boolean;
+  shareMode: ShareCardMode;
   token: string;
 }) {
   const statusMessage =
@@ -447,15 +473,30 @@ function ImportPanel({
   return (
     <section className="mx-auto w-full max-w-xl rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0]/82 p-4 text-center shadow-[0_18px_54px_rgba(87,72,52,0.13)]">
       {isSignedIn ? (
-        <form action={importSharedCard}>
-          <input type="hidden" name="token" value={token} />
-          <button
-            type="submit"
-            className="w-full rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
-          >
-            Life Cardsへ追加
-          </button>
-        </form>
+        <div className={`grid gap-3 ${shareMode === "withImage" ? "sm:grid-cols-2" : ""}`}>
+          {shareMode === "withImage" ? (
+            <form action={importSharedCard}>
+              <input type="hidden" name="token" value={token} />
+              <input type="hidden" name="importImageMode" value="withImage" />
+              <button
+                type="submit"
+                className="w-full rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+              >
+                画像ありで登録
+              </button>
+            </form>
+          ) : null}
+          <form action={importSharedCard}>
+            <input type="hidden" name="token" value={token} />
+            <input type="hidden" name="importImageMode" value="withoutImage" />
+            <button
+              type="submit"
+              className="w-full rounded-full border border-[#d8c8aa] bg-white/76 px-5 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+            >
+              画像なしで登録
+            </button>
+          </form>
+        </div>
       ) : (
         <div className="grid gap-3">
           <p className="text-sm font-semibold text-[#5f5346]">
@@ -478,6 +519,16 @@ function ImportPanel({
   );
 }
 
+function createReceivedTitle(creatorLabel: string) {
+  const trimmedCreatorLabel = creatorLabel.trim();
+
+  if (!trimmedCreatorLabel) {
+    return "Life Cardが届きました";
+  }
+
+  return `${trimmedCreatorLabel}からLife Cardが届きました`;
+}
+
 export default async function ShareCardPage({ params, searchParams }: Props) {
   const { token } = await params;
   const { import: importStatus } = await searchParams;
@@ -492,6 +543,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
   }
 
   const { card } = shareCard.payload;
+  const shareMode = shareCard.payload.shareMode;
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
   await incrementShareViewCount(token);
@@ -505,7 +557,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
             Shared Life Card
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            {shareCard.creatorLabel}さんからカードが届きました
+            {createReceivedTitle(shareCard.creatorLabel)}
           </h1>
           {expiresAt ? (
             <p className="mt-3 text-sm font-medium text-[#8d7f6e]">
@@ -514,11 +566,12 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
           ) : null}
         </div>
 
-        <SharedCardPreview card={card} date={date} />
+        <SharedCardPreview card={card} date={date} shareMode={shareMode} />
 
         <ImportPanel
           importStatus={importStatus}
           isSignedIn={Boolean(userId)}
+          shareMode={shareMode}
           token={token}
         />
       </section>
