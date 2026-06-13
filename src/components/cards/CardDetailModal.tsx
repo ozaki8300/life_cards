@@ -109,8 +109,6 @@ export default function CardDetailModal({
     frontFaceStep,
     backFaceStep,
     cycleViewMode,
-    isShowingBack,
-    returnToFront,
   } = useCardDetailViewCycle(initialViewMode);
 
   useEscapeKey(() => {
@@ -251,15 +249,15 @@ export default function CardDetailModal({
   }
 
   function handleDetailBackdropClick(event: MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
     event.stopPropagation();
+    event.nativeEvent.stopImmediatePropagation();
 
     if (event.target !== event.currentTarget) {
       return;
     }
 
-    if (isShowingBack()) {
-      returnToFront();
-    }
+    onClose();
   }
 
   async function openFullscreenPhoto() {
@@ -358,11 +356,6 @@ export default function CardDetailModal({
     } finally {
       setIsResolvingNextFullscreenImage(false);
     }
-  }
-
-  function returnFullscreenPhotoToDetail() {
-    setIsFullscreenPhotoOpen(false);
-    returnToFront();
   }
 
   function showCopyForAiStatus(status: "copied" | "failed") {
@@ -559,7 +552,7 @@ export default function CardDetailModal({
             canGoNextImage={canGoNextFullscreenImage}
             imageSrc={fullscreenImagePath}
             isResolvingNextImage={isResolvingNextFullscreenImage}
-            onBackdropClick={returnFullscreenPhotoToDetail}
+            onBackdropClick={onClose}
             onClose={() => setIsFullscreenPhotoOpen(false)}
             onNextImage={showNextFullscreenImage}
           />
