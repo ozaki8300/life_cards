@@ -6,6 +6,12 @@ import {
 } from "@/lib/supabase/usageEventSupabaseRepository";
 
 const appOpenedStorageKeyPrefix = "life_cards.usage_events.app_opened";
+const dedupWindowMs = 30 * 1000;
+const dedupTargetEvents = new Set<UsageEventName>([
+  "card_viewed",
+  "reencounter_opened",
+]);
+const recentUsageEventsByKey = new Map<string, number>();
 
 type UsageEventMetadata = Record<string, unknown>;
 
@@ -21,6 +27,45 @@ function appOpenedStorageKey(userId: string) {
   return `${appOpenedStorageKeyPrefix}.${userId}`;
 }
 
+function metadataCardId(metadata: UsageEventMetadata) {
+  const cardId = metadata.cardId ?? metadata.card_id;
+
+  return typeof cardId === "string" && cardId.trim() ? cardId.trim() : null;
+}
+
+function shouldSkipDuplicateUsageEvent(
+  eventName: UsageEventName,
+  metadata: UsageEventMetadata,
+) {
+  if (!dedupTargetEvents.has(eventName)) {
+    return false;
+  }
+
+  const cardId = metadataCardId(metadata);
+
+  if (!cardId) {
+    return false;
+  }
+
+  const now = Date.now();
+  const dedupKey = `${eventName}:${cardId}`;
+  const lastRecordedAt = recentUsageEventsByKey.get(dedupKey);
+
+  if (lastRecordedAt && now - lastRecordedAt < dedupWindowMs) {
+    return true;
+  }
+
+  recentUsageEventsByKey.set(dedupKey, now);
+
+  for (const [key, recordedAt] of recentUsageEventsByKey) {
+    if (now - recordedAt >= dedupWindowMs) {
+      recentUsageEventsByKey.delete(key);
+    }
+  }
+
+  return false;
+}
+
 function warnUsageEventError(message: string, error: unknown) {
   console.warn(message, error);
 }
@@ -33,6 +78,14 @@ export async function recordUsageEvent(
     eventName,
     metadataKeys: Object.keys(metadata),
   });
+
+  if (shouldSkipDuplicateUsageEvent(eventName, metadata)) {
+    console.warn("Life Cards usage event dedup skipped", {
+      eventName,
+      metadataKeys: Object.keys(metadata),
+    });
+    return;
+  }
 
   try {
     const recorded = await UsageEventSupabaseRepository.recordEvent(

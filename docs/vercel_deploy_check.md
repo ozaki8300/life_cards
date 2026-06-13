@@ -275,6 +275,16 @@ npm run storage:orphan:dry-run
 
 `SUPABASE_SERVICE_ROLE_KEY` は管理用の秘密鍵なので、Vercel の client bundle や `NEXT_PUBLIC_` 付き環境変数には入れない。
 
+## usage_events KPI 確認
+
+App Store 提出前に、保存済みの `usage_events` を集計し、イベント数や再会導線のログが異常増加していないか確認する。
+
+```bash
+npm run analytics:usage
+```
+
+この集計 script も `SUPABASE_SERVICE_ROLE_KEY` を使うため、service role key は `NEXT_PUBLIC_` 付き環境変数に入れない。
+
 ## デプロイ手順
 
 1. Vercel で repository を import する。

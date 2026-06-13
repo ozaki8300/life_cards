@@ -9,6 +9,7 @@
     "lint": "eslint",
     "storage:orphan:dry-run": "node --experimental-strip-types scripts/cleanup/dry_run_orphan_card_images.ts",
     "storage:orphan:delete": "node --experimental-strip-types scripts/cleanup/delete_orphan_card_images.ts --confirm",
+    "analytics:usage": "node --experimental-strip-types scripts/analytics/usage_events_summary.ts",
     "cap:sync:ios": "cap sync ios",
     "cap:open:ios": "cap open ios"
   },
