@@ -18,9 +18,16 @@ import SharedCardReceiveActions from "./SharedCardReceiveActions";
 import SharedCardPreview from "./SharedCardPreview";
 
 const cardImagesBucket = "card-images";
-const cardImageContentType = "image/webp";
 const sharedImageMaxLongEdge = 1600;
+const sharedImageJpegQuality = 72;
 const sharedImageWebpQuality = 72;
+
+const cardImageExtensionsByContentType = {
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+} as const;
+
+type CardImageContentType = keyof typeof cardImageExtensionsByContentType;
 
 type Props = {
   params: Promise<{
@@ -85,16 +92,22 @@ function generateImportedCardId() {
   return `card_${Date.now()}`;
 }
 
-function importedCardImagePath(userId: string, cardId: string) {
-  return `users/${userId}/cards/${cardId}/front.webp`;
+function importedCardImagePath(
+  userId: string,
+  cardId: string,
+  contentType: CardImageContentType,
+) {
+  const extension = cardImageExtensionsByContentType[contentType];
+
+  return `users/${userId}/cards/${cardId}/front.${extension}`;
 }
 
 function isRecipientStoragePath(path: string, userId: string) {
   return path.trim().replace(/^\/+/, "").startsWith(`users/${userId}/`);
 }
 
-async function recompressSharedImageToWebp(imageBody: ArrayBuffer) {
-  return sharp(Buffer.from(imageBody), {
+async function recompressSharedImage(imageBody: ArrayBuffer) {
+  const image = sharp(Buffer.from(imageBody), {
     limitInputPixels: 32_000_000,
   })
     .rotate()
@@ -103,11 +116,32 @@ async function recompressSharedImageToWebp(imageBody: ArrayBuffer) {
       height: sharedImageMaxLongEdge,
       width: sharedImageMaxLongEdge,
       withoutEnlargement: true,
-    })
-    .webp({
-      quality: sharedImageWebpQuality,
-    })
-    .toBuffer();
+    });
+
+  try {
+    const body = await image
+      .clone()
+      .webp({
+        quality: sharedImageWebpQuality,
+      })
+      .toBuffer();
+
+    return {
+      body,
+      contentType: "image/webp" as const,
+    };
+  } catch (error) {
+    console.warn("Life Cards shared image WebP compression failed; retrying as JPEG", error);
+    const body = await image.jpeg({
+      mozjpeg: true,
+      quality: sharedImageJpegQuality,
+    }).toBuffer();
+
+    return {
+      body,
+      contentType: "image/jpeg" as const,
+    };
+  }
 }
 
 async function copySharedImageToRecipientStorage({
@@ -133,12 +167,16 @@ async function copySharedImageToRecipientStorage({
     }
 
     const imageBody = await response.arrayBuffer();
-    const webpImageBody = await recompressSharedImageToWebp(imageBody);
-    const storagePath = importedCardImagePath(userId, cardId);
+    const compressedImage = await recompressSharedImage(imageBody);
+    const storagePath = importedCardImagePath(
+      userId,
+      cardId,
+      compressedImage.contentType,
+    );
     const { error } = await supabase.storage
       .from(cardImagesBucket)
-      .upload(storagePath, webpImageBody, {
-        contentType: cardImageContentType,
+      .upload(storagePath, compressedImage.body, {
+        contentType: compressedImage.contentType,
         upsert: true,
       });
 

@@ -6,7 +6,7 @@ export type ImageCompressionOptions = {
   targetBytes?: number;
 };
 
-type ImageCompressionMimeType = "image/webp";
+type ImageCompressionMimeType = "image/jpeg" | "image/webp";
 
 export type CompressedImageResult = {
   blob: Blob;
@@ -87,11 +87,28 @@ async function compressCanvas(
 ) {
   const blob = await canvasToBlob(canvas, mimeType, quality);
 
-  if (blob.type !== "image/webp") {
-    throw new Error("Image compression must produce image/webp");
+  if (blob.type !== mimeType) {
+    throw new Error(`Image compression must produce ${mimeType}`);
   }
 
   return blob;
+}
+
+async function compressCanvasWithFallback(
+  canvas: HTMLCanvasElement,
+  mimeType: ImageCompressionMimeType,
+  quality: number,
+) {
+  try {
+    return await compressCanvas(canvas, mimeType, quality);
+  } catch (error) {
+    if (mimeType !== "image/webp") {
+      throw error;
+    }
+
+    console.warn("Life Cards WebP compression failed; retrying as JPEG", error);
+    return compressCanvas(canvas, "image/jpeg", quality);
+  }
 }
 
 function blobToDataUrl(blob: Blob) {
@@ -150,7 +167,7 @@ export async function compressImage(
     initialQuality,
     Math.max(0, options.minQuality ?? defaultOptions.minQuality),
   );
-  const mimeType = options.mimeType ?? defaultOptions.mimeType;
+  let mimeType = options.mimeType ?? defaultOptions.mimeType;
   const targetBytes = options.targetBytes ?? defaultOptions.targetBytes;
   const image = await loadImage(file);
   const sourceWidth = image.naturalWidth || image.width;
@@ -176,7 +193,8 @@ export async function compressImage(
   context.drawImage(image, 0, 0, width, height);
 
   let quality = initialQuality;
-  let blob = await compressCanvas(canvas, mimeType, quality);
+  let blob = await compressCanvasWithFallback(canvas, mimeType, quality);
+  mimeType = blob.type as ImageCompressionMimeType;
   let smallestBlob = blob;
   let attempts = 1;
 

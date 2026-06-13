@@ -7,8 +7,14 @@ import {
 } from "@/lib/supabase/client";
 
 const CARD_IMAGES_BUCKET = "card-images";
-const CARD_IMAGE_CONTENT_TYPE = "image/webp";
 const SIGNED_URL_EXPIRES_IN_SECONDS = 60 * 60 * 24;
+
+const cardImageExtensionsByContentType = {
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+} as const;
+
+type CardImageContentType = keyof typeof cardImageExtensionsByContentType;
 
 type SignedImageUrlCacheEntry = {
   expiresAt: number;
@@ -62,8 +68,20 @@ async function getClient() {
   return userId ? { supabase, userId } : null;
 }
 
-function cardImagePath(userId: string, cardId: string) {
-  return `users/${userId}/cards/${cardId}/front.webp`;
+function isAllowedCardImageContentType(
+  value: string,
+): value is CardImageContentType {
+  return value in cardImageExtensionsByContentType;
+}
+
+function cardImagePath(
+  userId: string,
+  cardId: string,
+  contentType: CardImageContentType,
+) {
+  const extension = cardImageExtensionsByContentType[contentType];
+
+  return `users/${userId}/cards/${cardId}/front.${extension}`;
 }
 
 function imageBodyToBlob(image: Blob | string) {
@@ -88,19 +106,19 @@ export const CardImageStorageRepository = {
 
     const blob = imageBodyToBlob(image);
 
-    if (blob.type !== CARD_IMAGE_CONTENT_TYPE) {
-      throw new Error("Card image upload requires image/webp content.");
+    if (!isAllowedCardImageContentType(blob.type)) {
+      throw new Error("Card image upload requires image/webp or image/jpeg content.");
     }
 
     const path = assertUserStoragePath(
-      cardImagePath(client.userId, cardId),
+      cardImagePath(client.userId, cardId, blob.type),
       client.userId,
     );
 
     const { error } = await client.supabase.storage
       .from(CARD_IMAGES_BUCKET)
       .upload(path, blob, {
-        contentType: CARD_IMAGE_CONTENT_TYPE,
+        contentType: blob.type,
         upsert: true,
       });
 
