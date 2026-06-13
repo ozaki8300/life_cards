@@ -2,6 +2,7 @@
 
 import {
   createShareCardPayload,
+  type ShareCardMode,
   type ShareCardPayload,
   type ShareCardType,
 } from "@/lib/shareCardPayload";
@@ -18,6 +19,7 @@ const fallbackProductionOrigin = "https://life-cards-three.vercel.app";
 
 type CreateShareCardOptions = {
   origin?: string;
+  shareMode?: ShareCardMode;
   shareType?: ShareCardType;
 };
 
@@ -100,9 +102,11 @@ export async function createShareCardForCurrentUser(
 ): Promise<CreatedShareCard> {
   const { supabase, user } = await getCurrentUser();
   const origin = resolveShareOrigin(options.origin);
+  const shareMode = options.shareMode ?? "withImage";
   const shareType = options.shareType ?? "card";
   const now = new Date();
   const nowIso = now.toISOString();
+  const payload = createShareCardPayload(card, creatorLabel, shareMode);
 
   const { data: reusableShare, error: reusableShareError } = await supabase
     .from("share_cards")
@@ -128,6 +132,26 @@ export async function createShareCardForCurrentUser(
   }
 
   if (reusableShare?.token && reusableShare.expires_at) {
+    const { error: updateError } = await supabase
+      .from("share_cards")
+      .update({
+        card_payload: payload,
+        creator_label: creatorLabel,
+      })
+      .eq("token", reusableShare.token);
+
+    if (updateError) {
+      console.error("Life Cards share payload update message:", updateError.message);
+      console.error("Life Cards share payload update code:", updateError.code);
+      console.error("Life Cards share payload update details:", updateError.details);
+      console.error("Life Cards share payload update hint:", updateError.hint);
+      throw new Error(
+        `share_cards update failed: ${updateError.message} (${
+          updateError.code ?? "no-code"
+        })`,
+      );
+    }
+
     return {
       expiresAt: reusableShare.expires_at,
       shareUrl: `${origin}/share/${reusableShare.token}`,
@@ -137,7 +161,6 @@ export async function createShareCardForCurrentUser(
 
   const token = generateShareToken();
   const expiresAt = new Date(now.getTime() + shareDurationMs).toISOString();
-  const payload = createShareCardPayload(card, creatorLabel);
 
   const row: ShareCardInsertRow = {
     card_payload: payload,
@@ -167,6 +190,7 @@ export async function createShareCardForCurrentUser(
 
   await recordUsageEvent("share_created", {
     card_id: card.id,
+    share_mode: shareMode,
     share_type: shareType,
   });
 

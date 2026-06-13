@@ -9,6 +9,7 @@ import {
   getSupabaseSessionSafely,
 } from "@/lib/supabase/client";
 import { getProfileForCurrentUser } from "@/lib/supabase/profileSupabaseRepository";
+import type { ShareCardMode } from "@/lib/shareCardPayload";
 import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
@@ -33,6 +34,7 @@ export default function CardShareDialog({
   const [errorMessage, setErrorMessage] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [isCreatingShare, setIsCreatingShare] = useState(false);
+  const [shareMode, setShareMode] = useState<ShareCardMode>("withImage");
   const [shareUrl, setShareUrl] = useState("");
   const copyStatusResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -40,6 +42,22 @@ export default function CardShareDialog({
   useEscapeKey(onClose, { ignoreEditable: false });
   const formattedExpiresAt = useMemo(() => formatExpiresAt(expiresAt), [expiresAt]);
   const previewBackground = card.imagePath || defaultImageForCard(card);
+  const shareModeOptions: Array<{
+    label: string;
+    mode: ShareCardMode;
+    note: string;
+  }> = [
+    {
+      label: "画像ありで共有",
+      mode: "withImage",
+      note: "画像も表示し、受け取った人が自分のLife Cardsに登録できます。",
+    },
+    {
+      label: "画像なしで共有",
+      mode: "textOnly",
+      note: "本文だけを閲覧用に共有し、共有ページではdefault imageを表示します。",
+    },
+  ];
   const copyButtonLabel = copyStatus === "コピーしました" ? "コピーしました" : "リンクをコピー";
 
   useEffect(() => {
@@ -107,6 +125,7 @@ export default function CardShareDialog({
       const creatorLabel = await resolveCreatorLabel();
       const result = await createShareCardForCurrentUser(card, creatorLabel, {
         origin: window.location.origin,
+        shareMode,
         shareType: "card",
       });
 
@@ -225,6 +244,36 @@ export default function CardShareDialog({
             </section>
           ) : null}
 
+          {!shareUrl ? (
+            <section className="rounded-[16px] border border-[#e8ddcb] bg-white/70 p-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {shareModeOptions.map((option) => {
+                  const isSelected = shareMode === option.mode;
+
+                  return (
+                    <button
+                      key={option.mode}
+                      type="button"
+                      onClick={() => setShareMode(option.mode)}
+                      className={`rounded-[14px] border px-4 py-3 text-left transition ${
+                        isSelected
+                          ? "border-[#2f2a23] bg-[#fffaf0] shadow-sm"
+                          : "border-[#eadfce] bg-white/72 hover:bg-white"
+                      }`}
+                    >
+                      <span className="block text-sm font-bold text-[#332d25]">
+                        {option.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-5 text-[#6f6253]">
+                        {option.note}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
           {shareUrl ? (
             <section className="rounded-[16px] border border-[#e8ddcb] bg-white/70 p-4 text-center">
               <div className="mx-auto flex w-full max-w-[220px] justify-center rounded-[14px] border border-[#e0d3c0] bg-white p-3 shadow-sm">
@@ -238,6 +287,10 @@ export default function CardShareDialog({
                 />
               </div>
               <div className="mt-4 rounded-[14px] border border-[#eadfce] bg-[#fffaf0]/72 px-4 py-3 text-left">
+                <p className="text-xs font-semibold text-[#5f5346]">
+                  共有方法:{" "}
+                  {shareMode === "withImage" ? "画像あり" : "画像なし"}
+                </p>
                 <p className="text-xs font-medium leading-5 text-[#6f6253]">
                   この共有リンクは{SHARE_EXPIRATION_DAYS}日間有効です。
                 </p>
