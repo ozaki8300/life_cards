@@ -17,8 +17,9 @@ Share v3 では、共有ページをまず「届いたLife Cardを見る場所�
 ## Core Principles
 
 - 閲覧はログイン不要にする。
-- Life Cardsに取り込む時だけログインまたは登録が必要になる。
-- 未ログインユーザーにImport選択肢を見せない。
+- 未ログインでもカード本文は保存できる。
+- 未ログインでは画像を保存しない。
+- 画像も保存したい時だけログインを促す。
 - 既存ユーザーにだけImport選択肢を見せる。
 - 画像あり/なしの選択は、送信者側とログイン済み受信者側でのみ扱う。
 - QR、URL、`share_cards` row は1つのままにする。
@@ -61,17 +62,25 @@ Share v3 では、ユーザーを以下の3種類に分けて導線を整理し�
 - `shareMode === "withImage"`: 画像ありで表示する。
 - `shareMode === "textOnly"`: default image で表示する。
 
-未ログイン受信者には Import 選択肢を出しません。
+未ログイン受信者には画像付きImport選択肢を出しません。ただし、本文だけを受け取る導線は表示します。
 
-出す導線は以下です。
+`shareMode === "withImage"` の場合に出す導線は以下です。
 
-- このカードを受け取りました
-- Life Cardsを始める
-- Life Cardsとは？
+- どう受け取りますか？
+- 画像はこの画面で見られます。
+- 保存されるのは文字だけです。
+- 文字だけ受け取る
+- 画像も受け取りたい場合はログインしてください
+- Google Login
 
-ここでは「Import」ではなく、Life Cardsを始めるための登録導線として扱います。
+`shareMode === "textOnly"` の場合に出す導線は以下です。
 
-### Signed-Out Screen Rough
+- このカードを受け取りますか？
+- 文字だけ受け取る
+
+未ログインでは画像をローカル保存しません。容量増加を避けるため、`withImage` 共有でも未ログイン保存は本文のみ、画像は閲覧のみです。
+
+### Signed-Out Screen Rough: withImage
 
 ```txt
 KからLife Cardが届きました
@@ -79,20 +88,42 @@ KからLife Cardが届きました
 [表カード]
 [裏カード]
 
-このカードを受け取りました
-[Life Cardsを始める]
-Life Cardsとは？
+どう受け取りますか？
+
+画像はこの画面で見られます。
+保存されるのは文字だけです。
+
+[文字だけ受け取る]
+
+画像も受け取りたい場合はログインしてください
+[Google Login]
+```
+
+### Signed-Out Screen Rough: textOnly
+
+```txt
+KからLife Cardが届きました
+
+[表カード]
+[裏カード]
+
+このカードを受け取りますか？
+
+[文字だけ受け取る]
 ```
 
 ### Signed-Out Requirements
 
 - カード本文は閲覧できる。
+- カード本文はログインなしで保存できる。
 - 画像あり共有なら画像ありで閲覧できる。
 - 画像なし共有なら default image で閲覧できる。
-- `画像ありで登録` は出さない。
-- `画像なしで登録` は出さない。
-- Import という文脈を見せない。
-- ログイン/登録後に取り込むかどうかは別導線で扱う。
+- `withImage` 共有でも未ログイン保存は本文のみ。
+- 未ログインでは `imagePath`、storage image、shared image を保存しない。
+- 未ログインでは画像付き登録を出さない。
+- `withImage` 共有では、画像も保存したい場合だけログインを促す。
+- `textOnly` 共有では、Google Login を主CTAにしない。
+- 主語は「ログイン」ではなく「受け取る」にする。
 
 ## Signed-In Recipient Flow
 
@@ -103,11 +134,11 @@ Life Cardsとは？
 `shareMode === "withImage"` の場合:
 
 - 画像付きで登録
-- 本文だけ登録
+- 文字だけ登録
 
 `shareMode === "textOnly"` の場合:
 
-- 本文だけ登録
+- 文字だけ登録
 
 `textOnly` 共有では、画像付き登録をUIに出しません。server action に直接 `withImage` import が投げられても拒否します。
 
@@ -121,7 +152,7 @@ KからLife Cardが届きました
 
 どう受け取りますか？
 [画像付きで登録]
-[本文だけ登録]
+[文字だけ登録]
 ```
 
 ### Signed-In Requirements
@@ -129,8 +160,8 @@ KからLife Cardが届きました
 - カード本文は閲覧できる。
 - 画像あり共有なら画像ありで閲覧できる。
 - 画像なし共有なら default image で閲覧できる。
-- `withImage` 共有では、画像付き登録と本文だけ登録を選べる。
-- `textOnly` 共有では、本文だけ登録のみ選べる。
+- `withImage` 共有では、画像付き登録と文字だけ登録を選べる。
+- `textOnly` 共有では、文字だけ登録のみ選べる。
 - `textOnly` 共有では、画像付き登録をUIに出さない。
 - `textOnly` 共有で画像付き登録が直接POSTされても server action で拒否する。
 
@@ -141,15 +172,16 @@ Share v3 では、未ログインユーザー向けの「登録」と、ログ�
 未ログイン受信者:
 
 - 共有カードを閲覧する。
-- Life Cardsを始める導線を見る。
-- この時点ではカードのImport方法を選ばない。
+- 文字だけ受け取る導線を見る。
+- `withImage` 共有でも画像は閲覧のみで、保存は本文のみ。
+- 画像も保存したい場合だけログイン導線を見る。
 
 ログイン済み受信者:
 
 - 共有カードを閲覧する。
 - 閲覧後の次アクションとしてImport方法を選ぶ。
-- `withImage` 共有なら、画像付き登録または本文だけ登録を選ぶ。
-- `textOnly` 共有なら、本文だけ登録のみ選ぶ。
+- `withImage` 共有なら、画像付き登録または文字だけ登録を選ぶ。
+- `textOnly` 共有なら、文字だけ登録のみ選ぶ。
 
 ## Image Handling
 
@@ -169,6 +201,8 @@ Share v3 では、未ログインユーザー向けの「登録」と、ログ�
 
 `shareMode === "textOnly"` の場合、`withImage` import は許可しません。
 
+未ログイン受信者が受け取る場合は、常に `withoutImage` 相当です。未ログイン保存では `imagePath`、storage image、shared image を保存しません。
+
 ## Title Copy
 
 受信画面タイトルは creatorLabel の有無で分岐します。
@@ -185,13 +219,14 @@ Share v3 では、未ログインユーザー向けの「登録」と、ログ�
 
 未ログイン受信者側:
 
-- Life Cardsを始める
-- Life Cardsとは？
+- 文字だけ受け取る
+- 画像も受け取りたい場合はログインしてください
+- Google Login
 
 ログイン済み受信者側:
 
 - 画像付きで登録
-- 本文だけ登録
+- 文字だけ登録
 
 ## Non-Goals
 
@@ -211,9 +246,10 @@ Share v3 のユーザー導線整理では、以下は行いません。
 将来実装する場合は、共有ページの構成を以下の責務に分けると見通しがよくなります。
 
 - Shared card viewer: ログイン状態に関係なくカードを表示する。
-- Signed-out recipient CTA: 登録開始導線のみを表示する。
+- Signed-out recipient CTA: 本文だけ受け取る導線を表示し、画像保存が必要な場合だけログインを促す。
 - Signed-in import CTA: `shareMode` に応じてImport方法を表示する。
 - Import server action: `shareMode` と import image mode の組み合わせを検証する。
+- Text-only local receive action: 未ログイン受信者が本文のみをローカル保存する。
 
 server action 側では、UIに出していない操作も直接POSTされる前提で検証します。
 
@@ -222,3 +258,4 @@ server action 側では、UIに出していない操作も直接POSTされる前
 - `shareMode === "textOnly"` and import without image: allow.
 - `shareMode === "textOnly"` and import with image: reject.
 
+未ログイン保存では、UIからもコードからも画像保存を行わないようにします。

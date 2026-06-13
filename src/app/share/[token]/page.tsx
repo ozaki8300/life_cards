@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import LoginButton from "@/components/auth/LoginButton";
 import { formatDate } from "@/components/cards/cardUiUtils";
 import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -13,6 +12,7 @@ import type {
   DefaultCardImageKey,
 } from "@/lib/types";
 
+import SharedCardReceiveActions from "./SharedCardReceiveActions";
 import SharedCardPreview from "./SharedCardPreview";
 
 const cardImagesBucket = "card-images";
@@ -341,15 +341,6 @@ async function importSharedCard(formData: FormData) {
     redirect("/cards");
   }
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect(`/share/${token}?import=login-required`);
-  }
-
   const shareCard = await getShareCardState(token);
 
   if (shareCard.status !== "available") {
@@ -361,6 +352,15 @@ async function importSharedCard(formData: FormData) {
     importImageModeValue === "withImage"
   ) {
     redirect(`/share/${token}?import=unavailable`);
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/share/${token}?import=login-required`);
   }
 
   const now = new Date().toISOString();
@@ -397,6 +397,7 @@ async function importSharedCard(formData: FormData) {
     back_text: card.backText ?? "",
     created_at: now,
     deck_id: "uncategorized",
+    default_image_key: card.defaultImageKey ?? "paper",
     front_comment: card.frontComment ?? "",
     front_text: card.frontText ?? "",
     id: newCardId,
@@ -452,18 +453,16 @@ function MessagePanel({ message }: { message: string }) {
 
 function ImportPanel({
   importStatus,
-  isSignedIn,
   shareMode,
   token,
 }: {
   importStatus?: string;
-  isSignedIn: boolean;
   shareMode: ShareCardMode;
   token: string;
 }) {
   const statusMessage =
     importStatus === "login-required"
-      ? "追加するにはログインしてください"
+      ? "画像付きで受け取るにはログインが必要です"
       : importStatus === "failed"
         ? "カードを追加できませんでした"
         : importStatus === "unavailable"
@@ -472,49 +471,39 @@ function ImportPanel({
 
   return (
     <section className="mx-auto w-full max-w-xl rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0]/82 p-4 text-center shadow-[0_18px_54px_rgba(87,72,52,0.13)]">
-      {isSignedIn ? (
-        <div className={`grid gap-3 ${shareMode === "withImage" ? "sm:grid-cols-2" : ""}`}>
-          {shareMode === "withImage" ? (
-            <form action={importSharedCard}>
-              <input type="hidden" name="token" value={token} />
-              <input type="hidden" name="importImageMode" value="withImage" />
-              <button
-                type="submit"
-                className="w-full rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
-              >
-                画像ありで登録
-              </button>
-            </form>
-          ) : null}
+      <h2 className="text-base font-bold text-[#332d25]">
+        どう受け取りますか？
+      </h2>
+
+      <div className={`mt-4 grid gap-3 ${shareMode === "withImage" ? "sm:grid-cols-2" : ""}`}>
+        {shareMode === "withImage" ? (
           <form action={importSharedCard}>
             <input type="hidden" name="token" value={token} />
-            <input type="hidden" name="importImageMode" value="withoutImage" />
+            <input type="hidden" name="importImageMode" value="withImage" />
             <button
               type="submit"
-              className="w-full rounded-full border border-[#d8c8aa] bg-white/76 px-5 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+              className="w-full rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
             >
-              画像なしで登録
+              画像付きで登録
             </button>
           </form>
-        </div>
-      ) : (
-        <div className="grid gap-3">
-          <p className="text-sm font-semibold text-[#5f5346]">
-            追加するにはログインしてください
-          </p>
-          <div className="flex justify-center">
-            <LoginButton />
-          </div>
-        </div>
-      )}
+        ) : null}
+        <form action={importSharedCard}>
+          <input type="hidden" name="token" value={token} />
+          <input type="hidden" name="importImageMode" value="withoutImage" />
+          <button
+            type="submit"
+            className="w-full rounded-full border border-[#d8c8aa] bg-white/76 px-5 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+          >
+            文字だけ登録
+          </button>
+        </form>
+      </div>
       {statusMessage ? (
         <p className="mt-3 text-xs font-semibold text-[#a24d3c]">
           {statusMessage}
         </p>
       ) : null}
-      <p className="mt-3 text-xs leading-5 text-[#8d7f6e]">
-        共有カードはコピーとして未分類デッキに追加されます。
-      </p>
     </section>
   );
 }
@@ -568,12 +557,15 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
 
         <SharedCardPreview card={card} date={date} shareMode={shareMode} />
 
-        <ImportPanel
-          importStatus={importStatus}
-          isSignedIn={Boolean(userId)}
-          shareMode={shareMode}
-          token={token}
-        />
+        {userId ? (
+          <ImportPanel
+            importStatus={importStatus}
+            shareMode={shareMode}
+            token={token}
+          />
+        ) : (
+          <SharedCardReceiveActions card={card} shareMode={shareMode} />
+        )}
       </section>
     </main>
   );
