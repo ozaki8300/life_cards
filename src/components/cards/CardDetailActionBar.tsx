@@ -13,7 +13,7 @@ const favoriteActionButtonInactiveClass =
 const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
 const actionBarBaseClass =
-  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-1rem))] flex-nowrap items-center justify-center gap-1 rounded-[22px] border p-1.5 backdrop-blur-md sm:max-w-[460px] sm:gap-2 sm:p-2";
+  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-1rem))] flex-nowrap items-center justify-center gap-1 rounded-[22px] border p-1.5 backdrop-blur-md sm:max-w-[min(540px,calc(100vw-1rem))] sm:gap-2 sm:p-2";
 const actionBarToneClass =
   "border-[#e0d3c0] bg-[#fffaf0]/50 shadow-[0_12px_34px_rgba(87,72,52,0.1)]";
 const actionBarReadingToneClass =
@@ -128,9 +128,11 @@ type Props = {
   onEdit: () => void;
   onToggleFavorite: () => void;
   onCopyForAi?: () => void;
+  onOpenMemo?: () => void;
   onOpenPhoto: () => void;
   onShare: () => void;
   copyForAiStatus?: "copied" | "failed" | "idle" | "working";
+  hasBackMemo?: boolean;
   hasImage: boolean;
   isFavorite: boolean;
   isSubdued?: boolean;
@@ -143,9 +145,11 @@ export default function CardDetailActionBar({
   onEdit,
   onToggleFavorite,
   onCopyForAi,
+  onOpenMemo,
   onOpenPhoto,
   onShare,
   copyForAiStatus = "idle",
+  hasBackMemo = false,
   hasImage,
   isFavorite,
   isSubdued = false,
@@ -179,6 +183,17 @@ export default function CardDetailActionBar({
           className={copyForAiActionButtonClass}
         >
           AI
+        </button>
+      ) : null}
+      {hasBackMemo ? (
+        <button
+          type="button"
+          aria-label="裏面メモ全文を開く"
+          title="裏面メモ全文を開く"
+          onClick={onOpenMemo}
+          className={actionButtonClass}
+        >
+          <span aria-hidden="true">📄</span>
         </button>
       ) : null}
       <button

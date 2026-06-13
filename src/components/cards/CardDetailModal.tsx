@@ -13,6 +13,7 @@ import { useEscapeKey } from "@/lib/useEscapeKey";
 import CardFace from "./CardFace";
 import CardDetailActionBar from "./CardDetailActionBar";
 import FullscreenImageViewer from "./FullscreenImageViewer";
+import FullscreenMemoViewer from "./FullscreenMemoViewer";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 import useCardDetailViewCycle, {
   type CardDetailViewMode,
@@ -34,9 +35,11 @@ function debugImageState(message: string, payload: Record<string, unknown>) {
 
 export default function CardDetailModal({
   card,
+  cardCount,
   deckLabel,
   isFavorite,
   hasMultipleCards,
+  index,
   onClose,
   onDelete,
   onEdit,
@@ -49,6 +52,7 @@ export default function CardDetailModal({
   initialViewMode = "front",
 }: {
   card: Card;
+  cardCount: number;
   canGoNextFullscreenImage?: boolean;
   deckLabel: string;
   index: number;
@@ -71,6 +75,7 @@ export default function CardDetailModal({
   const [fullscreenImagePath, setFullscreenImagePath] = useState("");
   const [fullscreenImageCardId, setFullscreenImageCardId] = useState("");
   const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
+  const [isFullscreenMemoOpen, setIsFullscreenMemoOpen] = useState(false);
   const [isResolvingNextFullscreenImage, setIsResolvingNextFullscreenImage] =
     useState(false);
   const [isResolvingFullscreenImage, setIsResolvingFullscreenImage] =
@@ -103,6 +108,7 @@ export default function CardDetailModal({
     storageResolutionMatches && resolvedStorageImage.status === "error";
   const actionBarHasImage = hasAttachedImage;
   const date = formatDate(card.createdAt);
+  const backMemoText = card.backText?.trim() ?? "";
   const {
     viewMode,
     rotationAngle,
@@ -110,6 +116,7 @@ export default function CardDetailModal({
     backFaceStep,
     cycleViewMode,
   } = useCardDetailViewCycle(initialViewMode);
+  const canOpenBackMemo = viewMode === "back" && Boolean(backMemoText);
 
   useEscapeKey(() => {
     onClose();
@@ -508,6 +515,7 @@ export default function CardDetailModal({
         <div className="pointer-events-auto relative">
           <CardDetailActionBar
             copyForAiStatus={copyForAiStatus}
+            hasBackMemo={canOpenBackMemo}
             hasImage={actionBarHasImage}
             isFavorite={isFavorite}
             isSubdued={viewMode === "back"}
@@ -515,6 +523,7 @@ export default function CardDetailModal({
             onCopyForAi={handleCopyForAi}
             onDelete={onDelete}
             onEdit={onEdit}
+            onOpenMemo={() => setIsFullscreenMemoOpen(true)}
             onOpenPhoto={openFullscreenPhoto}
             onShare={onShare}
             onToggleFavorite={onToggleFavorite}
@@ -555,6 +564,20 @@ export default function CardDetailModal({
             onBackdropClick={onClose}
             onClose={() => setIsFullscreenPhotoOpen(false)}
             onNextImage={showNextFullscreenImage}
+          />
+        ) : null}
+
+        {isFullscreenMemoOpen ? (
+          <FullscreenMemoViewer
+            canGoNext={hasMultipleCards}
+            canGoPrevious={hasMultipleCards}
+            currentIndex={index}
+            memo={backMemoText}
+            onClose={() => setIsFullscreenMemoOpen(false)}
+            onNext={showNextPhoto}
+            onPrevious={showPreviousPhoto}
+            title={card.frontText}
+            totalCount={cardCount}
           />
         ) : null}
       </div>

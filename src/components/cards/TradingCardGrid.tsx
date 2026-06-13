@@ -679,6 +679,7 @@ export default function TradingCardGrid({
       <CardGridDialogs
         canGoNextFullscreenImage={canGoNextFullscreenImage}
         card={selectedCard}
+        cardCount={displayCards.length}
         currentCardsForEdit={currentCardsForEdit}
         deckLabel={selectedCard ? deckLabelFor(selectedCard) : ""}
         decks={decks}

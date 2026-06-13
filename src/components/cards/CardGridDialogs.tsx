@@ -10,6 +10,7 @@ import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 type Props = {
   canGoNextFullscreenImage: boolean;
   card: Card | null;
+  cardCount: number;
   currentCardsForEdit: Card[];
   deckLabel: string;
   decks: Deck[];
@@ -41,6 +42,7 @@ type Props = {
 export default function CardGridDialogs({
   canGoNextFullscreenImage,
   card,
+  cardCount,
   currentCardsForEdit,
   deckLabel,
   decks,
@@ -107,6 +109,7 @@ export default function CardGridDialogs({
           ) : (
             <CardDetailModal
               card={card}
+              cardCount={cardCount}
               canGoNextFullscreenImage={canGoNextFullscreenImage}
               deckLabel={deckLabel}
               index={index}
