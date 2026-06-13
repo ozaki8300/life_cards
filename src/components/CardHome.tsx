@@ -8,6 +8,7 @@ import { recordDailyAppOpened } from "@/lib/usageEvents";
 import CardFirstNav from "./CardFirstNav";
 import ProfileSetupModal from "./auth/ProfileSetupModal";
 import CardsPageHeader from "./cards/CardsPageHeader";
+import CardMatrixView from "./cards/CardMatrixView";
 import ReencounterSection from "./cards/ReencounterSection";
 import TradingCardGrid from "./cards/TradingCardGrid";
 import {
@@ -21,6 +22,7 @@ import useCardHomeData, {
 import useReencounterCards from "./cards/useReencounterCards";
 
 type ViewStatus = CardHomeLoadStatus | "filteredEmpty";
+type CardViewMode = "list" | "matrix";
 
 type Props = {
   cards: Card[];
@@ -30,6 +32,7 @@ type Props = {
 
 export default function CardHome({ cards, decks, activeDeckId }: Props) {
   const [activeTab, setActiveTab] = useState("すべて");
+  const [viewMode, setViewMode] = useState<CardViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const {
     allCards,
@@ -158,6 +161,37 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
               ) : null}
 
               <section>
+                <div className="mb-4 flex justify-center sm:justify-start">
+                  <div
+                    className="inline-flex rounded-full border border-[#e0d3c0] bg-[#fffaf0]/78 p-1 shadow-sm"
+                    aria-label="カード表示切替"
+                  >
+                    <button
+                      type="button"
+                      aria-pressed={viewMode === "list"}
+                      onClick={() => setViewMode("list")}
+                      className={`h-9 rounded-full px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                        viewMode === "list"
+                          ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
+                          : "text-[#6f6253] hover:bg-white/70 hover:text-[#2f2a23]"
+                      }`}
+                    >
+                      一覧
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={viewMode === "matrix"}
+                      onClick={() => setViewMode("matrix")}
+                      className={`h-9 rounded-full px-4 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+                        viewMode === "matrix"
+                          ? "bg-[#2f2a23] text-[#fffaf0] shadow-sm"
+                          : "text-[#6f6253] hover:bg-white/70 hover:text-[#2f2a23]"
+                      }`}
+                    >
+                      マトリクス
+                    </button>
+                  </div>
+                </div>
                 {viewStatus === "empty" ? (
                   <CardHomeStatus
                     message="最初のカードを作りましょう。"
@@ -167,8 +201,21 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
                 {viewStatus === "filteredEmpty" ? (
                   <CardHomeStatus message="該当するカードがありません。" />
                 ) : null}
-                {viewStatus === "ready" ? (
+                {viewStatus === "ready" && viewMode === "list" ? (
                   <TradingCardGrid
+                    cards={visibleCards}
+                    decks={allDecks}
+                    editSeedCards={allCards}
+                    favoriteIds={activeFavoriteIds}
+                    onCardViewed={recordCardView}
+                    onDecksChange={setAllDecks}
+                    onDeleteCard={handleDeleteCard}
+                    onUpdateCard={handleUpdateCard}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                ) : null}
+                {viewStatus === "ready" && viewMode === "matrix" ? (
+                  <CardMatrixView
                     cards={visibleCards}
                     decks={allDecks}
                     editSeedCards={allCards}
