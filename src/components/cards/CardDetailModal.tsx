@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MouseEvent, TouchEvent } from "react";
+import type { MouseEvent, TouchEvent, WheelEvent } from "react";
 
 import { createCopyForAiMarkdown } from "@/lib/copyForAi";
 import { useCopyForAiFeatureFlag } from "@/lib/featureFlags";
@@ -121,6 +121,34 @@ export default function CardDetailModal({
   useEscapeKey(() => {
     onClose();
   });
+
+  useEffect(() => {
+    const scrollY = window.scrollY;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyOverscrollBehavior =
+      document.body.style.overscrollBehavior;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyWidth = document.body.style.width;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.width = previousBodyWidth;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -265,6 +293,10 @@ export default function CardDetailModal({
     }
 
     onClose();
+  }
+
+  function stopModalScrollEvent(event: TouchEvent<HTMLElement> | WheelEvent<HTMLElement>) {
+    event.stopPropagation();
   }
 
   async function openFullscreenPhoto() {
@@ -424,8 +456,15 @@ export default function CardDetailModal({
         onTouchEnd={(event) => event.stopPropagation()}
         onTouchMove={(event) => event.stopPropagation()}
         onTouchStart={(event) => event.stopPropagation()}
+        onWheel={(event) => event.stopPropagation()}
       />
-      <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center gap-5 sm:gap-5">
+      <div
+        className="pointer-events-none relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center gap-5 sm:gap-5"
+        onTouchEnd={stopModalScrollEvent}
+        onTouchMove={stopModalScrollEvent}
+        onTouchStart={stopModalScrollEvent}
+        onWheel={stopModalScrollEvent}
+      >
         <div
           className={`pointer-events-none relative mx-auto ${detailCardFrameClass}`}
         >
