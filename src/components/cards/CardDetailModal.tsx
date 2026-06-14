@@ -11,12 +11,15 @@ import type { Card } from "@/lib/types";
 import { recordUsageEvent } from "@/lib/usageEvents";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
-import CardDetailActionBar from "./CardDetailActionBar";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 const shutterButtonClass =
   "pointer-events-auto relative z-50 flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 text-xs font-bold text-[#6f6253] shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
+const menuItemClass =
+  "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-bold text-[#5f5346] transition hover:bg-[#fff5e6] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]";
+const destructiveMenuItemClass =
+  "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-bold text-[#9b4b35] transition hover:bg-[#fff1eb] focus:outline-none focus:ring-2 focus:ring-[#e6c9be]";
 
 function normalizeLinkUrl(linkUrl: string) {
   const trimmed = linkUrl.trim();
@@ -70,6 +73,7 @@ export default function CardDetailModal({
 }) {
   const [viewMode, setViewMode] =
     useState<CardDetailViewMode>(initialViewMode);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isCopyForAiVisible = useCopyForAiFeatureFlag();
   const [copyForAiStatus, setCopyForAiStatus] = useState<
     "copied" | "failed" | "idle" | "working"
@@ -103,11 +107,11 @@ export default function CardDetailModal({
       ? "text-[#2f2a23]"
       : "text-white";
   const frontMediaInsetClass =
-    "inset-x-3 top-[calc(env(safe-area-inset-top)+3.75rem)] bottom-[calc(env(safe-area-inset-bottom)+11.25rem)] sm:inset-x-12 sm:top-[calc(env(safe-area-inset-top)+4.25rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+12rem)]";
+    "inset-x-3 top-[calc(env(safe-area-inset-top)+3.75rem)] bottom-[calc(env(safe-area-inset-bottom)+6.25rem)] sm:inset-x-12 sm:top-[calc(env(safe-area-inset-top)+4.25rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+7rem)]";
   const frontCaptionBottomClass =
-    "bottom-[calc(env(safe-area-inset-bottom)+10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+11.5rem)]";
+    "bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+6.5rem)]";
   const backViewBottomPaddingClass =
-    "pb-[calc(env(safe-area-inset-bottom)+9.25rem)] sm:pb-[calc(env(safe-area-inset-bottom)+11rem)]";
+    "pb-[calc(env(safe-area-inset-bottom)+5.75rem)] sm:pb-[calc(env(safe-area-inset-bottom)+6.75rem)]";
   const canNavigateCards = hasMultipleCards && cardCount > 1;
   const nextViewModeLabel = isFrontView ? "裏面" : "表面";
 
@@ -230,17 +234,28 @@ export default function CardDetailModal({
   }, [card.id, card.imagePath, imageStoragePath]);
 
   function showPreviousPhoto() {
+    setIsMenuOpen(false);
     onPrevious();
   }
 
   function showNextPhoto() {
+    setIsMenuOpen(false);
     onNext();
   }
 
   function toggleViewMode() {
+    setIsMenuOpen(false);
     setViewMode((currentViewMode) =>
       currentViewMode === "front" ? "back" : "front",
     );
+  }
+
+  function toggleMenu() {
+    setIsMenuOpen((current) => !current);
+  }
+
+  function closeMenu() {
+    setIsMenuOpen(false);
   }
 
   function stopCardSurfaceEvent(event: MouseEvent<HTMLElement>) {
@@ -290,6 +305,31 @@ export default function CardDetailModal({
       console.warn("Life Cards Copy for AI failed", { clipboardError });
       showCopyForAiStatus("failed");
     }
+  }
+
+  function handleMenuShare() {
+    closeMenu();
+    onShare();
+  }
+
+  function handleMenuEdit() {
+    closeMenu();
+    onEdit();
+  }
+
+  function handleMenuFavorite() {
+    closeMenu();
+    onToggleFavorite();
+  }
+
+  function handleMenuDelete() {
+    closeMenu();
+    onDelete();
+  }
+
+  function handleMenuClose() {
+    closeMenu();
+    onClose();
   }
 
   const copyForAiToastMessage =
@@ -371,24 +411,6 @@ export default function CardDetailModal({
                 {date}
               </span>
             </div>
-            {linkHref ? (
-              <a
-                data-card-action="true"
-                href={linkHref}
-                target="_blank"
-                rel="noreferrer noopener"
-                className={`pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-bold shadow-[0_8px_22px_rgba(0,0,0,0.14)] backdrop-blur-md transition sm:right-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)] ${
-                  frontSurfaceTextClass === "text-white"
-                    ? "border-white/28 bg-black/22 text-white hover:bg-black/34"
-                    : "border-[#d8c8aa]/70 bg-[#fffaf0]/70 text-[#6f6253] hover:bg-[#fffaf0]/92"
-                }`}
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-                onTouchStart={(event) => event.stopPropagation()}
-              >
-                Open Link ↗
-              </a>
-            ) : null}
             <div
               className={`absolute inset-x-0 ${frontCaptionBottomClass} z-10 mx-auto flex w-full max-w-4xl flex-col gap-2 px-5 text-left sm:px-10 ${frontSurfaceTextClass}`}
               onClick={stopCardSurfaceEvent}
@@ -449,48 +471,130 @@ export default function CardDetailModal({
               </MarkdownMemo>
               <div aria-hidden="true" className="h-3 sm:h-8" />
             </div>
-            {linkHref ? (
-              <a
-                data-card-action="true"
-                href={linkHref}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="pointer-events-auto mx-auto mt-1 inline-flex shrink-0 items-center justify-center rounded-full border border-[#d8c8aa] bg-white/76 px-3 py-1 text-xs font-bold leading-tight text-[#6f6253] shadow-[0_6px_16px_rgba(87,72,52,0.08)] transition hover:bg-white sm:mt-3 sm:px-4 sm:py-2 sm:text-sm"
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
-                onTouchStart={(event) => event.stopPropagation()}
-              >
-                Open Link ↗
-              </a>
-            ) : null}
           </section>
         )}
 
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-1 bg-gradient-to-t from-[#1b130f]/56 via-[#1b130f]/20 to-transparent px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-6 sm:gap-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:pt-10">
-          <div className="pointer-events-auto relative">
-            <CardDetailActionBar
-              copyForAiStatus={copyForAiStatus}
-              isFavorite={isFavorite}
-              isSubdued={viewMode === "back"}
-              onClose={onClose}
-              onCopyForAi={handleCopyForAi}
-              onDelete={onDelete}
-              onEdit={onEdit}
-              onShare={onShare}
-              onToggleFavorite={onToggleFavorite}
-              showCopyForAi={isCopyForAiVisible}
-            />
-            {copyForAiToastMessage ? (
-              <p
-                aria-live="polite"
-                className="absolute bottom-[calc(100%+0.5rem)] left-1/2 z-40 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-[#d8c8aa] bg-[#fffaf0]/95 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-[#4f4437] shadow-[0_10px_26px_rgba(87,72,52,0.18)] backdrop-blur-md"
-              >
-                {copyForAiToastMessage}
-              </p>
-            ) : null}
-          </div>
-
           <div className="pointer-events-auto relative z-50 flex items-center justify-center gap-2 sm:gap-4">
+            {isMenuOpen ? (
+              <div
+                data-card-action="true"
+                className="absolute bottom-[calc(100%+0.75rem)] left-0 z-50 w-[min(260px,calc(100vw-1rem))] rounded-2xl border border-[#e0d3c0] bg-[#fffaf0]/96 p-2 text-[#4f4437] shadow-[0_18px_48px_rgba(45,35,24,0.24)] backdrop-blur-md sm:left-1/2 sm:-translate-x-1/2"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+                onPointerUp={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+              >
+                <div className="flex flex-col gap-1">
+                  {isCopyForAiVisible ? (
+                    <button
+                      type="button"
+                      className={menuItemClass}
+                      disabled={copyForAiStatus === "working"}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        closeMenu();
+                        void handleCopyForAi();
+                      }}
+                    >
+                      <span>AIコピー</span>
+                      <span className="text-xs text-[#9c8a73]">
+                        {copyForAiStatus === "working" ? "..." : "AI"}
+                      </span>
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={menuItemClass}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleMenuEdit();
+                    }}
+                  >
+                    編集
+                  </button>
+                  {linkHref ? (
+                    <a
+                      href={linkHref}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className={menuItemClass}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        closeMenu();
+                      }}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      onTouchStart={(event) => event.stopPropagation()}
+                    >
+                      Open Link
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={menuItemClass}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleMenuShare();
+                    }}
+                  >
+                    QR共有
+                  </button>
+                  <button
+                    type="button"
+                    className={menuItemClass}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleMenuFavorite();
+                    }}
+                  >
+                    {isFavorite ? "お気に入り解除" : "お気に入り"}
+                  </button>
+                  <button
+                    type="button"
+                    className={destructiveMenuItemClass}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleMenuDelete();
+                    }}
+                  >
+                    削除
+                  </button>
+                  <button
+                    type="button"
+                    className={menuItemClass}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleMenuClose();
+                    }}
+                  >
+                    閉じる
+                  </button>
+                </div>
+              </div>
+            ) : null}
+            <button
+              type="button"
+              aria-label="補助操作メニュー"
+              aria-expanded={isMenuOpen}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleMenu();
+              }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation();
+              }}
+              onTouchStart={(event) => {
+                event.stopPropagation();
+              }}
+              className={shutterButtonClass}
+            >
+              <span className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-[5px] border-[#fefbf4] bg-[#f0e4d2] text-lg leading-none shadow-inner shadow-white/80 sm:h-[60px] sm:w-[60px]">
+                ...
+              </span>
+            </button>
             <button
               type="button"
               aria-label="前のカードへ"
@@ -572,6 +676,14 @@ export default function CardDetailModal({
               </span>
             </button>
           </div>
+          {copyForAiToastMessage ? (
+            <p
+              aria-live="polite"
+              className="pointer-events-none rounded-full border border-[#d8c8aa] bg-[#fffaf0]/95 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-[#4f4437] shadow-[0_10px_26px_rgba(87,72,52,0.18)] backdrop-blur-md"
+            >
+              {copyForAiToastMessage}
+            </p>
+          ) : null}
         </div>
       </div>
     </>
