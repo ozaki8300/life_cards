@@ -15,8 +15,6 @@ import CardDetailActionBar from "./CardDetailActionBar";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
 import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
-const sideNavButtonClass =
-  "pointer-events-auto fixed top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/32 bg-[#fffaf0]/34 text-3xl font-semibold leading-none text-[#5f513f]/54 opacity-62 shadow-[0_3px_10px_rgba(87,72,52,0.06)] backdrop-blur-md transition hover:bg-[#fffaf0]/72 hover:text-[#5f513f] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:h-12 sm:w-12 sm:border-[#e0d3c0]/64 sm:bg-[#fffaf0]/68 sm:text-4xl sm:text-[#5f513f]/72 sm:opacity-76 sm:shadow-[0_8px_24px_rgba(87,72,52,0.14)] sm:hover:bg-white sm:hover:text-[#5f513f] sm:hover:opacity-100";
 const shutterButtonClass =
   "pointer-events-auto relative z-50 flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 text-xs font-bold text-[#6f6253] shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
 
@@ -104,15 +102,13 @@ export default function CardDetailModal({
     backgroundImage.includes("default-paper.webp") || isBlurExtend
       ? "text-[#2f2a23]"
       : "text-white";
-  const previousNavPositionClass = "left-3 sm:left-6";
-  const nextNavPositionClass = "right-3 sm:right-6";
   const frontMediaInsetClass =
     "inset-x-3 top-[calc(env(safe-area-inset-top)+3.75rem)] bottom-[calc(env(safe-area-inset-bottom)+11.25rem)] sm:inset-x-12 sm:top-[calc(env(safe-area-inset-top)+4.25rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+12rem)]";
   const frontCaptionBottomClass =
     "bottom-[calc(env(safe-area-inset-bottom)+10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+11.5rem)]";
   const backViewBottomPaddingClass =
     "pb-[calc(env(safe-area-inset-bottom)+9.25rem)] sm:pb-[calc(env(safe-area-inset-bottom)+11rem)]";
-  const canGoNextCard = hasMultipleCards && cardCount > 1;
+  const canNavigateCards = hasMultipleCards && cardCount > 1;
   const nextViewModeLabel = isFrontView ? "裏面" : "表面";
 
   useEscapeKey(() => {
@@ -247,7 +243,7 @@ export default function CardDetailModal({
     );
   }
 
-  function handleCardClick(event: MouseEvent<HTMLElement>) {
+  function stopCardSurfaceEvent(event: MouseEvent<HTMLElement>) {
     event.stopPropagation();
   }
 
@@ -255,11 +251,6 @@ export default function CardDetailModal({
     event.preventDefault();
     event.stopPropagation();
     event.nativeEvent.stopImmediatePropagation();
-
-    if (event.target !== event.currentTarget) {
-      return;
-    }
-
     onClose();
   }
 
@@ -324,6 +315,7 @@ export default function CardDetailModal({
       />
       <div
         className="pointer-events-auto fixed inset-0 z-10 overflow-hidden bg-[#17110d]/90 text-[#332d25]"
+        onClick={handleDetailBackdropClick}
         onTouchEnd={stopModalScrollEvent}
         onTouchMove={stopModalScrollEvent}
         onTouchStart={stopModalScrollEvent}
@@ -333,7 +325,6 @@ export default function CardDetailModal({
           <section
             aria-label="表面の全画面表示"
             className="absolute inset-0 cursor-default overflow-hidden"
-            onClick={handleCardClick}
           >
             <div
               aria-hidden="true"
@@ -343,6 +334,7 @@ export default function CardDetailModal({
             <div
               aria-hidden="true"
               className={`absolute bg-center bg-no-repeat drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)] ${frontMediaInsetClass}`}
+              onClick={stopCardSurfaceEvent}
               style={{
                 backgroundImage: `url(${backgroundImage})`,
                 backgroundSize: "contain",
@@ -352,11 +344,14 @@ export default function CardDetailModal({
               aria-hidden="true"
               className={`absolute inset-0 ${
                 frontSurfaceTextClass === "text-white"
-                  ? "bg-gradient-to-t from-black/62 via-black/10 to-black/22"
-                  : "bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
+                  ? "pointer-events-none bg-gradient-to-t from-black/62 via-black/10 to-black/22"
+                  : "pointer-events-none bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
               }`}
             />
-            <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]">
+            <div
+              className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]"
+              onClick={stopCardSurfaceEvent}
+            >
               <span
                 className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md ${
                   frontSurfaceTextClass === "text-white"
@@ -396,6 +391,7 @@ export default function CardDetailModal({
             ) : null}
             <div
               className={`absolute inset-x-0 ${frontCaptionBottomClass} z-10 mx-auto flex w-full max-w-4xl flex-col gap-2 px-5 text-left sm:px-10 ${frontSurfaceTextClass}`}
+              onClick={stopCardSurfaceEvent}
             >
               {displayFrontText ? (
                 <h2 className="max-w-3xl text-[clamp(1.35rem,3vw,3.25rem)] font-bold leading-[1.08] drop-shadow-[0_5px_22px_rgba(0,0,0,0.3)]">
@@ -417,9 +413,11 @@ export default function CardDetailModal({
           <section
             aria-label="裏面メモの全画面表示"
             className={`absolute inset-0 flex cursor-default flex-col overflow-hidden bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
-            onClick={handleCardClick}
           >
-            <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4">
+            <header
+              className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4"
+              onClick={stopCardSurfaceEvent}
+            >
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9c8a73] sm:text-[11px] sm:tracking-[0.22em]">
                   Back Memo
@@ -468,33 +466,6 @@ export default function CardDetailModal({
           </section>
         )}
 
-        {hasMultipleCards ? (
-          <>
-            <button
-              type="button"
-              aria-label="前へ"
-              onClick={(event) => {
-                event.stopPropagation();
-                showPreviousPhoto();
-              }}
-              className={`${sideNavButtonClass} ${previousNavPositionClass}`}
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              aria-label="次へ"
-              onClick={(event) => {
-                event.stopPropagation();
-                showNextPhoto();
-              }}
-              className={`${sideNavButtonClass} ${nextNavPositionClass}`}
-            >
-              ›
-            </button>
-          </>
-        ) : null}
-
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-1 bg-gradient-to-t from-[#1b130f]/56 via-[#1b130f]/20 to-transparent px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-6 sm:gap-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:pt-10">
           <div className="pointer-events-auto relative">
             <CardDetailActionBar
@@ -519,7 +490,36 @@ export default function CardDetailModal({
             ) : null}
           </div>
 
-          <div className="pointer-events-auto relative z-50 flex items-center justify-center gap-3 sm:gap-4">
+          <div className="pointer-events-auto relative z-50 flex items-center justify-center gap-2 sm:gap-4">
+            <button
+              type="button"
+              aria-label="前のカードへ"
+              disabled={!canNavigateCards}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (canNavigateCards) {
+                  showPreviousPhoto();
+                }
+              }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation();
+              }}
+              onTouchStart={(event) => {
+                event.stopPropagation();
+              }}
+              className={`${shutterButtonClass} ${
+                canNavigateCards
+                  ? ""
+                  : "cursor-default opacity-45 hover:scale-100 hover:bg-[#fffaf0]/82"
+              }`}
+            >
+              <span className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-[5px] border-[#fefbf4] bg-[#f0e4d2] text-[11px] leading-none shadow-inner shadow-white/80 sm:h-[60px] sm:w-[60px] sm:text-xs">
+                戻る
+              </span>
+            </button>
             <button
               type="button"
               aria-label={`${nextViewModeLabel}へ`}
@@ -545,10 +545,10 @@ export default function CardDetailModal({
             <button
               type="button"
               aria-label="次のカードへ"
-              disabled={!canGoNextCard}
+              disabled={!canNavigateCards}
               onClick={(event) => {
                 event.stopPropagation();
-                if (canGoNextCard) {
+                if (canNavigateCards) {
                   showNextPhoto();
                 }
               }}
@@ -562,7 +562,7 @@ export default function CardDetailModal({
                 event.stopPropagation();
               }}
               className={`${shutterButtonClass} ${
-                canGoNextCard
+                canNavigateCards
                   ? ""
                   : "cursor-default opacity-45 hover:scale-100 hover:bg-[#fffaf0]/82"
               }`}
