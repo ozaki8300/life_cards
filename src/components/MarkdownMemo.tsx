@@ -141,6 +141,34 @@ function createMarkdownComponents(
       </ol>
     ),
     li: ({ children }) => <li className={listItemClass}>{children}</li>,
+    table: ({ children }) => (
+      <div className="my-4 max-w-full overflow-x-auto">
+        <table className="w-max min-w-full border-collapse text-left text-[0.92em] leading-6 text-[#5f5346]">
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({ children }) => (
+      <thead className="border-b border-[#d8c8aa] bg-[#fffaf0] text-[#3f362d]">
+        {children}
+      </thead>
+    ),
+    tbody: ({ children }) => (
+      <tbody className="divide-y divide-[#eadfce]">{children}</tbody>
+    ),
+    tr: ({ children }) => (
+      <tr className="align-top">{children}</tr>
+    ),
+    th: ({ children }) => (
+      <th className="min-w-24 whitespace-nowrap border border-[#e0d3c0] px-3 py-2 font-semibold">
+        {children}
+      </th>
+    ),
+    td: ({ children }) => (
+      <td className="min-w-24 whitespace-nowrap border border-[#eadfce] px-3 py-2">
+        {children}
+      </td>
+    ),
     blockquote: ({ children }) => (
       <blockquote className="my-4 rounded-r-[12px] border-l-4 border-[#d8c8aa] bg-[#fffaf0]/64 py-2.5 pl-4 pr-3 italic text-[#6d5f4f]">
         {children}
