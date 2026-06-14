@@ -109,7 +109,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     () => Array.from(favoriteIds),
     [favoriteIds],
   );
-  const todayCards = useReencounterCards({
+  const reencounterCandidates = useReencounterCards({
     cards: scopedCards,
     favoriteIds,
     metadataByCardId: encounterMetadataByCardId,
@@ -148,7 +148,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
                 <ReencounterSection
                   title="今日の再会"
                   subtitle="久しぶりに見たいカード"
-                  cards={todayCards}
+                  candidates={reencounterCandidates}
                   decks={allDecks}
                   editSeedCards={allCards}
                   favoriteIds={activeFavoriteIds}

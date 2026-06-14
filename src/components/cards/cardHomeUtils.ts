@@ -45,17 +45,22 @@ export function pickReencounterCards({
   cards,
   favoriteIds,
   metadataByCardId,
+  random,
   today,
 }: {
   cards: Card[];
   favoriteIds: ReadonlySet<string>;
   metadataByCardId: Record<string, EncounterMetadata>;
+  random?: () => number;
   today: string;
 }) {
-  return ReencounterEngine.pick({
-    cards,
-    favoriteIds,
-    metadataByCardId,
-    today,
-  });
+  return ReencounterEngine.pick(
+    {
+      cards,
+      favoriteIds,
+      metadataByCardId,
+      today,
+    },
+    { random },
+  );
 }

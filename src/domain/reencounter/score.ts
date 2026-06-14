@@ -1,14 +1,22 @@
-import type { ReencounterScoreInput } from "./types";
+import type { ReencounterScoreInput, ReencounterScoreResult } from "./types";
 
 export const REENCOUNTER_SCORE_V1 = {
-  favoriteBonus: 20,
-  futureReencounterPenalty: 500,
-  reencounteredTodayPenalty: 1000,
-  unviewedCardScore: 100,
+  favoriteBonus: 100,
+  lowViewBonusByViewCount: {
+    none: 30,
+    once: 20,
+    twice: 10,
+  },
+  randomBonusMax: 5,
+  unviewedCardScore: 30,
 } as const;
 
 function datePart(value: string) {
   return value.slice(0, 10);
+}
+
+function todayDatePart() {
+  return datePart(new Date().toISOString());
 }
 
 function daysBetween(startDate: string, endDate: string) {
@@ -22,47 +30,88 @@ function daysBetween(startDate: string, endDate: string) {
   return Math.max(0, Math.floor((endTime - startTime) / 86_400_000));
 }
 
-function isAfterDate(date: string, comparisonDate: string) {
-  const dateTime = new Date(`${date}T00:00:00.000Z`).getTime();
-  const comparisonTime = new Date(`${comparisonDate}T00:00:00.000Z`).getTime();
-
-  if (Number.isNaN(dateTime) || Number.isNaN(comparisonTime)) {
-    return false;
+function lowViewBonusFor(viewCount: number) {
+  if (viewCount <= 0) {
+    return REENCOUNTER_SCORE_V1.lowViewBonusByViewCount.none;
   }
 
-  return dateTime > comparisonTime;
+  if (viewCount === 1) {
+    return REENCOUNTER_SCORE_V1.lowViewBonusByViewCount.once;
+  }
+
+  if (viewCount === 2) {
+    return REENCOUNTER_SCORE_V1.lowViewBonusByViewCount.twice;
+  }
+
+  return 0;
+}
+
+function reasonFor({
+  daysSinceLastViewed,
+  hasLastViewed,
+  isFavorite,
+  viewCount,
+}: {
+  daysSinceLastViewed: number;
+  hasLastViewed: boolean;
+  isFavorite: boolean;
+  viewCount: number;
+}) {
+  if (!hasLastViewed) {
+    return "まだ見ていないカード";
+  }
+
+  if (daysSinceLastViewed >= 1) {
+    return `${daysSinceLastViewed}日ぶりの再会`;
+  }
+
+  if (isFavorite) {
+    return "お気に入りカード";
+  }
+
+  if (viewCount <= 0) {
+    return "まだ見ていないカード";
+  }
+
+  if (viewCount === 1) {
+    return "まだ1回しか見ていません";
+  }
+
+  if (viewCount === 2) {
+    return "まだ2回しか見ていません";
+  }
+
+  return "最近見ていなかったカード";
 }
 
 export function calculateReencounterScore({
   metadata,
   isFavorite,
-  today,
-}: ReencounterScoreInput) {
+  random = Math.random,
+  today = todayDatePart(),
+}: ReencounterScoreInput): ReencounterScoreResult {
+  const viewCount = metadata?.viewCount ?? 0;
   const lastViewedDate = metadata?.lastViewedAt
     ? datePart(metadata.lastViewedAt)
     : null;
-  const lastReencounterDate = metadata?.lastReencounterAt
-    ? datePart(metadata.lastReencounterAt)
-    : null;
-  const nextReencounterDate = metadata?.nextReencounterAt
-    ? datePart(metadata.nextReencounterAt)
-    : null;
-  let score =
-    lastViewedDate && today
-      ? daysBetween(lastViewedDate, today)
-      : REENCOUNTER_SCORE_V1.unviewedCardScore;
+  const daysSinceLastViewed = lastViewedDate
+    ? daysBetween(lastViewedDate, today)
+    : REENCOUNTER_SCORE_V1.unviewedCardScore;
+  const favoriteBonus = isFavorite ? REENCOUNTER_SCORE_V1.favoriteBonus : 0;
+  const lowViewBonus = lowViewBonusFor(viewCount);
+  const randomBonus =
+    Math.max(0, Math.min(1, random())) * REENCOUNTER_SCORE_V1.randomBonusMax;
+  const score =
+    favoriteBonus + daysSinceLastViewed + lowViewBonus + randomBonus;
 
-  if (isFavorite) {
-    score += REENCOUNTER_SCORE_V1.favoriteBonus;
-  }
-
-  if (today && lastReencounterDate === today) {
-    score -= REENCOUNTER_SCORE_V1.reencounteredTodayPenalty;
-  }
-
-  if (today && nextReencounterDate && isAfterDate(nextReencounterDate, today)) {
-    score -= REENCOUNTER_SCORE_V1.futureReencounterPenalty;
-  }
-
-  return score;
+  return {
+    randomBonus,
+    reason: reasonFor({
+      daysSinceLastViewed,
+      hasLastViewed: Boolean(lastViewedDate),
+      isFavorite,
+      viewCount,
+    }),
+    score,
+  };
 }

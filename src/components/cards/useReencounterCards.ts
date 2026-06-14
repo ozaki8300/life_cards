@@ -19,9 +19,10 @@ export default function useReencounterCards({
   metadataByCardId,
 }: Params) {
   const today = new Date().toISOString().slice(0, 10);
+  const favoriteSignature = Array.from(favoriteIds).sort().join("|");
   const selectionKey = useMemo(
-    () => `${today}:${cards.map((card) => card.id).join("|")}`,
-    [cards, today],
+    () => `${today}:${favoriteSignature}:${cards.map((card) => card.id).join("|")}`,
+    [cards, favoriteSignature, today],
   );
 
   return useMemo(

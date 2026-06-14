@@ -2,16 +2,17 @@
 
 import { useMemo } from "react";
 
+import type { ReencounterCandidate } from "@/domain/reencounter/types";
 import type { Card, Deck } from "@/lib/types";
 
 import TradingCardGrid from "./TradingCardGrid";
 
-const REENCOUNTER_DISPLAY_LIMIT = 4;
+const REENCOUNTER_DISPLAY_LIMIT = 3;
 
 type Props = {
   title: string;
   subtitle: string;
-  cards: Card[];
+  candidates: ReencounterCandidate[];
   decks: Deck[];
   editSeedCards?: Card[];
   favoriteIds: string[];
@@ -25,7 +26,7 @@ type Props = {
 export default function ReencounterSection({
   title,
   subtitle,
-  cards,
+  candidates,
   decks,
   editSeedCards,
   favoriteIds,
@@ -35,17 +36,24 @@ export default function ReencounterSection({
   onUpdateCard,
   onToggleFavorite,
 }: Props) {
-  const displayCards = useMemo(() => {
-    const limitedCards = cards.slice(0, REENCOUNTER_DISPLAY_LIMIT);
+  const displayCandidates = useMemo(() => {
+    const limitedCandidates = candidates.slice(0, REENCOUNTER_DISPLAY_LIMIT);
 
     if (!editSeedCards) {
-      return limitedCards;
+      return limitedCandidates;
     }
 
     const latestCardsById = new Map(editSeedCards.map((card) => [card.id, card]));
 
-    return limitedCards.map((card) => latestCardsById.get(card.id) ?? card);
-  }, [cards, editSeedCards]);
+    return limitedCandidates.map((candidate) => ({
+      ...candidate,
+      card: latestCardsById.get(candidate.card.id) ?? candidate.card,
+    }));
+  }, [candidates, editSeedCards]);
+  const displayCards = useMemo(
+    () => displayCandidates.map((candidate) => candidate.card),
+    [displayCandidates],
+  );
 
   if (displayCards.length === 0) {
     return null;
@@ -75,6 +83,16 @@ export default function ReencounterSection({
         railLoop
         showCarouselIndicator
       />
+      <div className="mt-2 flex flex-wrap gap-2">
+        {displayCandidates.map((candidate) => (
+          <p
+            key={candidate.card.id}
+            className="rounded-full border border-[#e7dac8] bg-[#fffaf0]/64 px-2.5 py-1 text-[11px] font-semibold leading-tight text-[#8c7a62]"
+          >
+            {candidate.reason}
+          </p>
+        ))}
+      </div>
     </section>
   );
 }
