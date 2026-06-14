@@ -61,6 +61,15 @@ const blurExtendPaperModeOptions = [
   label: string;
 }>;
 const previewCollapsedStorageKey = "life_cards.card_form.preview_collapsed";
+const bookCardBackMemoTemplate = `## 要約
+
+## 重要な示唆
+
+## 自分への問い
+
+## 仕事・学びへの転用
+
+## 読後アクション`;
 
 export type CardFormValues = {
   backText: string;
@@ -388,6 +397,18 @@ export default function CardForm({
       cameraInputRef.current?.click();
       return;
     }
+  }
+
+  function insertBookCardTemplate() {
+    setBackMode("edit");
+    setPreviewFace("back");
+    setBackText((currentBackText) => {
+      const trimmedEnd = currentBackText.trimEnd();
+
+      return trimmedEnd
+        ? `${trimmedEnd}\n\n${bookCardBackMemoTemplate}`
+        : bookCardBackMemoTemplate;
+    });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -749,6 +770,19 @@ export default function CardForm({
                 className="box-border block w-full min-w-0 max-w-full appearance-none rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
               />
             </section>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
+              <span className="text-xs font-semibold leading-5 text-[#7d705f]">
+                推薦本・読書メモをLife Card化
+              </span>
+              <button
+                type="button"
+                onClick={insertBookCardTemplate}
+                className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+              >
+                本カード
+              </button>
+            </div>
 
             <BackMemoEditor
               backMode={backMode}
