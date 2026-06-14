@@ -57,7 +57,7 @@ function CardTile({
       } ${cardShadowClass}`}
     >
       <div
-        className={`pointer-events-none absolute inset-0 rounded-[18px] [transform-style:preserve-3d] transition-transform duration-500 ease-out ${
+        className={`absolute inset-0 rounded-[18px] [transform-style:preserve-3d] transition-transform duration-500 ease-out ${
           isBack ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]"
         }`}
       >

@@ -71,6 +71,44 @@ const bookCardBackMemoTemplate = `## 要約
 
 ## 読後アクション`;
 
+function sanitizeIsbnInput(value: string) {
+  return value.replaceAll("-", "").replace(/\s+/g, "").toUpperCase();
+}
+
+function isValidIsbn13(value: string) {
+  if (!/^\d{13}$/.test(value)) {
+    return false;
+  }
+
+  const sum = value
+    .slice(0, 12)
+    .split("")
+    .reduce((total, digit, index) => {
+      const multiplier = index % 2 === 0 ? 1 : 3;
+
+      return total + Number(digit) * multiplier;
+    }, 0);
+  const checkDigit = (10 - (sum % 10)) % 10;
+
+  return checkDigit === Number(value[12]);
+}
+
+function convertIsbn13ToIsbn10(value: string) {
+  if (!value.startsWith("978") || !isValidIsbn13(value)) {
+    return value;
+  }
+
+  const isbn10Body = value.slice(3, 12);
+  const weightedSum = isbn10Body
+    .split("")
+    .reduce((total, digit, index) => total + Number(digit) * (10 - index), 0);
+  const checkValue = 11 - (weightedSum % 11);
+  const checkDigit =
+    checkValue === 10 ? "X" : checkValue === 11 ? "0" : String(checkValue);
+
+  return `${isbn10Body}${checkDigit}`;
+}
+
 export type CardFormValues = {
   backText: string;
   cardDate: string;
@@ -139,6 +177,8 @@ export default function CardForm({
     initialValues.imageFrameMode ?? "none",
   );
   const [linkUrl, setLinkUrl] = useState(initialValues.linkUrl);
+  const [bookIsbn, setBookIsbn] = useState("");
+  const [bookLinkMessage, setBookLinkMessage] = useState("");
   const [previewFace, setPreviewFace] = useState<"front" | "back">("front");
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
   const [isDefaultImagesOpen, setIsDefaultImagesOpen] = useState(false);
@@ -409,6 +449,29 @@ export default function CardForm({
         ? `${trimmedEnd}\n\n${bookCardBackMemoTemplate}`
         : bookCardBackMemoTemplate;
     });
+  }
+
+  function createAmazonLinkFromIsbn() {
+    const sanitizedIsbn = sanitizeIsbnInput(bookIsbn);
+
+    if (!sanitizedIsbn) {
+      setBookLinkMessage("ISBNを入力してください。");
+      return;
+    }
+
+    if (
+      linkUrl.trim() &&
+      !window.confirm("Link欄のURLをAmazonリンクで上書きしますか？")
+    ) {
+      setBookLinkMessage("既存のLinkを残しました。");
+      return;
+    }
+
+    const isbnOrAsin = convertIsbn13ToIsbn10(sanitizedIsbn);
+
+    setBookIsbn(sanitizedIsbn);
+    setLinkUrl(`https://www.amazon.co.jp/dp/${isbnOrAsin}`);
+    setBookLinkMessage("AmazonリンクをLink欄に入れました。");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -771,17 +834,46 @@ export default function CardForm({
               />
             </section>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
-              <span className="text-xs font-semibold leading-5 text-[#7d705f]">
-                推薦本・読書メモをLife Card化
-              </span>
-              <button
-                type="button"
-                onClick={insertBookCardTemplate}
-                className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
-              >
-                本カード
-              </button>
+            <div className="grid gap-2 rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-semibold leading-5 text-[#7d705f]">
+                  推薦本・読書メモをLife Card化
+                </span>
+                <button
+                  type="button"
+                  onClick={insertBookCardTemplate}
+                  className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                >
+                  本カード
+                </button>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <input
+                  type="text"
+                  inputMode="text"
+                  value={bookIsbn}
+                  onChange={(event) => {
+                    setBookIsbn(event.target.value);
+                    setBookLinkMessage("");
+                  }}
+                  placeholder="ISBN / 978-4023308398"
+                  aria-label="ISBN"
+                  className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-3 py-2 text-sm font-semibold text-[#332d25] outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+                />
+                <button
+                  type="button"
+                  onClick={createAmazonLinkFromIsbn}
+                  className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                >
+                  Amazonリンクを作成
+                </button>
+              </div>
+              {bookLinkMessage ? (
+                <p className="text-xs font-semibold leading-5 text-[#7d705f]">
+                  {bookLinkMessage}
+                </p>
+              ) : null}
             </div>
 
             <BackMemoEditor
