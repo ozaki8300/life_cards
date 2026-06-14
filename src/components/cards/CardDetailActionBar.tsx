@@ -82,25 +82,6 @@ function QrCodeIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
-function ImageIcon({ className = "h-5 w-5" }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <rect height="18" rx="2" ry="2" width="18" x="3" y="3" />
-      <circle cx="9" cy="9" r="2" />
-      <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
-    </svg>
-  );
-}
-
 function TrashIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg
@@ -128,12 +109,8 @@ type Props = {
   onEdit: () => void;
   onToggleFavorite: () => void;
   onCopyForAi?: () => void;
-  onOpenMemo?: () => void;
-  onOpenPhoto: () => void;
   onShare: () => void;
   copyForAiStatus?: "copied" | "failed" | "idle" | "working";
-  hasBackMemo?: boolean;
-  hasImage: boolean;
   isFavorite: boolean;
   isSubdued?: boolean;
   showCopyForAi?: boolean;
@@ -145,12 +122,8 @@ export default function CardDetailActionBar({
   onEdit,
   onToggleFavorite,
   onCopyForAi,
-  onOpenMemo,
-  onOpenPhoto,
   onShare,
   copyForAiStatus = "idle",
-  hasBackMemo = false,
-  hasImage,
   isFavorite,
   isSubdued = false,
   showCopyForAi = false,
@@ -161,9 +134,14 @@ export default function CardDetailActionBar({
 
   return (
     <section
+      data-card-action="true"
       className={`${actionBarBaseClass} ${
         isSubdued ? actionBarReadingToneClass : actionBarToneClass
       }`}
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
+      onTouchStart={(event) => event.stopPropagation()}
     >
       <button
         type="button"
@@ -185,17 +163,6 @@ export default function CardDetailActionBar({
           AI
         </button>
       ) : null}
-      {hasBackMemo ? (
-        <button
-          type="button"
-          aria-label="裏面メモ全文を開く"
-          title="裏面メモ全文を開く"
-          onClick={onOpenMemo}
-          className={actionButtonClass}
-        >
-          <span aria-hidden="true">📄</span>
-        </button>
-      ) : null}
       <button
         type="button"
         aria-label="編集"
@@ -203,15 +170,6 @@ export default function CardDetailActionBar({
         className={actionButtonClass}
       >
         <PencilIcon />
-      </button>
-      <button
-        type="button"
-        aria-label="画像を開く"
-        onClick={onOpenPhoto}
-        disabled={!hasImage}
-        className={actionButtonClass}
-      >
-        <ImageIcon />
       </button>
       <button
         type="button"

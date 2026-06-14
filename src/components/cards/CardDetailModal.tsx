@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent, TouchEvent, WheelEvent } from "react";
 
+import MarkdownMemo from "@/components/MarkdownMemo";
 import { createCopyForAiMarkdown } from "@/lib/copyForAi";
 import { useCopyForAiFeatureFlag } from "@/lib/featureFlags";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
@@ -10,22 +11,24 @@ import type { Card } from "@/lib/types";
 import { recordUsageEvent } from "@/lib/usageEvents";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
-import CardFace from "./CardFace";
 import CardDetailActionBar from "./CardDetailActionBar";
-import FullscreenImageViewer from "./FullscreenImageViewer";
-import FullscreenMemoViewer from "./FullscreenMemoViewer";
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
-import useCardDetailViewCycle, {
-  type CardDetailViewMode,
-} from "./useCardDetailViewCycle";
+import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 const sideNavButtonClass =
-  "pointer-events-auto absolute top-[54%] z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/38 bg-[#fffaf0]/44 text-3xl font-semibold leading-none text-[#5f513f]/62 opacity-72 shadow-[0_3px_10px_rgba(87,72,52,0.08)] backdrop-blur-md transition hover:bg-[#fffaf0]/72 hover:text-[#5f513f] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:top-1/2 sm:h-12 sm:w-12 sm:border-[#e0d3c0]/80 sm:bg-[#fffaf0]/86 sm:text-4xl sm:text-[#5f513f] sm:opacity-100 sm:shadow-[0_8px_24px_rgba(87,72,52,0.22)] sm:hover:bg-white";
+  "pointer-events-auto fixed top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#e0d3c0]/32 bg-[#fffaf0]/34 text-3xl font-semibold leading-none text-[#5f513f]/54 opacity-62 shadow-[0_3px_10px_rgba(87,72,52,0.06)] backdrop-blur-md transition hover:bg-[#fffaf0]/72 hover:text-[#5f513f] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:h-12 sm:w-12 sm:border-[#e0d3c0]/64 sm:bg-[#fffaf0]/68 sm:text-4xl sm:text-[#5f513f]/72 sm:opacity-76 sm:shadow-[0_8px_24px_rgba(87,72,52,0.14)] sm:hover:bg-white sm:hover:text-[#5f513f] sm:hover:opacity-100";
 const shutterButtonClass =
-  "relative flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
-const detailCardFrameClass =
-  "w-full max-w-[min(350px,calc((100dvh-13rem)*0.69),calc(100vw-2rem))] sm:max-w-[460px]";
-const detailCardAspectClass = "aspect-[3/4.35] sm:aspect-[3/4]";
+  "pointer-events-auto relative z-50 flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 text-xs font-bold text-[#6f6253] shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
+
+function normalizeLinkUrl(linkUrl: string) {
+  const trimmed = linkUrl.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
 
 function debugImageState(message: string, payload: Record<string, unknown>) {
   if (process.env.NODE_ENV !== "production") {
@@ -39,16 +42,13 @@ export default function CardDetailModal({
   deckLabel,
   isFavorite,
   hasMultipleCards,
-  index,
   onClose,
   onDelete,
   onEdit,
   onNext,
-  onNextFullscreenImage,
   onPrevious,
   onShare,
   onToggleFavorite,
-  canGoNextFullscreenImage = false,
   initialViewMode = "front",
 }: {
   card: Card;
@@ -70,16 +70,8 @@ export default function CardDetailModal({
   onShare: () => void;
   onToggleFavorite: () => void;
 }) {
-  const touchStartX = useRef<number | null>(null);
-  const shouldSkipNextClick = useRef(false);
-  const [fullscreenImagePath, setFullscreenImagePath] = useState("");
-  const [fullscreenImageCardId, setFullscreenImageCardId] = useState("");
-  const [isFullscreenPhotoOpen, setIsFullscreenPhotoOpen] = useState(false);
-  const [isFullscreenMemoOpen, setIsFullscreenMemoOpen] = useState(false);
-  const [isResolvingNextFullscreenImage, setIsResolvingNextFullscreenImage] =
-    useState(false);
-  const [isResolvingFullscreenImage, setIsResolvingFullscreenImage] =
-    useState(false);
+  const [viewMode, setViewMode] =
+    useState<CardDetailViewMode>(initialViewMode);
   const isCopyForAiVisible = useCopyForAiFeatureFlag();
   const [copyForAiStatus, setCopyForAiStatus] = useState<
     "copied" | "failed" | "idle" | "working"
@@ -100,23 +92,28 @@ export default function CardDetailModal({
       ? resolvedStorageImage.signedUrl
       : "");
   const backgroundImage = displayImagePath || defaultImageForCard(card);
-  const hasAttachedImage = Boolean(
-    card.imagePath?.trim() || imageStoragePath,
-  );
-  const canOpenFullscreen = Boolean(displayImagePath);
   const imageResolveFailed =
     storageResolutionMatches && resolvedStorageImage.status === "error";
-  const actionBarHasImage = hasAttachedImage;
   const date = formatDate(card.createdAt);
-  const backMemoText = card.backText?.trim() ?? "";
-  const {
-    viewMode,
-    rotationAngle,
-    frontFaceStep,
-    backFaceStep,
-    cycleViewMode,
-  } = useCardDetailViewCycle(initialViewMode);
-  const canOpenBackMemo = viewMode === "back" && Boolean(backMemoText);
+  const linkHref = normalizeLinkUrl(card.linkUrl ?? "");
+  const displayFrontText = card.frontText?.trim() ?? "";
+  const displayFrontComment = card.frontComment?.trim() ?? "";
+  const isFrontView = viewMode === "front";
+  const isBlurExtend = card.imageFitMode === "blurExtend";
+  const frontSurfaceTextClass =
+    backgroundImage.includes("default-paper.webp") || isBlurExtend
+      ? "text-[#2f2a23]"
+      : "text-white";
+  const previousNavPositionClass = "left-3 sm:left-6";
+  const nextNavPositionClass = "right-3 sm:right-6";
+  const frontMediaInsetClass =
+    "inset-x-3 top-[calc(env(safe-area-inset-top)+3.75rem)] bottom-[calc(env(safe-area-inset-bottom)+11.25rem)] sm:inset-x-12 sm:top-[calc(env(safe-area-inset-top)+4.25rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+12rem)]";
+  const frontCaptionBottomClass =
+    "bottom-[calc(env(safe-area-inset-bottom)+10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+11.5rem)]";
+  const backViewBottomPaddingClass =
+    "pb-[calc(env(safe-area-inset-bottom)+11.5rem)] sm:pb-[calc(env(safe-area-inset-bottom)+12rem)]";
+  const canGoNextCard = hasMultipleCards && cardCount > 1;
+  const nextViewModeLabel = isFrontView ? "裏面" : "表面";
 
   useEscapeKey(() => {
     onClose();
@@ -160,29 +157,21 @@ export default function CardDetailModal({
 
   useEffect(() => {
     debugImageState("render values", {
-      actionBarHasImage,
-      canOpenFullscreen,
       cardId: card.id,
       cardImagePath: card.imagePath,
       cardImageStoragePath: card.imageStoragePath,
       displayImagePath,
-      hasAttachedImage,
       imageResolveFailed,
       imageStoragePath,
-      isResolvingFullscreenImage,
       resolvedStorageImage,
     });
   }, [
-    actionBarHasImage,
-    canOpenFullscreen,
     card.id,
     card.imagePath,
     card.imageStoragePath,
     displayImagePath,
-    hasAttachedImage,
     imageResolveFailed,
     imageStoragePath,
-    isResolvingFullscreenImage,
     resolvedStorageImage,
   ]);
 
@@ -252,35 +241,14 @@ export default function CardDetailModal({
     onNext();
   }
 
-  function handleCardTouchStart(event: TouchEvent<HTMLElement>) {
-    touchStartX.current = event.changedTouches[0].clientX;
-    shouldSkipNextClick.current = false;
-  }
-
-  function handleCardTouchEnd(event: TouchEvent<HTMLElement>) {
-    if (touchStartX.current === null) {
-      return;
-    }
-
-    const deltaX = event.changedTouches[0].clientX - touchStartX.current;
-
-    if (Math.abs(deltaX) >= 50) {
-      shouldSkipNextClick.current = true;
-    }
-
-    touchStartX.current = null;
+  function toggleViewMode() {
+    setViewMode((currentViewMode) =>
+      currentViewMode === "front" ? "back" : "front",
+    );
   }
 
   function handleCardClick(event: MouseEvent<HTMLElement>) {
     event.stopPropagation();
-
-    if (shouldSkipNextClick.current) {
-      event.preventDefault();
-      shouldSkipNextClick.current = false;
-      return;
-    }
-
-    cycleViewMode();
   }
 
   function handleDetailBackdropClick(event: MouseEvent<HTMLDivElement>) {
@@ -297,104 +265,6 @@ export default function CardDetailModal({
 
   function stopModalScrollEvent(event: TouchEvent<HTMLElement> | WheelEvent<HTMLElement>) {
     event.stopPropagation();
-  }
-
-  async function openFullscreenPhoto() {
-    const directImagePath = card.imagePath?.trim();
-
-    debugImageState("open requested", {
-      canOpenFullscreen,
-      actionBarHasImage,
-      cardId: card.id,
-      directImagePath,
-      displayImagePath,
-      imageStoragePath,
-    });
-
-    if (directImagePath) {
-      setFullscreenImagePath(directImagePath);
-      setFullscreenImageCardId(card.id);
-      setIsFullscreenPhotoOpen(true);
-      return;
-    }
-
-    if (displayImagePath) {
-      setFullscreenImagePath(displayImagePath);
-      setFullscreenImageCardId(card.id);
-      setIsFullscreenPhotoOpen(true);
-      return;
-    }
-
-    if (!imageStoragePath) {
-      return;
-    }
-
-    setIsResolvingFullscreenImage(true);
-
-    try {
-      debugImageState("signed URL resolve on click start", {
-        cardId: card.id,
-        path: imageStoragePath,
-      });
-
-      const signedUrl =
-        await CardImageStorageRepository.getCachedSignedImageUrl(
-          imageStoragePath,
-        );
-
-      debugImageState("signed URL resolve on click result", {
-        cardId: card.id,
-        hasSignedUrl: Boolean(signedUrl),
-        path: imageStoragePath,
-      });
-
-      setResolvedStorageImage({
-        signedUrl: signedUrl ?? "",
-        status: signedUrl ? "resolved" : "error",
-        storagePath: imageStoragePath,
-      });
-
-      if (signedUrl) {
-        setFullscreenImagePath(signedUrl);
-        setFullscreenImageCardId(card.id);
-        setIsFullscreenPhotoOpen(true);
-      }
-    } catch (error) {
-      console.warn("Life Cards fullscreen image signed URL failed", error);
-      debugImageState("signed URL resolve on click failed", {
-        cardId: card.id,
-        error,
-        path: imageStoragePath,
-      });
-      setResolvedStorageImage({
-        signedUrl: "",
-        status: "error",
-        storagePath: imageStoragePath,
-      });
-    } finally {
-      setIsResolvingFullscreenImage(false);
-    }
-  }
-
-  async function showNextFullscreenImage() {
-    if (!onNextFullscreenImage || isResolvingNextFullscreenImage) {
-      return;
-    }
-
-    setIsResolvingNextFullscreenImage(true);
-
-    try {
-      const nextImage = await onNextFullscreenImage(
-        fullscreenImageCardId || card.id,
-      );
-
-      if (nextImage) {
-        setFullscreenImagePath(nextImage.imageUrl);
-        setFullscreenImageCardId(nextImage.cardId);
-      }
-    } finally {
-      setIsResolvingNextFullscreenImage(false);
-    }
   }
 
   function showCopyForAiStatus(status: "copied" | "failed") {
@@ -431,12 +301,6 @@ export default function CardDetailModal({
     }
   }
 
-  const previousNavPositionClass = "left-[-1.25rem] sm:left-[-3.5rem]";
-  const nextNavPositionClass = "right-[-1.25rem] sm:right-[-3.5rem]";
-  const cardShadowClass =
-    card.imageFitMode === "blurExtend"
-      ? "shadow-[0_28px_90px_rgba(126,107,82,0.2)]"
-      : "shadow-[0_28px_80px_rgba(87,72,52,0.3)]";
   const copyForAiToastMessage =
     copyForAiStatus === "copied"
       ? "プロンプトをコピーしました"
@@ -459,166 +323,256 @@ export default function CardDetailModal({
         onWheel={(event) => event.stopPropagation()}
       />
       <div
-        className="pointer-events-none relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center gap-5 sm:gap-5"
+        className="pointer-events-auto fixed inset-0 z-10 overflow-hidden bg-[#17110d]/90 text-[#332d25]"
         onTouchEnd={stopModalScrollEvent}
         onTouchMove={stopModalScrollEvent}
         onTouchStart={stopModalScrollEvent}
         onWheel={stopModalScrollEvent}
       >
-        <div
-          className={`pointer-events-none relative mx-auto ${detailCardFrameClass}`}
-        >
-          <article
+        {isFrontView ? (
+          <section
+            aria-label="表面の全画面表示"
+            className="absolute inset-0 cursor-default overflow-hidden"
             onClick={handleCardClick}
-            onTouchStart={handleCardTouchStart}
-            onTouchEnd={handleCardTouchEnd}
-            className={`pointer-events-auto relative mx-auto ${detailCardAspectClass} ${detailCardFrameClass} cursor-pointer overflow-hidden rounded-[24px] transition-[max-width,aspect-ratio] duration-500 ease-out [perspective:1000px] ${cardShadowClass}`}
           >
             <div
-              className="absolute inset-0 rounded-[24px] transition-transform duration-500 ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
-              style={{ transform: `rotateY(${rotationAngle}deg)` }}
-            >
-              <div
-                className={`absolute inset-0 [transform-style:preserve-3d] ${
-                  viewMode === "front" ? "z-10" : "pointer-events-none z-0"
+              aria-hidden="true"
+              className="absolute inset-0 scale-110 bg-cover bg-center opacity-58 blur-2xl"
+              style={{ backgroundImage: `url(${backgroundImage})` }}
+            />
+            <div
+              aria-hidden="true"
+              className={`absolute bg-center bg-no-repeat drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)] ${frontMediaInsetClass}`}
+              style={{
+                backgroundImage: `url(${backgroundImage})`,
+                backgroundSize: "contain",
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className={`absolute inset-0 ${
+                frontSurfaceTextClass === "text-white"
+                  ? "bg-gradient-to-t from-black/62 via-black/10 to-black/22"
+                  : "bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
+              }`}
+            />
+            <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]">
+              <span
+                className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md ${
+                  frontSurfaceTextClass === "text-white"
+                    ? "border-white/28 bg-black/22 text-white"
+                    : "border-[#d8c8aa]/70 bg-[#fffaf0]/62 text-[#6f6253]"
                 }`}
-                style={{ transform: `rotateY(${frontFaceStep * 180}deg)` }}
               >
-                <CardFace
-                  backgroundImage={backgroundImage}
-                  backText={card.backText}
-                  date={date}
-                  deckLabel={deckLabel}
-                  face="front"
-                  frontComment={card.frontComment}
-                  frontText={card.frontText}
-                  imageFitMode={card.imageFitMode}
-                  imageFrameMode={card.imageFrameMode}
-                  linkUrl={card.linkUrl}
-                  size="detail"
-                />
-              </div>
-              <div
-                className={`absolute inset-0 [transform-style:preserve-3d] ${
-                  viewMode === "back" ? "z-10" : "pointer-events-none z-0"
+                {deckLabel}
+              </span>
+              <span
+                className={`text-xs font-semibold ${
+                  frontSurfaceTextClass === "text-white"
+                    ? "text-white/78"
+                    : "text-[#6f6253]/78"
                 }`}
-                style={{
-                  transform: `rotateY(${backFaceStep * 180 - 180}deg)`,
-                }}
               >
-                <CardFace
-                  backgroundImage={backgroundImage}
-                  backText={card.backText}
-                  date={date}
-                  deckLabel={deckLabel}
-                  face="back"
-                  frontComment={card.frontComment}
-                  frontText={card.frontText}
-                  imageFitMode={card.imageFitMode}
-                  imageFrameMode={card.imageFrameMode}
-                  linkUrl={card.linkUrl}
-                  size="detail"
-                />
-              </div>
+                {date}
+              </span>
             </div>
-          </article>
-
-          {hasMultipleCards ? (
-            <>
-              <button
-                type="button"
-                aria-label="前へ"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  showPreviousPhoto();
-                }}
-                className={`${sideNavButtonClass} ${previousNavPositionClass}`}
+            {linkHref ? (
+              <a
+                data-card-action="true"
+                href={linkHref}
+                target="_blank"
+                rel="noreferrer noopener"
+                className={`pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 inline-flex items-center justify-center rounded-full border px-3 py-1.5 text-xs font-bold shadow-[0_8px_22px_rgba(0,0,0,0.14)] backdrop-blur-md transition sm:right-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)] ${
+                  frontSurfaceTextClass === "text-white"
+                    ? "border-white/28 bg-black/22 text-white hover:bg-black/34"
+                    : "border-[#d8c8aa]/70 bg-[#fffaf0]/70 text-[#6f6253] hover:bg-[#fffaf0]/92"
+                }`}
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
               >
-                ‹
-              </button>
-              <button
-                type="button"
-                aria-label="次へ"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  showNextPhoto();
-                }}
-                className={`${sideNavButtonClass} ${nextNavPositionClass}`}
-              >
-                ›
-              </button>
-            </>
-          ) : null}
-        </div>
-
-        <div className="pointer-events-auto relative">
-          <CardDetailActionBar
-            copyForAiStatus={copyForAiStatus}
-            hasBackMemo={canOpenBackMemo}
-            hasImage={actionBarHasImage}
-            isFavorite={isFavorite}
-            isSubdued={viewMode === "back"}
-            onClose={onClose}
-            onCopyForAi={handleCopyForAi}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            onOpenMemo={() => setIsFullscreenMemoOpen(true)}
-            onOpenPhoto={openFullscreenPhoto}
-            onShare={onShare}
-            onToggleFavorite={onToggleFavorite}
-            showCopyForAi={isCopyForAiVisible}
-          />
-          {copyForAiToastMessage ? (
-            <p
-              aria-live="polite"
-              className="absolute bottom-[calc(100%+0.5rem)] left-1/2 z-40 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-[#d8c8aa] bg-[#fffaf0]/95 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-[#4f4437] shadow-[0_10px_26px_rgba(87,72,52,0.18)] backdrop-blur-md"
+                Open Link ↗
+              </a>
+            ) : null}
+            <div
+              className={`absolute inset-x-0 ${frontCaptionBottomClass} z-10 mx-auto flex w-full max-w-4xl flex-col gap-2 px-5 text-left sm:px-10 ${frontSurfaceTextClass}`}
             >
-              {copyForAiToastMessage}
-            </p>
-          ) : null}
-        </div>
+              {displayFrontText ? (
+                <h2 className="max-w-3xl text-[clamp(1.35rem,3vw,3.25rem)] font-bold leading-[1.08] drop-shadow-[0_5px_22px_rgba(0,0,0,0.3)]">
+                  {displayFrontText}
+                </h2>
+              ) : (
+                <p className="text-xl font-semibold opacity-75">
+                  表面タイトルなし
+                </p>
+              )}
+              {displayFrontComment ? (
+                <p className="max-w-2xl text-sm font-medium leading-relaxed opacity-88 drop-shadow-[0_3px_14px_rgba(0,0,0,0.24)] sm:text-base">
+                  {displayFrontComment}
+                </p>
+              ) : null}
+            </div>
+          </section>
+        ) : (
+          <section
+            aria-label="裏面メモの全画面表示"
+            className={`absolute inset-0 flex cursor-default flex-col overflow-hidden bg-[#fffaf0] px-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
+            onClick={handleCardClick}
+          >
+            <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-2 border-b border-[#e5d6c2] pb-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9c8a73]">
+                  Back Memo
+                </p>
+                <h2 className="mt-1 truncate text-xl font-bold text-[#332d25] sm:text-3xl">
+                  {displayFrontText || "裏面メモ"}
+                </h2>
+              </div>
+              <div className="flex shrink-0 items-center gap-3 text-xs font-semibold text-[#8c7a62]">
+                <span>{deckLabel}</span>
+                <span>{date}</span>
+              </div>
+            </header>
+            <div
+              data-card-scroll="true"
+              className="card-detail-back-scroll mx-auto mt-4 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[18px] border border-[#eadcc8] bg-white/54 px-4 py-4 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:px-7 sm:py-6"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerMove={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              onTouchMove={(event) => event.stopPropagation()}
+              onWheel={(event) => event.stopPropagation()}
+            >
+              <MarkdownMemo
+                emptyText="裏面メモがありません"
+                readingDensity="detailBack"
+              >
+                {card.backText ?? ""}
+              </MarkdownMemo>
+              <div aria-hidden="true" className="h-6 sm:h-8" />
+            </div>
+            {linkHref ? (
+              <a
+                data-card-action="true"
+                href={linkHref}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="pointer-events-auto mx-auto mt-3 inline-flex shrink-0 items-center justify-center rounded-full border border-[#d8c8aa] bg-white/76 px-4 py-2 text-sm font-bold text-[#6f6253] shadow-[0_8px_22px_rgba(87,72,52,0.1)] transition hover:bg-white"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+              >
+                Open Link ↗
+              </a>
+            ) : null}
+          </section>
+        )}
 
         {hasMultipleCards ? (
-          <div className="pointer-events-auto -mt-1 flex justify-center pb-[env(safe-area-inset-bottom)] sm:-mt-0.5">
+          <>
             <button
               type="button"
-              aria-label="次のカードを見る"
+              aria-label="前へ"
+              onClick={(event) => {
+                event.stopPropagation();
+                showPreviousPhoto();
+              }}
+              className={`${sideNavButtonClass} ${previousNavPositionClass}`}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              aria-label="次へ"
               onClick={(event) => {
                 event.stopPropagation();
                 showNextPhoto();
               }}
+              className={`${sideNavButtonClass} ${nextNavPositionClass}`}
+            >
+              ›
+            </button>
+          </>
+        ) : null}
+
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 bg-gradient-to-t from-[#1b130f]/56 via-[#1b130f]/20 to-transparent px-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-10">
+          <div className="pointer-events-auto relative">
+            <CardDetailActionBar
+              copyForAiStatus={copyForAiStatus}
+              isFavorite={isFavorite}
+              isSubdued={viewMode === "back"}
+              onClose={onClose}
+              onCopyForAi={handleCopyForAi}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              onShare={onShare}
+              onToggleFavorite={onToggleFavorite}
+              showCopyForAi={isCopyForAiVisible}
+            />
+            {copyForAiToastMessage ? (
+              <p
+                aria-live="polite"
+                className="absolute bottom-[calc(100%+0.5rem)] left-1/2 z-40 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-full border border-[#d8c8aa] bg-[#fffaf0]/95 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-[#4f4437] shadow-[0_10px_26px_rgba(87,72,52,0.18)] backdrop-blur-md"
+              >
+                {copyForAiToastMessage}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="pointer-events-auto relative z-50 flex items-center justify-center gap-4">
+            <button
+              type="button"
+              aria-label={`${nextViewModeLabel}へ`}
+              onClick={(event) => {
+                event.stopPropagation();
+                toggleViewMode();
+              }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation();
+              }}
+              onTouchStart={(event) => {
+                event.stopPropagation();
+              }}
               className={shutterButtonClass}
             >
-              <span className="h-[54px] w-[54px] rounded-full border-[5px] border-[#fefbf4] bg-[#f0e4d2] shadow-inner shadow-white/80 sm:h-[60px] sm:w-[60px]" />
+              <span className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-[5px] border-[#fefbf4] bg-[#f0e4d2] text-[11px] leading-none shadow-inner shadow-white/80 sm:h-[60px] sm:w-[60px] sm:text-xs">
+                {nextViewModeLabel}
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-label="次のカードへ"
+              disabled={!canGoNextCard}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (canGoNextCard) {
+                  showNextPhoto();
+                }
+              }}
+              onPointerDown={(event) => {
+                event.stopPropagation();
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation();
+              }}
+              onTouchStart={(event) => {
+                event.stopPropagation();
+              }}
+              className={`${shutterButtonClass} ${
+                canGoNextCard
+                  ? ""
+                  : "cursor-default opacity-45 hover:scale-100 hover:bg-[#fffaf0]/82"
+              }`}
+            >
+              <span className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-[5px] border-[#fefbf4] bg-[#f0e4d2] text-[11px] leading-none shadow-inner shadow-white/80 sm:h-[60px] sm:w-[60px] sm:text-xs">
+                次へ
+              </span>
             </button>
           </div>
-        ) : null}
-
-        {isFullscreenPhotoOpen ? (
-          <FullscreenImageViewer
-            alt={card.frontText ?? ""}
-            canGoNextImage={canGoNextFullscreenImage}
-            imageSrc={fullscreenImagePath}
-            isResolvingNextImage={isResolvingNextFullscreenImage}
-            onBackdropClick={onClose}
-            onClose={() => setIsFullscreenPhotoOpen(false)}
-            onNextImage={showNextFullscreenImage}
-          />
-        ) : null}
-
-        {isFullscreenMemoOpen ? (
-          <FullscreenMemoViewer
-            canGoNext={hasMultipleCards}
-            canGoPrevious={hasMultipleCards}
-            currentIndex={index}
-            memo={backMemoText}
-            onClose={() => setIsFullscreenMemoOpen(false)}
-            onNext={showNextPhoto}
-            onPrevious={showPreviousPhoto}
-            title={card.frontText}
-            totalCount={cardCount}
-          />
-        ) : null}
+        </div>
       </div>
     </>
   );

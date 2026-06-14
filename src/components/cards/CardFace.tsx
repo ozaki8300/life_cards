@@ -53,8 +53,8 @@ const faceSize = {
     title: "text-[1.65rem] leading-tight sm:text-4xl",
     comment: "text-sm leading-6 sm:text-base sm:leading-7",
     date: "text-[11px] sm:text-xs",
-    backContent: "px-4 pb-4 pt-3 sm:px-7 sm:pb-7 sm:pt-6",
-    backMemo: "card-detail-back-scroll overflow-y-auto pb-10 pr-1.5 text-[15px] leading-[1.7] sm:pr-2 sm:text-base sm:leading-7",
+    backContent: "px-4 pb-4 pt-3 sm:px-8 sm:pb-8 sm:pt-7",
+    backMemo: "card-detail-back-scroll overflow-y-auto pb-10 pr-1.5 text-[15px] leading-[1.75] sm:pr-2 sm:text-[17px] sm:leading-8",
   },
 } as const;
 
