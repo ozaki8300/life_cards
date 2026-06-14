@@ -13,7 +13,7 @@ const favoriteActionButtonInactiveClass =
 const deleteActionButtonClass =
   `${actionButtonBaseClass} border-[#e6c9be] bg-[#fff4ef]/84 text-[#9b4b35] hover:bg-white`;
 const actionBarBaseClass =
-  "mb-[env(safe-area-inset-bottom)] flex w-full max-w-[min(390px,calc(100vw-1rem))] flex-nowrap items-center justify-center gap-1 rounded-[22px] border p-1.5 backdrop-blur-md sm:max-w-[min(540px,calc(100vw-1rem))] sm:gap-2 sm:p-2";
+  "flex w-full max-w-[min(390px,calc(100vw-1rem))] flex-nowrap items-center justify-center gap-1 rounded-[22px] border p-1.5 backdrop-blur-md sm:max-w-[min(540px,calc(100vw-1rem))] sm:gap-2 sm:p-2";
 const actionBarToneClass =
   "border-[#e0d3c0] bg-[#fffaf0]/50 shadow-[0_12px_34px_rgba(87,72,52,0.1)]";
 const actionBarReadingToneClass =

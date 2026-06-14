@@ -111,7 +111,7 @@ export default function CardDetailModal({
   const frontCaptionBottomClass =
     "bottom-[calc(env(safe-area-inset-bottom)+10.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+11.5rem)]";
   const backViewBottomPaddingClass =
-    "pb-[calc(env(safe-area-inset-bottom)+11.5rem)] sm:pb-[calc(env(safe-area-inset-bottom)+12rem)]";
+    "pb-[calc(env(safe-area-inset-bottom)+9.25rem)] sm:pb-[calc(env(safe-area-inset-bottom)+11rem)]";
   const canGoNextCard = hasMultipleCards && cardCount > 1;
   const nextViewModeLabel = isFrontView ? "裏面" : "表面";
 
@@ -416,26 +416,26 @@ export default function CardDetailModal({
         ) : (
           <section
             aria-label="裏面メモの全画面表示"
-            className={`absolute inset-0 flex cursor-default flex-col overflow-hidden bg-[#fffaf0] px-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
+            className={`absolute inset-0 flex cursor-default flex-col overflow-hidden bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
             onClick={handleCardClick}
           >
-            <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-2 border-b border-[#e5d6c2] pb-4 sm:flex-row sm:items-end sm:justify-between">
+            <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4">
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#9c8a73]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9c8a73] sm:text-[11px] sm:tracking-[0.22em]">
                   Back Memo
                 </p>
-                <h2 className="mt-1 truncate text-xl font-bold text-[#332d25] sm:text-3xl">
+                <h2 className="mt-0.5 truncate text-lg font-bold leading-tight text-[#332d25] sm:mt-1 sm:text-3xl">
                   {displayFrontText || "裏面メモ"}
                 </h2>
               </div>
-              <div className="flex shrink-0 items-center gap-3 text-xs font-semibold text-[#8c7a62]">
+              <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold leading-tight text-[#8c7a62] sm:gap-3 sm:text-xs">
                 <span>{deckLabel}</span>
                 <span>{date}</span>
               </div>
             </header>
             <div
               data-card-scroll="true"
-              className="card-detail-back-scroll mx-auto mt-4 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[18px] border border-[#eadcc8] bg-white/54 px-4 py-4 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:px-7 sm:py-6"
+              className="card-detail-back-scroll mx-auto mt-2 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[14px] border border-[#eadcc8] bg-white/54 px-3 py-3 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:rounded-[18px] sm:px-7 sm:py-6"
               onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
               onPointerMove={(event) => event.stopPropagation()}
@@ -449,7 +449,7 @@ export default function CardDetailModal({
               >
                 {card.backText ?? ""}
               </MarkdownMemo>
-              <div aria-hidden="true" className="h-6 sm:h-8" />
+              <div aria-hidden="true" className="h-3 sm:h-8" />
             </div>
             {linkHref ? (
               <a
@@ -457,7 +457,7 @@ export default function CardDetailModal({
                 href={linkHref}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="pointer-events-auto mx-auto mt-3 inline-flex shrink-0 items-center justify-center rounded-full border border-[#d8c8aa] bg-white/76 px-4 py-2 text-sm font-bold text-[#6f6253] shadow-[0_8px_22px_rgba(87,72,52,0.1)] transition hover:bg-white"
+                className="pointer-events-auto mx-auto mt-1 inline-flex shrink-0 items-center justify-center rounded-full border border-[#d8c8aa] bg-white/76 px-3 py-1 text-xs font-bold leading-tight text-[#6f6253] shadow-[0_6px_16px_rgba(87,72,52,0.08)] transition hover:bg-white sm:mt-3 sm:px-4 sm:py-2 sm:text-sm"
                 onClick={(event) => event.stopPropagation()}
                 onPointerDown={(event) => event.stopPropagation()}
                 onTouchStart={(event) => event.stopPropagation()}
@@ -495,7 +495,7 @@ export default function CardDetailModal({
           </>
         ) : null}
 
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 bg-gradient-to-t from-[#1b130f]/56 via-[#1b130f]/20 to-transparent px-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-10">
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-1 bg-gradient-to-t from-[#1b130f]/56 via-[#1b130f]/20 to-transparent px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-6 sm:gap-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:pt-10">
           <div className="pointer-events-auto relative">
             <CardDetailActionBar
               copyForAiStatus={copyForAiStatus}
@@ -519,7 +519,7 @@ export default function CardDetailModal({
             ) : null}
           </div>
 
-          <div className="pointer-events-auto relative z-50 flex items-center justify-center gap-4">
+          <div className="pointer-events-auto relative z-50 flex items-center justify-center gap-3 sm:gap-4">
             <button
               type="button"
               aria-label={`${nextViewModeLabel}へ`}
