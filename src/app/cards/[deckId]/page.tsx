@@ -29,6 +29,7 @@ async function canUseSeedInitialData() {
 
 export default async function DeckCardsPage({ params }: Props) {
   const { deckId } = await params;
+  const encodedDeckId = encodeURIComponent(deckId);
   const useSeedInitialData = await canUseSeedInitialData();
   const initialCards = useSeedInitialData ? cards : [];
   const initialDecks = useSeedInitialData ? decks : [];
@@ -42,7 +43,7 @@ export default async function DeckCardsPage({ params }: Props) {
           decks={initialDecks}
         />
       </section>
-      <NewCardFab href={`/cards/${deckId}/new`} />
+      <NewCardFab href={`/cards/${encodedDeckId}/new`} />
     </main>
   );
 }

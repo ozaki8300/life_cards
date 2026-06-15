@@ -1,5 +1,3 @@
-import { notFound } from "next/navigation";
-
 import NewCardForm from "@/components/NewCardForm";
 import { decks } from "@/data/decks/decks";
 
@@ -15,19 +13,16 @@ export function generateStaticParams() {
   }));
 }
 
+export const dynamicParams = true;
+
 export default async function NewDeckCardPage({ params }: Props) {
   const { deckId } = await params;
-  const deck = decks.find((item) => item.id === deckId);
-
-  if (!deck) {
-    notFound();
-  }
+  const encodedDeckId = encodeURIComponent(deckId);
 
   return (
     <NewCardForm
-      backHref={`/cards/${deck.id}`}
-      deckId={deck.id}
-      deckName={deck.name}
+      backHref={`/cards/${encodedDeckId}`}
+      deckId={deckId}
       deckOptions={decks}
     />
   );
