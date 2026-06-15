@@ -110,9 +110,6 @@ create table if not exists public.commons_cards (
   link_url text,
   deck_name text,
   category text,
-  image_path text,
-  image_url text,
-  image_fit_mode text,
   published_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   is_active boolean not null default true,
@@ -154,7 +151,8 @@ create index if not exists commons_cards_category_idx
 - `deck_name` / `category`
   - 公開時点の分類 snapshot。元 deck の ID は原則持たない。
 - `image_path` / `image_url`
-  - 画像参照。Storage 方針が固まるまでは片方に寄せず、設計上の選択肢として残す。
+  - MVP v0 では持たせない、または未使用にする。
+  - Storage RLS が固まるまで Commons で画像共有しない。
 - `published_at`
   - 初回公開日時。
 - `updated_at`
@@ -534,3 +532,478 @@ AI 推薦は MVP 外とし、手動検索・filter・軽い品質指標から始
 - コメント、いいね、フォロー、Deck 共有、AI 推薦は後回し。
 
 Commons は「投稿する場所」ではなく、「良いカードと出会い、自分の未来へ持ち帰る場所」として設計する。
+
+## 12. MVP v0 実装前詳細設計
+
+この section は、上記の思想・設計方針を MVP v0 として実装可能な粒度へ具体化する。
+
+今回の対象は実装計画の明文化のみであり、コード変更、DB 変更、Supabase 設定変更は行わない。
+
+### 12.1 MVP v0 の確定スコープ
+
+MVP v0 でやること:
+
+- `commons_cards` table 設計。
+- `commons_imports` table 設計。
+- RLS SQL draft。
+- 自分のカードを Commons へ公開する。
+- 公開済みカードを非公開化する。
+- Commons 一覧を見る。
+- Commons 詳細を見る。
+- Commons Card を自分の My Cards へ Import する。
+- Import したカードを Reencounter 対象にする。
+
+MVP v0 でやらないこと:
+
+- 画像共有。
+- コメント。
+- いいね。
+- フォロー。
+- ランキング。
+- AI 推薦。
+- 課金。
+- Deck 共有。
+- 共同編集。
+- 元カードとの自動同期。
+- Import 済みカードの自動更新。
+
+MVP v0 の成功条件は、「画像なしでも、共通文脈の良いカードを発見し、自分の My Cards へ安全に取り込み、Reencounter 対象にできる」ことである。
+
+### 12.2 MVP v0 の画像方針
+
+MVP v0 では画像共有しない。
+
+明確な方針:
+
+```txt
+MVP v0 では commons_cards に image_path / image_url を持たせない、または未使用にする。
+Import 時も画像はコピーしない。
+```
+
+理由:
+
+- Storage RLS が複雑になる。
+- private card の画像漏洩リスクがある。
+- Commons の価値検証は画像なしでも可能。
+- App Store 前後の安全性を優先する。
+- 画像は本文よりも著作権・個人情報・授業資料写り込みのリスクが高い。
+
+MVP v0 の公開 preview では、画像が含まれないことを明示する。
+
+将来対応として後回しにするもの:
+
+- Commons 用 public 画像 bucket へ明示コピーする。
+- 公開前に画像を含めるか選択できるようにする。
+- 公開前に画像含有確認を出す。
+- 画像なし公開を default にし、画像付き公開は opt-in にする。
+- private Storage の画像を直接公開せず、Commons 用に別 path へ copy する。
+
+### 12.3 既存 `cards` schema との対応
+
+現行の `Card` 型は [src/lib/types.ts](/home/ozaki/projects/life_cards/src/lib/types.ts:10) で定義されている。
+
+```ts
+export type Card = {
+  id: string;
+  deckId: string;
+  defaultImageKey?: DefaultCardImageKey;
+  imagePath?: string;
+  imageStoragePath?: string;
+  imageFitMode?: CardImageFitMode;
+  imageFrameMode?: CardImageFrameMode;
+  linkUrl?: string;
+  isFavorite?: boolean;
+  frontText?: string;
+  frontComment?: string;
+  backText?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+Supabase の `cards` table は設計上、以下の対応になっている。
+
+| Card field | cards column | Commons Import 方針 |
+| --- | --- | --- |
+| `id` | `id text` | Import 時に新規 ID を発行する。 |
+| `deckId` | `deck_id text` | ユーザーが選ぶ。未選択なら `Commons` deck を作成または利用する。 |
+| user owner | `user_id uuid` | Import 実行者の `auth.uid()` を入れる。 |
+| `frontText` | `front_text text` | `commons_cards.front_text` からコピーする。 |
+| `frontComment` | `front_comment text` | `commons_cards.comment_text` からコピーする。 |
+| `backText` | `back_text text` | `commons_cards.back_memo` からコピーする。 |
+| `linkUrl` | `link_url text` | `commons_cards.link_url` からコピーする。 |
+| `isFavorite` | `is_favorite boolean` | `false` にする。 |
+| `defaultImageKey` | `default_image_key text` | `paper` など既定値にする。 |
+| `imagePath` / `imageStoragePath` | `image_path text` | MVP v0 ではコピーしない。空文字または `null`。 |
+| `imageFitMode` | `image_fit_mode text` | 画像なしでも既存必須挙動に合わせ `cover` を入れてよい。 |
+| `createdAt` | `created_at timestamptz` | Import 時刻。 |
+| `updatedAt` | `updated_at timestamptz` | Import 時刻。 |
+
+注意点:
+
+- `cards.id` は `text` で、primary key は `(user_id, id)`。
+- `deck_id` も `text` で、`decks(user_id, id)` への foreign key を持つ。
+- 現行 repository は `link_url` を扱っているが、古い SQL design document には `link_url` が抜けている箇所がある。Commons 実装前に実 DB schema と migration history を確認する。
+- `source_commons_card_id` を `cards` table に追加するかは未確定。MVP v0 では `commons_imports.imported_card_id` で追跡する方が `cards` schema への影響を小さくできる。
+
+MVP v0 の Import は、テキスト中心 field だけをコピーする。
+
+- コピーする: `front_text`、`front_comment`、`back_text`、`link_url`。
+- Import 時に設定する: `id`、`user_id`、`deck_id`、`created_at`、`updated_at`、`is_favorite=false`。
+- コピーしない: `image_path`、`image_fit_mode` の実画像意味、`default_image_key` の元値、encounter metadata、favorite。
+
+### 12.4 DB schema draft
+
+以下は Supabase SQL として実装可能に近い draft である。今回は実行しない。
+
+#### `commons_cards`
+
+```sql
+create table if not exists public.commons_cards (
+  id uuid primary key default gen_random_uuid(),
+  source_card_id text not null,
+  owner_user_id uuid not null references auth.users(id) on delete cascade,
+  front_text text not null,
+  comment_text text,
+  back_memo text,
+  link_url text,
+  deck_name text,
+  category text,
+  published_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  is_active boolean not null default true,
+  imported_count integer not null default 0 check (imported_count >= 0),
+  view_count integer not null default 0 check (view_count >= 0)
+);
+
+create index if not exists commons_cards_active_published_at_idx
+  on public.commons_cards (is_active, published_at desc);
+
+create index if not exists commons_cards_owner_published_at_idx
+  on public.commons_cards (owner_user_id, published_at desc);
+
+create index if not exists commons_cards_category_idx
+  on public.commons_cards (category);
+```
+
+MVP v0 では `image_path` / `image_url` / `image_fit_mode` を入れない。既存カードに画像があっても Commons snapshot には含めない。
+
+`source_card_id` は公開者の元カード ID だが、閲覧者がこの値から `cards` table を読めてはいけない。Commons の閲覧と Import は `commons_cards` の snapshot だけで完結させる。
+
+#### `commons_imports`
+
+```sql
+create table if not exists public.commons_imports (
+  id uuid primary key default gen_random_uuid(),
+  commons_card_id uuid not null references public.commons_cards(id) on delete cascade,
+  importer_user_id uuid not null references auth.users(id) on delete cascade,
+  imported_card_id text not null,
+  imported_at timestamptz not null default now(),
+  unique (commons_card_id, importer_user_id)
+);
+
+create index if not exists commons_imports_importer_imported_at_idx
+  on public.commons_imports (importer_user_id, imported_at desc);
+
+create index if not exists commons_imports_commons_card_idx
+  on public.commons_imports (commons_card_id);
+```
+
+同一ユーザーが同じ Commons Card を何度も Import できるか:
+
+- MVP v0 では重複 Import を避ける。
+- `unique (commons_card_id, importer_user_id)` を置く。
+- 理由は、誤操作による重複保存と `imported_count` の水増しを防ぐため。
+
+将来、同じカードを複数 deck に入れたい需要が明確になったら、unique 制約を外すか、`target_deck_id` を含む unique に変更する。
+
+### 12.5 RLS SQL draft
+
+以下は draft であり、今回は実行しない。
+
+#### `commons_cards` RLS
+
+```sql
+alter table public.commons_cards enable row level security;
+
+create policy "Commons cards are readable when active"
+  on public.commons_cards
+  for select
+  to authenticated
+  using (
+    is_active = true
+    or owner_user_id = auth.uid()
+  );
+
+create policy "Users can publish their own commons cards"
+  on public.commons_cards
+  for insert
+  to authenticated
+  with check (
+    owner_user_id = auth.uid()
+  );
+
+create policy "Owners can update their commons cards"
+  on public.commons_cards
+  for update
+  to authenticated
+  using (
+    owner_user_id = auth.uid()
+  )
+  with check (
+    owner_user_id = auth.uid()
+  );
+```
+
+MVP v0 では delete policy を作らない。非公開は `is_active = false` で表現する。
+
+`source_card_id` が本人の `cards` に属することは、RLS policy だけに押し込まず、アプリ側または RPC 側で必ず確認する。より堅くするなら publish を RPC 化し、RPC 内で `cards.user_id = auth.uid()` を確認してから `commons_cards` に snapshot insert する。
+
+`update` policy は「所有者だけ更新できる」境界を作るが、更新可能 column の制限までは表現しない。MVP v0 の実装では repository / RPC 側で `is_active` と snapshot field だけを更新対象にし、`owner_user_id` や metrics を client から任意更新させない。
+
+#### `commons_imports` RLS
+
+```sql
+alter table public.commons_imports enable row level security;
+
+create policy "Users can read their own commons imports"
+  on public.commons_imports
+  for select
+  to authenticated
+  using (
+    importer_user_id = auth.uid()
+  );
+
+create policy "Users can create their own commons imports"
+  on public.commons_imports
+  for insert
+  to authenticated
+  with check (
+    importer_user_id = auth.uid()
+  );
+```
+
+MVP v0 では `commons_imports` の update / delete は不要。
+
+注意:
+
+- `cards` table の RLS は絶対に緩めない。
+- `source_card_id` から private `cards` を読めないこと。
+- Commons 閲覧は `commons_cards` snapshot だけで完結すること。
+- `commons_imports` は原則本人だけが読める。全体集計は `commons_cards.imported_count` や将来の server-side aggregation で扱う。
+
+### 12.6 公開 / 更新 / 非公開 flow
+
+#### 公開
+
+```txt
+My Card
+↓
+Commonsへ公開
+↓
+公開内容 preview
+↓
+画像は含まれないことを明示
+↓
+確認
+↓
+source_card_id が自分の cards に属することを確認
+↓
+commons_cards へ snapshot insert
+```
+
+公開 snapshot に含めるもの:
+
+- `source_card_id`
+- `owner_user_id`
+- `front_text`
+- `comment_text`
+- `back_memo`
+- `link_url`
+- `deck_name`
+- `category`
+
+公開 snapshot に含めないもの:
+
+- 画像。
+- favorite。
+- encounter metadata。
+- private deck ID。
+- private Storage path。
+
+#### 更新
+
+```txt
+My Card編集
+↓
+Commonsは自動更新されない
+↓
+公開者が「Commons版を更新」を押す
+↓
+更新内容 preview
+↓
+画像は含まれないことを明示
+↓
+確認
+↓
+commons_cards snapshotを上書き
+```
+
+更新できるのは公開者だけ。元カードを編集しても Commons Card は自動更新されない。
+
+`source_card_id` がすでに削除されている場合は、自動更新できない。公開者に「元カードが見つからないため、Commons 版を更新できません」と表示し、非公開操作は可能にする。
+
+#### 非公開
+
+```txt
+Commons管理
+↓
+非公開
+↓
+確認
+↓
+is_active=false
+```
+
+非公開にしても、既に Import された他人の My Cards は消えない。
+
+これは「贈与されたカードは受け取った人のもの」という Life Cards の思想に沿う。Commons Card は公開者が公開状態を管理するが、Import 後カードは Import したユーザーの独立した My Card である。
+
+### 12.7 Import flow
+
+```txt
+Commons詳細
+↓
+自分のカードに保存
+↓
+保存先 Deck 選択
+↓
+active な commons_cards snapshot を読む
+↓
+cards へ insert
+↓
+commons_imports へ insert
+↓
+commons_cards.imported_count +1
+↓
+My Cards へ遷移
+```
+
+Import の注意:
+
+- Import は snapshot から作る。
+- `source_card_id` ではなく `commons_cards` から読む。
+- Import 後のカードは自分の card。
+- 元 Commons Card が更新されても Import 済みカードは自動更新されない。
+- 元 Commons Card が非公開になっても Import 済みカードは消えない。
+- `is_favorite` は `false`。
+- 画像はコピーしない。
+- deck はユーザーが選ぶ。未選択の場合は `Commons` deck を作成または利用する。
+- `commons_imports` の unique 制約に当たった場合は、既に保存済みであることを UI で伝える。
+
+`imported_count` の increment と `commons_imports` insert は競合しやすいため、実装時は RPC で transaction 化する案を優先する。
+
+RPC 化する場合の責務:
+
+- active な `commons_cards` を読む。
+- duplicate import を確認する。
+- target deck が本人の deck であることを確認する。
+- `cards` に insert する。
+- `commons_imports` に insert する。
+- `commons_cards.imported_count` を increment する。
+
+### 12.8 UI 最小構成
+
+MVP v0 で作る画面:
+
+- Commons 一覧。
+- Commons 詳細。
+- My Card 詳細または編集画面から `Commonsへ公開`。
+- 公開済みカードの `Commons版を更新`。
+- 公開済みカードの `非公開`。
+
+Commons 一覧:
+
+- keyword search は Step 6 でもよい。
+- 最初は active な Commons Card を `published_at desc` で表示する。
+- card preview、deck/category、保存数、作者 display name を表示する。
+
+Commons 詳細:
+
+- Front。
+- Comment。
+- Back Memo。
+- Link。
+- 作者。
+- `自分のカードに保存` button。
+- 画像は含まれないことを必要に応じて注記する。
+
+My Card 詳細 / 編集:
+
+- `Commonsへ公開` button。
+- 既に公開済みなら `Commons版を更新` と `非公開`。
+- 公開 preview で、公開対象 field と画像なしを確認させる。
+
+MVP v0 で入れない UI:
+
+- コメント欄。
+- いいね。
+- フォロー。
+- ランキング。
+- 投稿フィード。
+
+### 12.9 実装順序
+
+安全な順序:
+
+1. SQL draft 作成。
+2. Supabase で schema / RLS 適用。
+3. 型定義追加。
+4. repository 追加。
+5. publish / unpublish 実装。
+6. list / detail 実装。
+7. import 実装。
+8. event logging 追加。
+9. lint / build。
+10. 手動テスト。
+
+この順序にする理由:
+
+- 先に DB / RLS 境界を固める。
+- publish / unpublish を Import より先に作り、公開 snapshot の安全性を確認する。
+- Import は最後に transaction と重複制御を含めて作る。
+- event logging は MVP の体験が通った後に追加する。
+
+### 12.10 手動テスト項目
+
+必須テスト:
+
+- User A が自分のカードを公開できる。
+- User B が Commons 一覧で User A の active Commons Card を見られる。
+- User B が User A の private `cards` を直接読めない。
+- User B が Commons Card を Import できる。
+- Import 後カードは User B の My Cards に入る。
+- Import 後カードの `is_favorite` は `false`。
+- Import 後カードに画像が入らない。
+- User A が元カードを編集しても Commons は自動更新されない。
+- User A が `Commons版を更新` を明示実行した時だけ Commons が変わる。
+- User A が非公開にすると Commons 一覧から消える。
+- User B の Import 済みカードは User A の非公開後も消えない。
+- User B は User A の inactive Commons Card を一覧で見られない。
+- User A は自分の inactive Commons Card を管理画面で見られる。
+- 同じ User B が同じ Commons Card を二重 Import できない、または保存済みとして扱われる。
+- 未ログイン時は Commons 閲覧・Import・公開操作の扱いが仕様通りになる。
+
+未ログイン時の初期推奨:
+
+- Commons 一覧 / 詳細はログイン要求に寄せる。
+- Import、公開、更新、非公開は必ずログイン必須。
+- 将来 SEO や公開閲覧を重視する場合だけ anonymous select を検討する。
+
+### 12.11 既存 schema との懸念点
+
+- `cards.link_url` は実装 repository では使われているが、古い SQL design document には抜けがある。実 DB に column があるか確認が必要。
+- `cards.id` が `text` なので、`commons_cards.source_card_id` と `commons_imports.imported_card_id` も MVP v0 では `text` にする。
+- `cards` の primary key は `(user_id, id)` なので、`imported_card_id` だけでは全体一意ではない。`commons_imports.importer_user_id + imported_card_id` で Import 後カードを特定する。
+- `source_commons_card_id` を `cards` に追加すると便利だが、MVP v0 では `commons_imports` で追跡する方が安全。
+- 画像関連 field は現行 `Card` 型に存在するが、MVP v0 の Commons ではコピーしない。Import されたカードの見た目は default image で成立させる。
