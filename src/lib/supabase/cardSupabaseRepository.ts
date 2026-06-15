@@ -320,7 +320,15 @@ export const CardSupabaseRepository = {
     await persistImageFitMode(client, row.id, row.image_fit_mode);
 
     if (previousImagePath && previousImagePath !== row.image_path) {
-      await removeStoredImagePath(previousImagePath);
+      try {
+        await removeStoredImagePath(previousImagePath);
+      } catch (removeError) {
+        console.warn("Life Cards Supabase previous image cleanup failed", {
+          cardId: row.id,
+          error: supabaseErrorLog(removeError),
+          imagePathKind: imagePathKind(previousImagePath),
+        });
+      }
     }
 
     return fetchCards(client);

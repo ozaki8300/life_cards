@@ -80,8 +80,12 @@ function cardImagePath(
   contentType: CardImageContentType,
 ) {
   const extension = cardImageExtensionsByContentType[contentType];
+  const imageId = globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const uploadedAt = new Date().toISOString().replace(/[^0-9]/g, "");
 
-  return `users/${userId}/cards/${cardId}/front.${extension}`;
+  return `users/${userId}/cards/${cardId}/front-${uploadedAt}-${imageId}.${extension}`;
 }
 
 function imageBodyToBlob(image: Blob | string) {
@@ -190,6 +194,8 @@ export const CardImageStorageRepository = {
     if (error) {
       throw error;
     }
+
+    signedImageUrlCache.delete(scopedPath);
 
     return true;
   },
