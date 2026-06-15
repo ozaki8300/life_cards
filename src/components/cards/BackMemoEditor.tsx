@@ -1,7 +1,10 @@
 import MarkdownMemo from "@/components/MarkdownMemo";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 
 import type { BackMemoMode } from "./cardFormUtils";
+
+const COPY_STATUS_RESET_MS = 1800;
 
 type Props = {
   backMode: BackMemoMode;
@@ -28,6 +31,58 @@ export default function BackMemoEditor({
   onBackTextChange,
   onFocus,
 }: Props) {
+  const [copyStatus, setCopyStatus] = useState("");
+  const copyStatusResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    return () => {
+      if (copyStatusResetTimerRef.current) {
+        clearTimeout(copyStatusResetTimerRef.current);
+        copyStatusResetTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  function clearCopyStatusResetTimer() {
+    if (copyStatusResetTimerRef.current) {
+      clearTimeout(copyStatusResetTimerRef.current);
+      copyStatusResetTimerRef.current = null;
+    }
+  }
+
+  function showCopyStatus(message: string) {
+    clearCopyStatusResetTimer();
+    setCopyStatus(message);
+    copyStatusResetTimerRef.current = setTimeout(() => {
+      setCopyStatus("");
+      copyStatusResetTimerRef.current = null;
+    }, COPY_STATUS_RESET_MS);
+  }
+
+  async function handleCopyBackMemo() {
+    try {
+      await navigator.clipboard.writeText(backText);
+      showCopyStatus("コピーしました");
+    } catch (error) {
+      console.warn("Life Cards Back Memo copy failed", error);
+      showCopyStatus("コピーできませんでした");
+    }
+  }
+
+  function handleClearBackMemo() {
+    const confirmed = window.confirm("本当にBack Memoを削除しますか？");
+
+    if (!confirmed) {
+      return;
+    }
+
+    onBackTextChange("");
+    setCopyStatus("");
+    clearCopyStatusResetTimer();
+  }
+
   function handleBackTextKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.nativeEvent.isComposing || event.key === "Process") {
       return;
@@ -99,10 +154,35 @@ export default function BackMemoEditor({
       onFocusCapture={onFocus}
     >
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
             Back Memo
           </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopyBackMemo}
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/82 px-3 py-2 text-xs font-semibold text-[#6f6253] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+            >
+              📋 コピー
+            </button>
+            <button
+              type="button"
+              disabled={!backText}
+              onClick={handleClearBackMemo}
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#ead7c8] bg-[#fffaf0]/62 px-3 py-2 text-xs font-semibold text-[#8a6254] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              クリア
+            </button>
+            {copyStatus ? (
+              <span
+                aria-live="polite"
+                className="text-xs font-semibold text-[#7d705f]"
+              >
+                {copyStatus}
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="rounded-full border border-[#e0d3c0] bg-[#fffaf0]/95 p-1 shadow-sm backdrop-blur">
