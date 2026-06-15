@@ -30,13 +30,21 @@ export function cardSearchText(card: Card, decks: Deck[]) {
   return normalizeSearchText(searchText);
 }
 
-export function sortCardsByNewest(cards: Card[]) {
+export function sortCardsByRecent(cards: Card[]) {
   return cards
     .map((card, index) => ({ card, index }))
     .sort((a, b) => {
-      const dateCompare = b.card.createdAt.localeCompare(a.card.createdAt);
+      const updatedAtCompare = (b.card.updatedAt || b.card.createdAt).localeCompare(
+        a.card.updatedAt || a.card.createdAt,
+      );
 
-      return dateCompare === 0 ? a.index - b.index : dateCompare;
+      if (updatedAtCompare !== 0) {
+        return updatedAtCompare;
+      }
+
+      const createdAtCompare = b.card.createdAt.localeCompare(a.card.createdAt);
+
+      return createdAtCompare === 0 ? a.index - b.index : createdAtCompare;
     })
     .map(({ card }) => card);
 }

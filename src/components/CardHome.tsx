@@ -14,7 +14,7 @@ import TradingCardGrid from "./cards/TradingCardGrid";
 import {
   cardSearchText,
   keywordsFor,
-  sortCardsByNewest,
+  sortCardsByRecent,
 } from "./cards/cardHomeUtils";
 import useCardHomeData, {
   type CardHomeLoadStatus,
@@ -78,7 +78,7 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
             return keywords.every((keyword) => searchText.includes(keyword));
           });
 
-    return sortCardsByNewest(filteredCards);
+    return sortCardsByRecent(filteredCards);
   }, [activeTab, allDecks, favoriteIds, scopedCards, searchQuery]);
   const activeDeckName = useMemo(() => {
     if (!activeDeckId) {

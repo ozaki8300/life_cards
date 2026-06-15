@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import type { Card, Deck } from "@/lib/types";
 
+import { sortCardsByRecent } from "./cardHomeUtils";
 import TradingCardGrid from "./TradingCardGrid";
 
 type Props = {
@@ -23,10 +24,6 @@ type DeckCardGroup = {
   deckId: string;
   deckName: string;
 };
-
-function cardTime(card: Card) {
-  return new Date(card.updatedAt || card.createdAt).getTime();
-}
 
 function deckLabelFor(deckId: string, decksById: Map<string, Deck>) {
   return (
@@ -59,7 +56,7 @@ export default function CardMatrixView({
 
     return Array.from(cardsByDeckId.entries())
       .map(([deckId, deckCards]) => ({
-        cards: [...deckCards].sort((left, right) => cardTime(right) - cardTime(left)),
+        cards: sortCardsByRecent(deckCards),
         deckId,
         deckName: deckLabelFor(deckId, decksById),
       }))
