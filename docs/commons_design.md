@@ -1007,3 +1007,316 @@ MVP v0 で入れない UI:
 - `cards` の primary key は `(user_id, id)` なので、`imported_card_id` だけでは全体一意ではない。`commons_imports.importer_user_id + imported_card_id` で Import 後カードを特定する。
 - `source_commons_card_id` を `cards` に追加すると便利だが、MVP v0 では `commons_imports` で追跡する方が安全。
 - 画像関連 field は現行 `Card` 型に存在するが、MVP v0 の Commons ではコピーしない。Import されたカードの見た目は default image で成立させる。
+
+## 13. `share_cards` 拡張案の調査と比較
+
+Commons は `commons_cards` という新 table ではなく、既存の Share Card snapshot に public pool 用の flag を追加して実装できる可能性がある。
+
+この section では、現行の `share_cards` / share token 実装を調査し、`share_cards` 拡張案と `commons_cards` 別 table 案を比較する。
+
+今回もコード変更、DB 変更、Supabase 設定変更は行わない。
+
+### 13.1 現行 `share_cards` table の schema
+
+現行 SQL draft は [docs/share_people_card_apply_sql_v1.md](/home/ozaki/projects/life_cards/docs/share_people_card_apply_sql_v1.md:62) にある。
+
+```sql
+create table if not exists public.share_cards (
+  token text primary key,
+  creator_user_id uuid references auth.users(id) on delete set null,
+  creator_label text not null,
+  source_card_id text,
+  share_type text not null default 'card',
+  card_payload jsonb not null,
+  expires_at timestamptz not null,
+  view_count integer not null default 0 check (view_count >= 0),
+  import_count integer not null default 0 check (import_count >= 0),
+  last_viewed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+```
+
+補足:
+
+- primary key は `token`。
+- `creator_user_id` は作成者。`on delete set null` のため、アカウント削除後に orphan row になり得る。
+- `creator_label` は共有時点の表示名 snapshot。
+- `source_card_id` は creator 側の元カード ID。
+- `share_type` は現行 check constraint では `card` / `people`。
+- `card_payload` は共有時点の snapshot。
+- `expires_at` は必須。
+- `view_count` / `import_count` / `last_viewed_at` を持つ。
+- `revoked` や `is_active` は現行 schema にはない。
+
+### 13.2 `card_payload` の snapshot 内容
+
+現行 payload 型は [src/lib/shareCardPayload.ts](/home/ozaki/projects/life_cards/src/lib/shareCardPayload.ts:9) にある。
+
+```ts
+export type ShareCardPayload = {
+  schemaVersion: 1;
+  shareMode: "withImage" | "textOnly";
+  card: {
+    frontText?: string;
+    frontComment?: string;
+    backText?: string;
+    defaultImageKey?: DefaultCardImageKey;
+    linkUrl?: string;
+    imagePath?: string;
+    imageFitMode: CardImageFitMode;
+    imageFrameMode?: CardImageFrameMode;
+    createdAt: string;
+    updatedAt: string;
+  };
+  creator: {
+    label: string;
+  };
+};
+```
+
+保持しているもの:
+
+- front text。
+- front comment。
+- back text。
+- link URL。
+- default image key。
+- image path。
+- image fit mode。
+- image frame mode。
+- card created / updated。
+- creator label。
+- share mode。
+
+保持していないもの:
+
+- deck ID。
+- deck name。
+- category。
+- favorite。
+- encounter metadata。
+- owner profile の live reference。
+- Commons 用 moderation status。
+
+現行 payload は Commons とかなり近い snapshot だが、Commons MVP v0 で欲しい `deck_name` / `category` / moderation / permanent publish state は持っていない。また、画像を持てる `withImage` 設計があるため、Commons v0 の「画像なし」方針とは明示的に分ける必要がある。
+
+### 13.3 share 作成・更新の実装
+
+現行の share 作成は [src/lib/supabase/shareCardSupabaseRepository.ts](/home/ozaki/projects/life_cards/src/lib/supabase/shareCardSupabaseRepository.ts:87) にある。
+
+動き:
+
+1. login user を取得する。
+2. `createShareCardPayload(card, creatorLabel, shareMode)` で snapshot を作る。
+3. 同じ `creator_user_id`、`source_card_id`、`share_type` の未期限切れ row を探す。
+4. 見つかれば既存 token を再利用し、`card_payload` と `creator_label` を update する。
+5. なければ新 token を作り、`expires_at = now + 7 days` で insert する。
+6. share URL は `/share/{token}`。
+
+重要な違い:
+
+- 現行 share は「同じカードの有効な共有 token を再利用し、payload を更新する」。
+- Commons は「公開 pool 上の公開 snapshot」を安定して管理したい。
+- Commons を `share_cards` に混ぜる場合、この token reuse logic が Commons row に誤って作用しないよう `share_type` や `visibility` 条件を追加する必要がある。
+
+### 13.4 expires / revoked / active の扱い
+
+現行:
+
+- `expires_at` は必須。
+- lookup 時に `expires_at > now()` を必ず確認する。
+- 期限切れ row は expired として扱う。
+- `revoked` はない。
+- `is_active` はない。
+- delete policy は creator に許可されている SQL draft だが、revoke UI は open question。
+
+Commons との違い:
+
+- Share Card は期限付きの一時共有。
+- Commons Card は原則、公開者が非公開にするまで永続公開。
+- Commons には `is_active` / `published_at` / `updated_at` が必要。
+- Commons に `expires_at` 必須は概念的に合わない。`expires_at null` を許すか、遠い未来日時を入れる必要が出る。
+
+`share_cards` を Commons に拡張するなら必要になる変更:
+
+- `expires_at` nullable 化、または `publish_mode` による扱い分岐。
+- `is_public_pool boolean` または `visibility text` の追加。
+- `is_active boolean` / `published_at` / `updated_at` の追加。
+- `share_type` check に `commons` を追加するか、`share_type` と `visibility` を分離する。
+- token reuse lookup から Commons row を除外する条件追加。
+
+### 13.5 token URL と RLS の設計
+
+現行 RLS draft:
+
+```sql
+create policy "share_cards_select_created"
+  on public.share_cards
+  for select
+  using (creator_user_id = auth.uid());
+
+create policy "share_cards_insert_created"
+  on public.share_cards
+  for insert
+  with check (creator_user_id = auth.uid());
+
+create policy "share_cards_update_created"
+  on public.share_cards
+  for update
+  using (creator_user_id = auth.uid())
+  with check (creator_user_id = auth.uid());
+
+create policy "share_cards_delete_created"
+  on public.share_cards
+  for delete
+  using (creator_user_id = auth.uid());
+```
+
+一般閲覧者向けに `share_cards` table を直接 public select で開けない方針になっている。
+
+現行 `/share/[token]` は [src/app/share/[token]/page.tsx](/home/ozaki/projects/life_cards/src/app/share/[token]/page.tsx:319) で service role client を使って token lookup している。
+
+lookup の特徴:
+
+- `.from("share_cards").select("creator_label,card_payload,expires_at").eq("token", token).maybeSingle()`
+- service role で RLS を bypass する。
+- app 側で `expires_at` を確認する。
+- 返す情報は `creator_label` と `card_payload` と `expires_at` に絞る。
+- `creator_user_id` は表示に返さない。
+
+Commons への示唆:
+
+- token を知っている人だけが見る一時共有と、一覧検索できる public pool は access pattern が違う。
+- Commons 一覧を `share_cards` で実現するなら、token lookup ではなく active Commons row の一覧 query が必要。
+- その一覧 query を service role route でやるか、RLS で authenticated select を開けるかを決める必要がある。
+- `share_cards` を直接 public readable にするのは、既存共有 payload 全体を危険にさらすため避けるべき。
+
+### 13.6 未ログイン閲覧とログイン済み Import の導線
+
+現行 `/share/[token]` の導線:
+
+- 未ログインでも `/share/[token]` を開いて preview できる。
+- 未ログインの場合、`SharedCardReceiveActions` で text-only card を client repository に保存できる。
+- 画像付き保存は login を促す。
+- ログイン済みの場合、server action `importSharedCard` で `cards` table へ insert する。
+- server action は `getShareCardState(token)` で再度 token / expiry / payload を確認する。
+- Import 後は `/cards` へ redirect。
+
+現行 Import の内容:
+
+- `front_text`、`front_comment`、`back_text`、`link_url` をコピー。
+- `is_favorite=false`。
+- deck は `uncategorized` を upsert して保存。
+- `default_image_key` は payload からコピー。
+- `image_path` は画像付き Import の場合、共有画像を recipient storage へ copy して保存。
+- `import_count` を increment。
+
+Commons MVP v0 との違い:
+
+- Commons はログイン済み Import を前提にした方がよい。
+- Commons v0 では画像をコピーしない。
+- Commons は保存先 deck 選択、または `Commons` deck を使う。
+- Commons は `commons_imports` のような Import 履歴で重複制御したい。
+- 現行 share Import は token 単位で、誰が Import したかを保持しない。
+
+### 13.7 `share_cards` を Commons 用に拡張できるか
+
+技術的には可能。
+
+理由:
+
+- `share_cards` はすでに snapshot を持つ。
+- creator user を持つ。
+- view / import count を持つ。
+- token URL と preview / import flow がある。
+- payload mapper と parser を reuse できる。
+
+ただし、MVP v0 の本命実装としては慎重に扱うべきである。
+
+必要な拡張例:
+
+```sql
+alter table public.share_cards
+  add column if not exists visibility text not null default 'token';
+
+alter table public.share_cards
+  add column if not exists is_active boolean not null default true;
+
+alter table public.share_cards
+  add column if not exists published_at timestamptz;
+
+alter table public.share_cards
+  add column if not exists updated_at timestamptz not null default now();
+
+alter table public.share_cards
+  add column if not exists category text;
+
+alter table public.share_cards
+  add column if not exists deck_name text;
+```
+
+追加で必要になる設計:
+
+- `visibility in ('token', 'commons')` の check。
+- `expires_at` を nullable にするか、Commons では無視する規約。
+- `share_type` と `visibility` の責務分離。
+- Commons 一覧用 index。
+- Commons 用 RLS / server route。
+- token share の reuse lookup が `visibility = 'token'` のみを対象にする修正。
+- Commons v0 では payload `shareMode = 'textOnly'` に固定する制約。
+- Commons Import 履歴 table の追加。
+
+この時点で、`share_cards` は「一時共有」と「Commons 公開」の両方を背負う table になり、概念が重くなる。
+
+### 13.8 `commons_cards` 別 table 案と `share_cards` 拡張案の比較
+
+| 観点 | `share_cards` 拡張案 | `commons_cards` 別 table 案 |
+| --- | --- | --- |
+| RLS 安全性 | 既存の token 共有 payload と Commons 一覧が同居するため policy が複雑になる。誤って token share を一覧公開するリスクがある。 | My Cards、Share、Commons の境界が分かれる。Commons 用に active select policy を設計しやすい。 |
+| 実装量 | payload mapper、token preview、Import の一部を reuse できる。ただし expiry nullable、visibility、reuse lookup 修正、一覧 query、RLS 分岐が必要。 | 新 repository / table が必要。ただし Commons の要件に合わせた schema にできる。 |
+| 既存共有機能への影響 | 高い。`share_cards` schema と作成・更新 logic を変えるため、既存 QR / URL 共有に regression risk がある。 | 低い。既存 share token flow をほぼ触らずに済む。payload mapper の考え方だけ reuse できる。 |
+| 一時共有と Commons 公開の概念分離 | 弱い。token share と public pool が同じ table になり、`expires_at` と `is_active` が混在する。 | 強い。Share Card は贈与、一時共有。Commons Card は公開 pool として整理できる。 |
+| 将来の検索・カテゴリ・指標 | 追加 column と index で可能。ただし token share には不要な column が増える。 | 最初から `category`、`deck_name`、`imported_count`、`view_count`、将来の moderation を置きやすい。 |
+| 期限切れ共有と永続公開の違い | `expires_at` 必須設計と衝突する。nullable 化または visibility 別解釈が必要。 | Commons は `is_active`、Share は `expires_at` と分けられる。 |
+| Import 設計 | 現行 share Import を流用できるが、Commons の重複制御や deck 選択とはズレる。 | `commons_imports` で Import 履歴と重複制御を設計しやすい。 |
+| 画像方針 | 現行 payload は `withImage` を持つため、Commons v0 では text-only 固定制約が必要。 | v0 schema から画像を外せる。Storage RLS の問題を避けやすい。 |
+| moderation | `share_cards` に moderation column を足すと一時共有にも概念が混ざる。 | Commons 専用に `moderation_status` 等を追加しやすい。 |
+
+### 13.9 結論
+
+推奨は `commons_cards` 別 table 案。
+
+理由:
+
+- 現行 `share_cards` は「token を知っている人が期限内に見る一時共有」に最適化されている。
+- Commons は「一覧検索される永続的な公開 pool」であり、access pattern が違う。
+- `expires_at` 必須、token primary key、token reuse logic、画像あり payload は Commons MVP v0 と噛み合わない。
+- `share_cards` を拡張すると、既存 URL / QR 共有の regression risk が高い。
+- Commons は将来、category、search、moderation、quality metrics、Import history を持つため、専用 table の方が育てやすい。
+- RLS 境界を `cards` / `share_cards` / `commons_cards` で分ける方が安全。
+
+ただし、実装資産は reuse する。
+
+Reuse したいもの:
+
+- `ShareCardPayload` の schemaVersion 付き snapshot という考え方。
+- card -> snapshot mapper の方針。
+- `creator_label` を snapshot として持つ方針。
+- Import 時に `cards` へ新規 insert し、`is_favorite=false` にする方針。
+- `source_card_id` を Import 側で private card lookup に使わない方針。
+
+Reuse しないもの:
+
+- `share_cards` table そのもの。
+- `/share/[token]` URL。
+- `expires_at` による期限管理。
+- token reuse logic。
+- 画像付き share payload / image copy flow。
+
+最終判断:
+
+```txt
+Commons MVP v0 は commons_cards 別 table で実装する。
+share_cards は一時共有 / People Card 交換のために維持する。
+Commons では share_cards の snapshot 設計思想だけを reuse し、table と RLS は分離する。
+```
