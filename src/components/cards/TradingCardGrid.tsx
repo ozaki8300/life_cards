@@ -306,14 +306,14 @@ export default function TradingCardGrid({
     updateActiveRailIndex,
   ]);
 
-  function scrollToRailIndex(index: number) {
+  function scrollToRailIndex(index: number, behavior: ScrollBehavior = "smooth") {
     const rail = railRef.current;
     const track = rail?.firstElementChild;
     const item = track?.children[index] as HTMLElement | undefined;
 
     setActiveRailIndex(index);
     item?.scrollIntoView({
-      behavior: "smooth",
+      behavior,
       block: "nearest",
       inline: "start",
     });
@@ -324,6 +324,12 @@ export default function TradingCardGrid({
       return;
     }
 
+    const isLoopingToStart =
+      shouldLoopRail &&
+      direction === 1 &&
+      activeRailIndex === displayCards.length - 1;
+    const isLoopingToEnd =
+      shouldLoopRail && direction === -1 && activeRailIndex === 0;
     const nextIndex = shouldLoopRail
       ? (activeRailIndex + direction + displayCards.length) %
         displayCards.length
@@ -331,8 +337,12 @@ export default function TradingCardGrid({
           Math.max(activeRailIndex + direction, 0),
           displayCards.length - 1,
         );
+    const scrollBehavior =
+      showCarouselIndicator && (isLoopingToStart || isLoopingToEnd)
+        ? "auto"
+        : "smooth";
 
-    scrollToRailIndex(nextIndex);
+    scrollToRailIndex(nextIndex, scrollBehavior);
   }
 
   function maxRailScrollLeft(rail: HTMLDivElement) {
@@ -353,11 +363,14 @@ export default function TradingCardGrid({
     }
 
     if (direction === -1) {
-      scrollToRailIndex(displayCards.length - 1);
+      scrollToRailIndex(
+        displayCards.length - 1,
+        showCarouselIndicator ? "auto" : "smooth",
+      );
       return true;
     }
 
-    scrollToRailIndex(0);
+    scrollToRailIndex(0, showCarouselIndicator ? "auto" : "smooth");
     return true;
   }
 

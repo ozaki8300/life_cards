@@ -7,7 +7,7 @@ import type { Card, Deck } from "@/lib/types";
 
 import TradingCardGrid from "./TradingCardGrid";
 
-const REENCOUNTER_DISPLAY_LIMIT = 3;
+const REENCOUNTER_DISPLAY_LIMIT = 4;
 
 type Props = {
   title: string;
