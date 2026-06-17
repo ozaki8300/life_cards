@@ -16,6 +16,8 @@ import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 const shutterButtonClass =
   "pointer-events-auto relative z-50 flex h-[72px] w-[72px] items-center justify-center rounded-full border border-[#d7c8b2] bg-[#fffaf0]/82 text-xs font-bold text-[#6f6253] shadow-[0_18px_42px_rgba(87,72,52,0.22)] backdrop-blur-md transition hover:scale-[1.03] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] focus:ring-offset-4 focus:ring-offset-[#f7f3ea] active:scale-95 sm:h-20 sm:w-20";
+const closeButtonClass =
+  "pointer-events-auto fixed right-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 flex h-12 w-12 items-center justify-center rounded-full border border-white/22 bg-black/34 text-3xl font-light leading-none text-white shadow-[0_12px_32px_rgba(0,0,0,0.24)] backdrop-blur-md transition hover:bg-black/48 focus:outline-none focus:ring-2 focus:ring-white/74 active:scale-95 sm:right-6 sm:top-[calc(env(safe-area-inset-top)+1rem)]";
 const menuItemClass =
   "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-bold text-[#5f5346] transition hover:bg-[#fff5e6] focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]";
 const destructiveMenuItemClass =
@@ -258,8 +260,23 @@ export default function CardDetailModal({
     setIsMenuOpen(false);
   }
 
-  function stopCardSurfaceEvent(event: MouseEvent<HTMLElement>) {
+  function stopCardActionEvent(event: MouseEvent<HTMLElement>) {
     event.stopPropagation();
+  }
+
+  function handleCardSurfaceClick(event: MouseEvent<HTMLElement>) {
+    const target = event.target;
+
+    event.stopPropagation();
+
+    if (
+      target instanceof Element &&
+      target.closest("a,button,input,textarea,select,[data-card-action='true']")
+    ) {
+      return;
+    }
+
+    toggleViewMode();
   }
 
   function handleDetailBackdropClick(event: MouseEvent<HTMLDivElement>) {
@@ -361,10 +378,25 @@ export default function CardDetailModal({
         onTouchStart={stopModalScrollEvent}
         onWheel={stopModalScrollEvent}
       >
+        <button
+          type="button"
+          aria-label="詳細画面を閉じる"
+          className={closeButtonClass}
+          onClick={(event) => {
+            event.stopPropagation();
+            onClose();
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          onPointerUp={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
+        >
+          ×
+        </button>
         {isFrontView ? (
           <section
             aria-label="表面の全画面表示"
-            className="absolute inset-0 cursor-default overflow-hidden"
+            className="absolute inset-0 cursor-pointer overflow-hidden"
+            onClick={handleCardSurfaceClick}
           >
             <div
               aria-hidden="true"
@@ -374,7 +406,6 @@ export default function CardDetailModal({
             <div
               aria-hidden="true"
               className={`absolute bg-center bg-no-repeat drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)] ${frontMediaInsetClass}`}
-              onClick={stopCardSurfaceEvent}
               style={{
                 backgroundImage: `url(${backgroundImage})`,
                 backgroundSize: "contain",
@@ -390,7 +421,6 @@ export default function CardDetailModal({
             />
             <div
               className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]"
-              onClick={stopCardSurfaceEvent}
             >
               <span
                 className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md ${
@@ -413,7 +443,6 @@ export default function CardDetailModal({
             </div>
             <div
               className={`absolute inset-x-0 ${frontCaptionBottomClass} z-10 mx-auto flex w-full max-w-4xl flex-col gap-2 px-5 text-left sm:px-10 ${frontSurfaceTextClass}`}
-              onClick={stopCardSurfaceEvent}
             >
               {displayFrontText ? (
                 <h2 className="max-w-3xl text-[clamp(1.35rem,3vw,3.25rem)] font-bold leading-[1.08] drop-shadow-[0_5px_22px_rgba(0,0,0,0.3)]">
@@ -434,11 +463,11 @@ export default function CardDetailModal({
         ) : (
           <section
             aria-label="裏面メモの全画面表示"
-            className={`absolute inset-0 flex cursor-default flex-col overflow-hidden bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
+            className={`absolute inset-0 flex cursor-pointer flex-col overflow-hidden bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
+            onClick={handleCardSurfaceClick}
           >
             <header
               className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4"
-              onClick={stopCardSurfaceEvent}
             >
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9c8a73] sm:text-[11px] sm:tracking-[0.22em]">
@@ -456,7 +485,6 @@ export default function CardDetailModal({
             <div
               data-card-scroll="true"
               className="card-detail-back-scroll mx-auto mt-2 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[14px] border border-[#eadcc8] bg-white/54 px-3 py-3 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:rounded-[18px] sm:px-7 sm:py-6"
-              onClick={(event) => event.stopPropagation()}
               onPointerDown={(event) => event.stopPropagation()}
               onPointerMove={(event) => event.stopPropagation()}
               onPointerUp={(event) => event.stopPropagation()}
@@ -480,7 +508,7 @@ export default function CardDetailModal({
               <div
                 data-card-action="true"
                 className="absolute bottom-[calc(100%+0.75rem)] left-0 z-50 w-[min(260px,calc(100vw-1rem))] rounded-2xl border border-[#e0d3c0] bg-[#fffaf0]/96 p-2 text-[#4f4437] shadow-[0_18px_48px_rgba(45,35,24,0.24)] backdrop-blur-md sm:left-1/2 sm:-translate-x-1/2"
-                onClick={(event) => event.stopPropagation()}
+                onClick={stopCardActionEvent}
                 onPointerDown={(event) => event.stopPropagation()}
                 onPointerUp={(event) => event.stopPropagation()}
                 onTouchStart={(event) => event.stopPropagation()}
