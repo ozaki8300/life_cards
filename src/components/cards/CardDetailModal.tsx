@@ -116,6 +116,11 @@ export default function CardDetailModal({
     "pb-[calc(env(safe-area-inset-bottom)+5.75rem)] sm:pb-[calc(env(safe-area-inset-bottom)+6.75rem)]";
   const canNavigateCards = hasMultipleCards && cardCount > 1;
   const nextViewModeLabel = isFrontView ? "裏面" : "表面";
+  const flipStageClass = `absolute inset-0 [-webkit-transform-style:preserve-3d] [transform-style:preserve-3d] transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none ${
+    isFrontView ? "[transform:rotateY(0deg)]" : "[transform:rotateY(180deg)]"
+  }`;
+  const flipFaceClass =
+    "absolute inset-0 overflow-hidden [-webkit-backface-visibility:hidden] [backface-visibility:hidden]";
 
   useEscapeKey(() => {
     onClose();
@@ -392,115 +397,118 @@ export default function CardDetailModal({
         >
           ×
         </button>
-        {isFrontView ? (
-          <section
-            aria-label="表面の全画面表示"
-            className="absolute inset-0 cursor-pointer overflow-hidden"
-            onClick={handleCardSurfaceClick}
-          >
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 scale-110 bg-cover bg-center opacity-58 blur-2xl"
-              style={{ backgroundImage: `url(${backgroundImage})` }}
-            />
-            <div
-              aria-hidden="true"
-              className={`absolute bg-center bg-no-repeat drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)] ${frontMediaInsetClass}`}
-              style={{
-                backgroundImage: `url(${backgroundImage})`,
-                backgroundSize: "contain",
-              }}
-            />
-            <div
-              aria-hidden="true"
-              className={`absolute inset-0 ${
-                frontSurfaceTextClass === "text-white"
-                  ? "pointer-events-none bg-gradient-to-t from-black/62 via-black/10 to-black/22"
-                  : "pointer-events-none bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
+        <div className="absolute inset-0 [-webkit-perspective:1400px] [perspective:1400px]">
+          <div className={flipStageClass}>
+            <section
+              aria-label="表面の全画面表示"
+              aria-hidden={!isFrontView}
+              className={`${flipFaceClass} cursor-pointer ${
+                isFrontView ? "pointer-events-auto" : "pointer-events-none"
               }`}
-            />
-            <div
-              className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]"
+              onClick={handleCardSurfaceClick}
             >
-              <span
-                className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md ${
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 scale-110 bg-cover bg-center opacity-58 blur-2xl"
+                style={{ backgroundImage: `url(${backgroundImage})` }}
+              />
+              <div
+                aria-hidden="true"
+                className={`absolute bg-center bg-no-repeat drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)] ${frontMediaInsetClass}`}
+                style={{
+                  backgroundImage: `url(${backgroundImage})`,
+                  backgroundSize: "contain",
+                }}
+              />
+              <div
+                aria-hidden="true"
+                className={`absolute inset-0 ${
                   frontSurfaceTextClass === "text-white"
-                    ? "border-white/28 bg-black/22 text-white"
-                    : "border-[#d8c8aa]/70 bg-[#fffaf0]/62 text-[#6f6253]"
+                    ? "pointer-events-none bg-gradient-to-t from-black/62 via-black/10 to-black/22"
+                    : "pointer-events-none bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
                 }`}
-              >
-                {deckLabel}
-              </span>
-              <span
-                className={`text-xs font-semibold ${
-                  frontSurfaceTextClass === "text-white"
-                    ? "text-white/78"
-                    : "text-[#6f6253]/78"
-                }`}
-              >
-                {date}
-              </span>
-            </div>
-            <div
-              className={`absolute inset-x-0 ${frontCaptionBottomClass} z-10 mx-auto flex w-full max-w-4xl flex-col gap-2 px-5 text-left sm:px-10 ${frontSurfaceTextClass}`}
-            >
-              {displayFrontText ? (
-                <h2 className="max-w-3xl text-[clamp(1.35rem,3vw,3.25rem)] font-bold leading-[1.08] drop-shadow-[0_5px_22px_rgba(0,0,0,0.3)]">
-                  {displayFrontText}
-                </h2>
-              ) : (
-                <p className="text-xl font-semibold opacity-75">
-                  表面タイトルなし
-                </p>
-              )}
-              {displayFrontComment ? (
-                <p className="max-w-2xl text-sm font-medium leading-relaxed opacity-88 drop-shadow-[0_3px_14px_rgba(0,0,0,0.24)] sm:text-base">
-                  {displayFrontComment}
-                </p>
-              ) : null}
-            </div>
-          </section>
-        ) : (
-          <section
-            aria-label="裏面メモの全画面表示"
-            className={`absolute inset-0 flex cursor-pointer flex-col overflow-hidden bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
-            onClick={handleCardSurfaceClick}
-          >
-            <header
-              className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4"
-            >
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9c8a73] sm:text-[11px] sm:tracking-[0.22em]">
-                  Back Memo
-                </p>
-                <h2 className="mt-0.5 truncate text-lg font-bold leading-tight text-[#332d25] sm:mt-1 sm:text-3xl">
-                  {displayFrontText || "裏面メモ"}
-                </h2>
+              />
+              <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]">
+                <span
+                  className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md ${
+                    frontSurfaceTextClass === "text-white"
+                      ? "border-white/28 bg-black/22 text-white"
+                      : "border-[#d8c8aa]/70 bg-[#fffaf0]/62 text-[#6f6253]"
+                  }`}
+                >
+                  {deckLabel}
+                </span>
+                <span
+                  className={`text-xs font-semibold ${
+                    frontSurfaceTextClass === "text-white"
+                      ? "text-white/78"
+                      : "text-[#6f6253]/78"
+                  }`}
+                >
+                  {date}
+                </span>
               </div>
-              <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold leading-tight text-[#8c7a62] sm:gap-3 sm:text-xs">
-                <span>{deckLabel}</span>
-                <span>{date}</span>
-              </div>
-            </header>
-            <div
-              data-card-scroll="true"
-              className="card-detail-back-scroll mx-auto mt-2 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[14px] border border-[#eadcc8] bg-white/54 px-3 py-3 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:rounded-[18px] sm:px-7 sm:py-6"
-              onPointerDown={(event) => event.stopPropagation()}
-              onPointerMove={(event) => event.stopPropagation()}
-              onPointerUp={(event) => event.stopPropagation()}
-              onTouchMove={(event) => event.stopPropagation()}
-              onWheel={(event) => event.stopPropagation()}
-            >
-              <MarkdownMemo
-                emptyText="裏面メモがありません"
-                readingDensity="detailBack"
+              <div
+                className={`absolute inset-x-0 ${frontCaptionBottomClass} z-10 mx-auto flex w-full max-w-4xl flex-col gap-2 px-5 text-left sm:px-10 ${frontSurfaceTextClass}`}
               >
-                {card.backText ?? ""}
-              </MarkdownMemo>
-              <div aria-hidden="true" className="h-3 sm:h-8" />
-            </div>
-          </section>
-        )}
+                {displayFrontText ? (
+                  <h2 className="max-w-3xl text-[clamp(1.35rem,3vw,3.25rem)] font-bold leading-[1.08] drop-shadow-[0_5px_22px_rgba(0,0,0,0.3)]">
+                    {displayFrontText}
+                  </h2>
+                ) : (
+                  <p className="text-xl font-semibold opacity-75">
+                    表面タイトルなし
+                  </p>
+                )}
+                {displayFrontComment ? (
+                  <p className="max-w-2xl text-sm font-medium leading-relaxed opacity-88 drop-shadow-[0_3px_14px_rgba(0,0,0,0.24)] sm:text-base">
+                    {displayFrontComment}
+                  </p>
+                ) : null}
+              </div>
+            </section>
+            <section
+              aria-label="裏面メモの全画面表示"
+              aria-hidden={isFrontView}
+              className={`${flipFaceClass} flex cursor-pointer flex-col bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] [transform:rotateY(180deg)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${
+                isFrontView ? "pointer-events-none" : "pointer-events-auto"
+              } ${backViewBottomPaddingClass}`}
+              onClick={handleCardSurfaceClick}
+            >
+              <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9c8a73] sm:text-[11px] sm:tracking-[0.22em]">
+                    Back Memo
+                  </p>
+                  <h2 className="mt-0.5 truncate text-lg font-bold leading-tight text-[#332d25] sm:mt-1 sm:text-3xl">
+                    {displayFrontText || "裏面メモ"}
+                  </h2>
+                </div>
+                <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold leading-tight text-[#8c7a62] sm:gap-3 sm:text-xs">
+                  <span>{deckLabel}</span>
+                  <span>{date}</span>
+                </div>
+              </header>
+              <div
+                data-card-scroll="true"
+                className="card-detail-back-scroll mx-auto mt-2 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[14px] border border-[#eadcc8] bg-white/54 px-3 py-3 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:rounded-[18px] sm:px-7 sm:py-6"
+                onPointerDown={(event) => event.stopPropagation()}
+                onPointerMove={(event) => event.stopPropagation()}
+                onPointerUp={(event) => event.stopPropagation()}
+                onTouchMove={(event) => event.stopPropagation()}
+                onWheel={(event) => event.stopPropagation()}
+              >
+                <MarkdownMemo
+                  emptyText="裏面メモがありません"
+                  readingDensity="detailBack"
+                >
+                  {card.backText ?? ""}
+                </MarkdownMemo>
+                <div aria-hidden="true" className="h-3 sm:h-8" />
+              </div>
+            </section>
+          </div>
+        </div>
 
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-1 bg-gradient-to-t from-[#1b130f]/56 via-[#1b130f]/20 to-transparent px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-6 sm:gap-2 sm:pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:pt-10">
           <div className="pointer-events-auto relative z-50 flex items-center justify-center gap-2 sm:gap-4">
