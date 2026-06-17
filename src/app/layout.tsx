@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import MobilePreviewMode from "@/components/debug/MobilePreviewMode";
 import "./globals.css";
+
+const appBackgroundColor = "#f7f3ea";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +16,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  applicationName: "Life Cards",
   title: "Life Cards",
   description: "写真・スクショ・言葉をカードにして、デッキで育てる知的チェキアプリ。",
+  appleWebApp: {
+    capable: true,
+    title: "Life Cards",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   icons: {
     icon: [
       {
@@ -31,6 +42,10 @@ export const metadata: Metadata = {
       },
     ],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: appBackgroundColor,
 };
 
 export default function RootLayout({
