@@ -116,8 +116,13 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     favoriteIds,
     metadataByCardId: encounterMetadataByCardId,
   });
+  const reencounterCardIds = useMemo(
+    () => new Set(reencounterCandidates.map((candidate) => candidate.card.id)),
+    [reencounterCandidates],
+  );
   const { buckets: timeMachineBuckets } = useTimeMachineCards({
     cards: scopedCards,
+    excludeCardIds: reencounterCardIds,
   });
 
   return (

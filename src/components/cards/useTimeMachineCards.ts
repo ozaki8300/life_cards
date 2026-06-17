@@ -8,6 +8,7 @@ import type { Card } from "@/lib/types";
 
 type Params = {
   cards: Card[];
+  excludeCardIds?: ReadonlySet<string>;
   limitPerBucket?: number;
   today?: string;
 };
@@ -24,6 +25,7 @@ function todayInputValue() {
 
 export default function useTimeMachineCards({
   cards,
+  excludeCardIds,
   limitPerBucket,
   today,
 }: Params): Result {
@@ -33,12 +35,20 @@ export default function useTimeMachineCards({
       return [];
     }
 
+    const candidateCards = excludeCardIds
+      ? cards.filter((card) => !excludeCardIds.has(card.id))
+      : cards;
+
+    if (candidateCards.length === 0) {
+      return [];
+    }
+
     return TimeMachineEngine.pick({
-      cards,
+      cards: candidateCards,
       limitPerBucket,
       today: resolvedToday,
     });
-  }, [cards, limitPerBucket, resolvedToday]);
+  }, [cards, excludeCardIds, limitPerBucket, resolvedToday]);
 
   return useMemo(
     () => ({
