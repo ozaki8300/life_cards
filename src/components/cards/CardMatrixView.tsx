@@ -32,6 +32,18 @@ function deckLabelFor(deckId: string, decksById: Map<string, Deck>) {
   );
 }
 
+function createDeckGroup(
+  deckId: string,
+  deckCards: Card[],
+  decksById: Map<string, Deck>,
+): DeckCardGroup {
+  return {
+    cards: sortCardsByRecent(deckCards),
+    deckId,
+    deckName: deckLabelFor(deckId, decksById),
+  };
+}
+
 export default function CardMatrixView({
   cards,
   decks,
@@ -54,13 +66,24 @@ export default function CardMatrixView({
       cardsByDeckId.set(card.deckId, deckCards);
     });
 
-    return Array.from(cardsByDeckId.entries())
-      .map(([deckId, deckCards]) => ({
-        cards: sortCardsByRecent(deckCards),
-        deckId,
-        deckName: deckLabelFor(deckId, decksById),
-      }))
-      .sort((left, right) => left.deckName.localeCompare(right.deckName, "ja"));
+    const orderedDecks = [
+      ...decks.filter((deck) => deck.id !== "uncategorized"),
+      ...decks.filter((deck) => deck.id === "uncategorized"),
+    ];
+    const orderedDeckIds = new Set(orderedDecks.map((deck) => deck.id));
+    const orderedGroups = orderedDecks.flatMap((deck) => {
+      const deckCards = cardsByDeckId.get(deck.id);
+
+      return deckCards ? [createDeckGroup(deck.id, deckCards, decksById)] : [];
+    });
+    const fallbackGroups = Array.from(cardsByDeckId.entries()).flatMap(
+      ([deckId, deckCards]) =>
+        orderedDeckIds.has(deckId)
+          ? []
+          : [createDeckGroup(deckId, deckCards, decksById)],
+    );
+
+    return [...orderedGroups, ...fallbackGroups];
   }, [cards, decks]);
 
   if (deckGroups.length === 0) {
