@@ -15,6 +15,9 @@ type SupabaseEncounterRow = {
   view_count: number;
 };
 
+const encounterSelectColumns =
+  "card_id,first_viewed_at,last_viewed_at,view_count,last_reencounter_at,next_reencounter_at,updated_at";
+
 function supabaseErrorLog(error: unknown) {
   if (!error || typeof error !== "object") {
     return error;
@@ -87,9 +90,7 @@ async function fetchMetadataMap(
 ) {
   const { data, error } = await client.supabase
     .from("encounters")
-    .select(
-      "card_id,first_viewed_at,last_viewed_at,view_count,last_reencounter_at,next_reencounter_at,updated_at",
-    )
+    .select(encounterSelectColumns)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -104,6 +105,32 @@ export const EncounterSupabaseRepository = {
     const client = await getClient();
 
     return client ? fetchMetadataMap(client) : null;
+  },
+
+  async getMetadata(cardId: string) {
+    const client = await getClient();
+
+    if (!client) {
+      return null;
+    }
+
+    const { data, error } = await client.supabase
+      .from("encounters")
+      .select(encounterSelectColumns)
+      .eq("user_id", client.userId)
+      .eq("card_id", cardId)
+      .maybeSingle<SupabaseEncounterRow>();
+
+    if (error) {
+      console.warn("Life Cards Supabase encounter lookup failed", {
+        cardId,
+        error: supabaseErrorLog(error),
+        userId: client.userId,
+      });
+      throw error;
+    }
+
+    return data ? rowToMetadata(data) : null;
   },
 
   async saveMetadata(metadata: EncounterMetadata) {
