@@ -1,0 +1,1 @@
+export const REENCOUNTER_DISPLAY_LIMIT = 4;

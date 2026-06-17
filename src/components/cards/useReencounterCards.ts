@@ -6,6 +6,7 @@ import type { EncounterMetadata } from "@/domain/reencounter/types";
 import type { Card } from "@/lib/types";
 
 import { pickReencounterCards } from "./cardHomeUtils";
+import { REENCOUNTER_DISPLAY_LIMIT } from "./reencounterConstants";
 
 type Params = {
   cards: Card[];
@@ -30,6 +31,7 @@ export default function useReencounterCards({
       pickReencounterCards({
         cards,
         favoriteIds,
+        limit: REENCOUNTER_DISPLAY_LIMIT,
         metadataByCardId,
         today,
       }),

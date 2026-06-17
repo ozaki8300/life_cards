@@ -5,9 +5,8 @@ import { useMemo } from "react";
 import type { ReencounterCandidate } from "@/domain/reencounter/types";
 import type { Card, Deck } from "@/lib/types";
 
+import { REENCOUNTER_DISPLAY_LIMIT } from "./reencounterConstants";
 import TradingCardGrid from "./TradingCardGrid";
-
-const REENCOUNTER_DISPLAY_LIMIT = 4;
 
 type Props = {
   title: string;

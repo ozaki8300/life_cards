@@ -52,12 +52,14 @@ export function sortCardsByRecent(cards: Card[]) {
 export function pickReencounterCards({
   cards,
   favoriteIds,
+  limit,
   metadataByCardId,
   random,
   today,
 }: {
   cards: Card[];
   favoriteIds: ReadonlySet<string>;
+  limit?: number;
   metadataByCardId: Record<string, EncounterMetadata>;
   random?: () => number;
   today: string;
@@ -69,6 +71,6 @@ export function pickReencounterCards({
       metadataByCardId,
       today,
     },
-    { random },
+    { limit, random },
   );
 }

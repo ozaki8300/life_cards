@@ -8,7 +8,7 @@ import CardTile from "./CardTile";
 import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 const RAIL_ITEM_CLASS =
-  "w-[min(22rem,calc(100vw-2.5rem))] shrink-0 snap-start overflow-visible rounded-[18px] sm:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)]";
+  "w-[min(22rem,calc(100vw_-_2.5rem))] shrink-0 snap-start overflow-visible rounded-[18px] sm:w-[calc((100%_-_2.5rem)/3)] lg:w-[calc((100%_-_3.75rem)/4)]";
 const faceControlBaseClass =
   "absolute z-[10000] flex items-center justify-center rounded-full border backdrop-blur-[2px] transition focus:outline-none focus:ring-2 focus:ring-white/70";
 const openDetailButtonClass = `${faceControlBaseClass} bottom-3 right-3 h-10 w-10 border-[#d8c8aa]/32 bg-[#f5eee1]/60 text-lg font-semibold leading-none text-[#8f806d] shadow-[0_6px_16px_rgba(87,72,52,0.075)] hover:border-[#d8c8aa]/48 hover:bg-[#fffaf0]/76 hover:text-[#756750]`;
