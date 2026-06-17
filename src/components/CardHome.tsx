@@ -10,6 +10,7 @@ import ProfileSetupModal from "./auth/ProfileSetupModal";
 import CardsPageHeader from "./cards/CardsPageHeader";
 import CardMatrixView from "./cards/CardMatrixView";
 import ReencounterSection from "./cards/ReencounterSection";
+import TimeMachineSection from "./cards/TimeMachineSection";
 import TradingCardGrid from "./cards/TradingCardGrid";
 import {
   cardSearchText,
@@ -20,6 +21,7 @@ import useCardHomeData, {
   type CardHomeLoadStatus,
 } from "./cards/useCardHomeData";
 import useReencounterCards from "./cards/useReencounterCards";
+import useTimeMachineCards from "./cards/useTimeMachineCards";
 
 type ViewStatus = CardHomeLoadStatus | "filteredEmpty";
 type CardViewMode = "list" | "matrix";
@@ -114,6 +116,9 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
     favoriteIds,
     metadataByCardId: encounterMetadataByCardId,
   });
+  const { buckets: timeMachineBuckets } = useTimeMachineCards({
+    cards: scopedCards,
+  });
 
   return (
     <>
@@ -145,19 +150,32 @@ export default function CardHome({ cards, decks, activeDeckId }: Props) {
           ) : (
             <>
               {!isSearching ? (
-                <ReencounterSection
-                  title="今日の再会"
-                  subtitle="久しぶりに見たいカード"
-                  candidates={reencounterCandidates}
-                  decks={allDecks}
-                  editSeedCards={allCards}
-                  favoriteIds={activeFavoriteIds}
-                  onCardViewed={recordCardReencounter}
-                  onDecksChange={setAllDecks}
-                  onDeleteCard={handleDeleteCard}
-                  onUpdateCard={handleUpdateCard}
-                  onToggleFavorite={toggleFavorite}
-                />
+                <>
+                  <ReencounterSection
+                    title="今日の再会"
+                    subtitle="久しぶりに見たいカード"
+                    candidates={reencounterCandidates}
+                    decks={allDecks}
+                    editSeedCards={allCards}
+                    favoriteIds={activeFavoriteIds}
+                    onCardViewed={recordCardReencounter}
+                    onDecksChange={setAllDecks}
+                    onDeleteCard={handleDeleteCard}
+                    onUpdateCard={handleUpdateCard}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                  <TimeMachineSection
+                    buckets={timeMachineBuckets}
+                    decks={allDecks}
+                    editSeedCards={allCards}
+                    favoriteIds={activeFavoriteIds}
+                    onCardViewed={recordCardView}
+                    onDecksChange={setAllDecks}
+                    onDeleteCard={handleDeleteCard}
+                    onUpdateCard={handleUpdateCard}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                </>
               ) : null}
 
               <section>

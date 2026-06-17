@@ -28,6 +28,8 @@ type Props = {
   onFlip: (cardId: string) => void;
   onOpen: (index: number, initialViewMode: CardDetailViewMode) => void;
   onToggleFavorite: (cardId: string) => void;
+  railCaptionByCardId?: Record<string, string>;
+  reasonByCardId?: Record<string, string>;
 };
 
 export default function CardTileList({
@@ -39,6 +41,8 @@ export default function CardTileList({
   onFlip,
   onOpen,
   onToggleFavorite,
+  railCaptionByCardId,
+  reasonByCardId,
 }: Props) {
   function stopOverlayButtonEvent(event: OverlayButtonEvent) {
     event.stopPropagation();
@@ -49,6 +53,9 @@ export default function CardTileList({
       {cards.map((card, index) => {
         const isBack = flippedIds.has(card.id);
         const isFavorite = activeFavoriteIds.has(card.id);
+        const railCaption =
+          railCaptionByCardId?.[card.id]?.trim() ??
+          reasonByCardId?.[card.id]?.trim();
         const favoriteButtonToneClass = isFavorite
           ? "border-[#d8c8aa]/42 bg-[#fff2c8]/66 text-[#8a6f24] hover:bg-[#fff0b5]/80 hover:text-[#765d19]"
           : "border-[#d8c8aa]/32 bg-[#f5eee1]/60 text-[#8f806d] hover:border-[#d8c8aa]/48 hover:bg-[#fffaf0]/76 hover:text-[#756750]";
@@ -70,6 +77,14 @@ export default function CardTileList({
               layout={layout}
               onFlip={() => onFlip(card.id)}
             />
+
+            {layout === "rail" && railCaption ? (
+              <p className="mx-auto mt-2 max-w-full truncate px-1 text-center text-[11px] font-semibold leading-tight text-[#8c7a62]">
+                <span className="inline-block max-w-full truncate rounded-full border border-[#e7dac8]/80 bg-[#fffaf0]/66 px-2.5 py-1 shadow-[0_4px_12px_rgba(87,72,52,0.045)]">
+                  {railCaption}
+                </span>
+              </p>
+            ) : null}
 
             <div className="pointer-events-none absolute inset-0 z-[9999]">
               <button

@@ -22,6 +22,8 @@ type Props = {
   onUpdateCard?: (card: Card) => void;
   onToggleFavorite?: (cardId: string) => void;
   railLoop?: boolean;
+  railCaptionByCardId?: Record<string, string>;
+  reasonByCardId?: Record<string, string>;
   showCarouselIndicator?: boolean;
 };
 
@@ -67,6 +69,8 @@ export default function TradingCardGrid({
   onUpdateCard,
   onToggleFavorite,
   railLoop = false,
+  railCaptionByCardId,
+  reasonByCardId,
   showCarouselIndicator = false,
 }: Props) {
   const railRef = useRef<HTMLDivElement | null>(null);
@@ -630,6 +634,8 @@ export default function TradingCardGrid({
       onFlip={toggleCard}
       onOpen={openCard}
       onToggleFavorite={toggleFavorite}
+      railCaptionByCardId={railCaptionByCardId}
+      reasonByCardId={reasonByCardId}
     />
   );
 
