@@ -12,14 +12,87 @@ const cardImageExtensionsByContentType = {
 
 type CardImageContentType = keyof typeof cardImageExtensionsByContentType;
 
-function isDataUrl(value: string) {
-  return value.startsWith("data:");
-}
-
 function isAllowedCardImageContentType(
   value: string,
 ): value is CardImageContentType {
   return value in cardImageExtensionsByContentType;
+}
+
+function isLocalOrPrivateHostname(hostname: string) {
+  const normalizedHostname = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  const ipv4Parts = normalizedHostname.split(".").map((part) => Number(part));
+
+  if (
+    normalizedHostname === "localhost" ||
+    normalizedHostname === "::1" ||
+    normalizedHostname.startsWith("127.") ||
+    normalizedHostname.startsWith("169.254.")
+  ) {
+    return true;
+  }
+
+  if (
+    ipv4Parts.length === 4 &&
+    ipv4Parts.every((part) => Number.isInteger(part) && part >= 0 && part <= 255)
+  ) {
+    const [first, second] = ipv4Parts;
+
+    return (
+      first === 10 ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168)
+    );
+  }
+
+  return (
+    normalizedHostname.startsWith("fc") ||
+    normalizedHostname.startsWith("fd") ||
+    normalizedHostname.startsWith("fe80:")
+  );
+}
+
+function allowedSupabaseStorageOrigin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(supabaseUrl);
+
+    if (isLocalOrPrivateHostname(parsedUrl.hostname)) {
+      return "";
+    }
+
+    return parsedUrl.origin;
+  } catch {
+    return "";
+  }
+}
+
+function allowedDisplayImageUrl(imagePath: string) {
+  const allowedOrigin = allowedSupabaseStorageOrigin();
+
+  if (!allowedOrigin) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(imagePath);
+
+    if (
+      parsedUrl.protocol !== "https:" ||
+      parsedUrl.origin !== allowedOrigin ||
+      isLocalOrPrivateHostname(parsedUrl.hostname)
+    ) {
+      return null;
+    }
+
+    return parsedUrl;
+  } catch {
+    return null;
+  }
 }
 
 function contentTypeFromPath(path: string) {
@@ -63,17 +136,6 @@ function shareCardImagePath(token: string, contentType: CardImageContentType) {
   return `share-images/${assertShareToken(token)}/front.${extension}`;
 }
 
-function dataUrlToServerBlob(dataUrl: string) {
-  const [metadata, base64Data] = dataUrl.split(",");
-  const mimeType = metadata.match(/^data:([^;]+);base64$/)?.[1];
-
-  if (!mimeType || !base64Data) {
-    throw new Error("Invalid data URL");
-  }
-
-  return new Blob([Buffer.from(base64Data, "base64")], { type: mimeType });
-}
-
 function normalizeImageBlob(blob: Blob, fallbackPath = "") {
   const contentType = blob.type || contentTypeFromPath(fallbackPath);
 
@@ -85,11 +147,13 @@ function normalizeImageBlob(blob: Blob, fallbackPath = "") {
 }
 
 async function fetchDisplayImageAsBlob(imagePath: string) {
-  if (isDataUrl(imagePath)) {
-    return normalizeImageBlob(dataUrlToServerBlob(imagePath));
+  const allowedImageUrl = allowedDisplayImageUrl(imagePath);
+
+  if (!allowedImageUrl) {
+    throw new Error("Share image fallback URL is not allowed.");
   }
 
-  const response = await fetch(imagePath);
+  const response = await fetch(allowedImageUrl);
 
   if (!response.ok) {
     throw new Error(`Share image fetch failed: ${response.status}`);

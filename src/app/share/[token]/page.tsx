@@ -106,8 +106,106 @@ function isRecipientStoragePath(path: string, userId: string) {
   return path.trim().replace(/^\/+/, "").startsWith(`users/${userId}/`);
 }
 
-function isShareImageStoragePath(path: string) {
-  return path.trim().replace(/^\/+/, "").startsWith("share-images/");
+function normalizeShareToken(token: string) {
+  const trimmedToken = token.trim();
+
+  if (!/^[A-Za-z0-9_-]+$/.test(trimmedToken)) {
+    return "";
+  }
+
+  return trimmedToken;
+}
+
+function isShareImageStoragePathForToken(path: string, token: string) {
+  const normalizedPath = path.trim().replace(/^\/+/, "");
+  const normalizedToken = normalizeShareToken(token);
+
+  if (!normalizedToken) {
+    return false;
+  }
+
+  return [
+    `share-images/${normalizedToken}/front.webp`,
+    `share-images/${normalizedToken}/front.jpg`,
+    `share-images/${normalizedToken}/front.jpeg`,
+  ].includes(normalizedPath);
+}
+
+function isLocalOrPrivateHostname(hostname: string) {
+  const normalizedHostname = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  const ipv4Parts = normalizedHostname.split(".").map((part) => Number(part));
+
+  if (
+    normalizedHostname === "localhost" ||
+    normalizedHostname === "::1" ||
+    normalizedHostname.startsWith("127.") ||
+    normalizedHostname.startsWith("169.254.")
+  ) {
+    return true;
+  }
+
+  if (
+    ipv4Parts.length === 4 &&
+    ipv4Parts.every((part) => Number.isInteger(part) && part >= 0 && part <= 255)
+  ) {
+    const [first, second] = ipv4Parts;
+
+    return (
+      first === 10 ||
+      (first === 172 && second >= 16 && second <= 31) ||
+      (first === 192 && second === 168)
+    );
+  }
+
+  return (
+    normalizedHostname.startsWith("fc") ||
+    normalizedHostname.startsWith("fd") ||
+    normalizedHostname.startsWith("fe80:")
+  );
+}
+
+function allowedSupabaseStorageOrigin() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(supabaseUrl);
+
+    if (isLocalOrPrivateHostname(parsedUrl.hostname)) {
+      return "";
+    }
+
+    return parsedUrl.origin;
+  } catch {
+    return "";
+  }
+}
+
+function isAllowedV1FallbackImageUrl(imagePath: string) {
+  const allowedOrigin = allowedSupabaseStorageOrigin();
+
+  if (!allowedOrigin) {
+    return false;
+  }
+
+  try {
+    const parsedUrl = new URL(imagePath);
+
+    if (parsedUrl.protocol !== "https:") {
+      return false;
+    }
+
+    if (isLocalOrPrivateHostname(parsedUrl.hostname)) {
+      return false;
+    }
+
+    return parsedUrl.origin === allowedOrigin;
+  } catch {
+    return false;
+  }
 }
 
 async function recompressSharedImage(imageBody: ArrayBuffer) {
@@ -153,12 +251,14 @@ async function copySharedImageToRecipientStorage({
   imagePath,
   shareImageStoragePath,
   supabase,
+  token,
   userId,
 }: {
   cardId: string;
   imagePath?: string;
   shareImageStoragePath?: string;
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
+  token: string;
   userId: string;
 }) {
   const normalizedShareImageStoragePath =
@@ -173,8 +273,13 @@ async function copySharedImageToRecipientStorage({
     let imageBody: ArrayBuffer;
 
     if (normalizedShareImageStoragePath) {
-      if (!isShareImageStoragePath(normalizedShareImageStoragePath)) {
-        throw new Error("Shared image storage path is outside share-images.");
+      if (
+        !isShareImageStoragePathForToken(
+          normalizedShareImageStoragePath,
+          token,
+        )
+      ) {
+        throw new Error("Shared image storage path is outside the current token.");
       }
 
       const shareReadClient = createShareReadClient();
@@ -193,6 +298,10 @@ async function copySharedImageToRecipientStorage({
 
       imageBody = await data.arrayBuffer();
     } else {
+      if (!isAllowedV1FallbackImageUrl(fallbackImagePath)) {
+        throw new Error("V1 shared image fallback URL is not allowed.");
+      }
+
       const response = await fetch(fallbackImagePath);
 
       if (!response.ok) {
@@ -262,10 +371,13 @@ function isImportImageMode(value: unknown): value is ImportImageMode {
   return value === "withImage" || value === "withoutImage";
 }
 
-async function createShareImageSignedUrl(shareImageStoragePath: string) {
+async function createShareImageSignedUrl(
+  shareImageStoragePath: string,
+  token: string,
+) {
   const normalizedPath = shareImageStoragePath.trim().replace(/^\/+/, "");
 
-  if (!normalizedPath || !isShareImageStoragePath(normalizedPath)) {
+  if (!isShareImageStoragePathForToken(normalizedPath, token)) {
     return "";
   }
 
@@ -288,14 +400,29 @@ async function createShareImageSignedUrl(shareImageStoragePath: string) {
   return data.signedUrl;
 }
 
-async function createDisplayShareCard(card: ShareCardPayload["card"]) {
+async function createDisplayShareCard(
+  card: ShareCardPayload["card"],
+  token: string,
+) {
   const shareImageStoragePath = card.shareImageStoragePath?.trim() ?? "";
 
   if (!shareImageStoragePath) {
+    const imagePath = card.imagePath?.trim() ?? "";
+
+    if (imagePath && !isAllowedV1FallbackImageUrl(imagePath)) {
+      return {
+        ...card,
+        imagePath: "",
+      };
+    }
+
     return card;
   }
 
-  const signedImagePath = await createShareImageSignedUrl(shareImageStoragePath);
+  const signedImagePath = await createShareImageSignedUrl(
+    shareImageStoragePath,
+    token,
+  );
 
   if (!signedImagePath) {
     return card;
@@ -470,6 +597,7 @@ async function importSharedCard(formData: FormData) {
           imagePath: card.imagePath ?? "",
           shareImageStoragePath: card.shareImageStoragePath ?? "",
           supabase,
+          token,
           userId: user.id,
         })
       : null;
@@ -640,7 +768,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
 
   const { card } = shareCard.payload;
   const shareMode = shareCard.payload.shareMode;
-  const displayCard = await createDisplayShareCard(card);
+  const displayCard = await createDisplayShareCard(card, token);
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
   await incrementShareViewCount(token);

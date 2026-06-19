@@ -69,17 +69,91 @@ function generateShareToken() {
     .replace(/=+$/g, "");
 }
 
-function resolveShareOrigin(origin?: string) {
-  const productionOrigin =
-    process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/g, "") ||
-    fallbackProductionOrigin;
-  const trimmedOrigin = origin?.trim().replace(/\/+$/g, "");
+function normalizeOrigin(value?: string) {
+  const trimmedValue = value?.trim();
 
-  if (trimmedOrigin && !trimmedOrigin.includes("localhost")) {
-    return trimmedOrigin;
+  if (!trimmedValue) {
+    return "";
   }
 
-  return productionOrigin;
+  try {
+    return new URL(trimmedValue).origin;
+  } catch {
+    return "";
+  }
+}
+
+function normalizeVercelOrigin(value?: string) {
+  const trimmedValue = value?.trim().replace(/^https?:\/\//, "");
+
+  return trimmedValue ? normalizeOrigin(`https://${trimmedValue}`) : "";
+}
+
+function isLocalDevOrigin(origin: string) {
+  try {
+    const { hostname, protocol } = new URL(origin);
+
+    return (
+      protocol === "http:" &&
+      (hostname === "localhost" || hostname === "127.0.0.1")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function configuredAppOrigins() {
+  return Array.from(
+    new Set(
+      [
+        normalizeOrigin(process.env.NEXT_PUBLIC_APP_ORIGIN),
+        normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL),
+        normalizeVercelOrigin(process.env.VERCEL_URL),
+        normalizeOrigin(fallbackProductionOrigin),
+      ].filter(Boolean),
+    ),
+  );
+}
+
+function requestHeaderOrigin(request: Request) {
+  const headerOrigin = normalizeOrigin(request.headers.get("origin") ?? "");
+
+  if (headerOrigin) {
+    return headerOrigin;
+  }
+
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+
+  if (!host) {
+    return "";
+  }
+
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0];
+  const protocol =
+    forwardedProto?.trim() ||
+    (host.includes("localhost") || host.startsWith("127.") ? "http" : "https");
+
+  return normalizeOrigin(`${protocol}://${host}`);
+}
+
+function isAllowedShareOrigin(origin: string, allowedOrigins: string[]) {
+  return allowedOrigins.includes(origin) || isLocalDevOrigin(origin);
+}
+
+function resolveShareOrigin(request: Request, requestedOrigin?: string) {
+  const allowedOrigins = configuredAppOrigins();
+  const requestOrigin = requestHeaderOrigin(request);
+  const normalizedRequestedOrigin = normalizeOrigin(requestedOrigin);
+
+  if (isAllowedShareOrigin(requestOrigin, allowedOrigins)) {
+    return requestOrigin;
+  }
+
+  if (isAllowedShareOrigin(normalizedRequestedOrigin, allowedOrigins)) {
+    return normalizedRequestedOrigin;
+  }
+
+  return allowedOrigins[0] || fallbackProductionOrigin;
 }
 
 function isShareCardMode(value: unknown): value is ShareCardMode {
@@ -260,7 +334,7 @@ export async function POST(request: Request) {
       userId,
     });
 
-    const origin = resolveShareOrigin(body.options?.origin);
+    const origin = resolveShareOrigin(request, body.options?.origin);
     const now = new Date();
     const nowIso = now.toISOString();
     const { data: reusableShare, error: reusableShareError } = await supabase
