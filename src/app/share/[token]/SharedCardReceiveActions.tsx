@@ -72,7 +72,7 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
       router.push("/cards");
     } catch (error) {
       console.warn("Life Cards shared text-only receive failed", error);
-      setStatusMessage("カードを受け取れませんでした");
+      setStatusMessage("カードを保存できませんでした");
       setIsSaving(false);
     }
   }
@@ -80,16 +80,14 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
   return (
     <section className="mx-auto w-full max-w-xl rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0]/82 p-4 text-center shadow-[0_18px_54px_rgba(87,72,52,0.13)]">
       <h2 className="text-base font-bold text-[#332d25]">
-        {shareMode === "withImage"
-          ? "どう受け取りますか？"
-          : "このカードを受け取りますか？"}
+        このカードを自分のLife Cardsへ保存できます
       </h2>
 
       {shareMode === "withImage" ? (
         <p className="mt-3 text-sm leading-6 text-[#6f6253]">
           画像はこの画面で見られます。
           <br />
-          保存すると、文字だけのカードとして追加されます。
+          ログインせずに保存すると、文字だけのカードとして追加されます。
         </p>
       ) : null}
 
@@ -109,7 +107,7 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
       {shareMode === "withImage" ? (
         <div className="mt-4 grid gap-2">
           <p className="text-xs font-semibold leading-5 text-[#6f6253]">
-            画像も保存するにはログインしてください
+            画像付きで保存するために Googleログインしてください
           </p>
           <div className="flex justify-center">
             <LoginButton />

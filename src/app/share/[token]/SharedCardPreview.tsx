@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import CardFace from "@/components/cards/CardFace";
 import { defaultImageForCard } from "@/components/cards/cardUiUtils";
 import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
@@ -61,28 +63,43 @@ function SharedCardFacePreview({
 }
 
 export default function SharedCardPreview({ card, date, shareMode }: Props) {
+  const [face, setFace] = useState<"front" | "back">("front");
   const backgroundImage =
     shareMode === "withImage" && card.imagePath
       ? card.imagePath
       : defaultImageForCard(card);
+  const helpText = face === "front" ? "タップで裏面を見る" : "タップで表面に戻る";
+
+  function flipCard() {
+    setFace((currentFace) => (currentFace === "front" ? "back" : "front"));
+  }
 
   return (
-    <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
-      <SharedCardFacePreview
-        backgroundImage={backgroundImage}
-        card={card}
-        date={date}
-        face="front"
-        shadowClass="shadow-[0_28px_80px_rgba(87,72,52,0.26)]"
-      />
-
-      <SharedCardFacePreview
-        backgroundImage={backgroundImage}
-        card={card}
-        date={date}
-        face="back"
-        shadowClass="shadow-[0_28px_80px_rgba(87,72,52,0.18)]"
-      />
+    <div className="text-center">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={helpText}
+        onClick={flipCard}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            flipCard();
+          }
+        }}
+        className="cursor-pointer touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2f2a23] focus-visible:ring-offset-4 focus-visible:ring-offset-[#f7f3ea]"
+      >
+        <SharedCardFacePreview
+          backgroundImage={backgroundImage}
+          card={card}
+          date={date}
+          face={face}
+          shadowClass="shadow-[0_28px_80px_rgba(87,72,52,0.24)]"
+        />
+      </div>
+      <p className="mt-3 text-xs font-semibold text-[#8d7f6e]">
+        {helpText}
+      </p>
     </div>
   );
 }

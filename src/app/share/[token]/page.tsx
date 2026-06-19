@@ -569,17 +569,17 @@ function ImportPanel({
 }) {
   const statusMessage =
     importStatus === "login-required"
-      ? "画像付きで受け取るにはログインが必要です"
+      ? "画像付きで保存するにはログインが必要です"
       : importStatus === "failed"
-        ? "カードを追加できませんでした"
+        ? "カードを保存できませんでした"
         : importStatus === "unavailable"
-          ? "この共有カードは追加できません"
+          ? "この共有カードは保存できません"
           : "";
 
   return (
     <section className="mx-auto w-full max-w-xl rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0]/82 p-4 text-center shadow-[0_18px_54px_rgba(87,72,52,0.13)]">
       <h2 className="text-base font-bold text-[#332d25]">
-        どう受け取りますか？
+        このカードを自分のカードに保存する
       </h2>
 
       <div className="mt-4 grid gap-3">
@@ -592,7 +592,7 @@ function ImportPanel({
           />
           <SharedCardImportSubmitButton
             idleLabel={
-              shareMode === "withImage" ? "画像付きで登録" : "文字だけ登録"
+              shareMode === "withImage" ? "画像付きで保存する" : "保存する"
             }
             tone={shareMode === "withImage" ? "primary" : "secondary"}
           />
@@ -607,14 +607,24 @@ function ImportPanel({
   );
 }
 
-function createReceivedTitle(creatorLabel: string) {
+function createCardTitle(frontText: string | undefined) {
+  const trimmedFrontText = frontText?.trim() ?? "";
+
+  if (!trimmedFrontText) {
+    return "Life Card";
+  }
+
+  return trimmedFrontText;
+}
+
+function createCreatorLabel(creatorLabel: string) {
   const trimmedCreatorLabel = creatorLabel.trim();
 
   if (!trimmedCreatorLabel) {
-    return "Life Cardが届きました";
+    return "";
   }
 
-  return `${trimmedCreatorLabel}からLife Cardが届きました`;
+  return `${trimmedCreatorLabel}から届いたLife Card`;
 }
 
 export default async function ShareCardPage({ params, searchParams }: Props) {
@@ -634,6 +644,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
   const shareMode = shareCard.payload.shareMode;
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
+  const creatorLabel = createCreatorLabel(shareCard.creatorLabel);
   await incrementShareViewCount(token);
   const userId = await getSignedInUserId();
 
@@ -645,8 +656,13 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
             Shared Life Card
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            {createReceivedTitle(shareCard.creatorLabel)}
+            {createCardTitle(card.frontText)}
           </h1>
+          {creatorLabel ? (
+            <p className="mt-3 text-sm font-medium text-[#8d7f6e]">
+              {creatorLabel}
+            </p>
+          ) : null}
           {expiresAt ? (
             <p className="mt-3 text-sm font-medium text-[#8d7f6e]">
               有効期限: {expiresAt}
@@ -665,6 +681,13 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
         ) : (
           <SharedCardReceiveActions card={card} shareMode={shareMode} />
         )}
+
+        <section className="mx-auto w-full max-w-xl text-center text-[#6f6253]">
+          <h2 className="text-sm font-bold text-[#332d25]">Life Cards</h2>
+          <p className="mt-2 text-xs font-medium leading-5">
+            経験・学び・志との再会を支援するカード
+          </p>
+        </section>
       </section>
     </main>
   );
