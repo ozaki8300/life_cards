@@ -10,6 +10,10 @@ import {
   type ShareCardMode,
   type ShareCardPayload,
 } from "@/lib/shareCardPayload";
+import {
+  isShareImageStoragePathForToken,
+  normalizeShareToken,
+} from "@/lib/shareImagePaths";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import SharedCardImportSubmitButton from "./SharedCardImportSubmitButton";
@@ -20,7 +24,6 @@ const cardImagesBucket = "card-images";
 const sharedImageMaxLongEdge = 1600;
 const sharedImageJpegQuality = 72;
 const sharedImageWebpQuality = 72;
-const sharedImageSignedUrlExpiresInSeconds = 60 * 60;
 
 const cardImageExtensionsByContentType = {
   "image/jpeg": "jpg",
@@ -104,31 +107,6 @@ function importedCardImagePath(
 
 function isRecipientStoragePath(path: string, userId: string) {
   return path.trim().replace(/^\/+/, "").startsWith(`users/${userId}/`);
-}
-
-function normalizeShareToken(token: string) {
-  const trimmedToken = token.trim();
-
-  if (!/^[A-Za-z0-9_-]+$/.test(trimmedToken)) {
-    return "";
-  }
-
-  return trimmedToken;
-}
-
-function isShareImageStoragePathForToken(path: string, token: string) {
-  const normalizedPath = path.trim().replace(/^\/+/, "");
-  const normalizedToken = normalizeShareToken(token);
-
-  if (!normalizedToken) {
-    return false;
-  }
-
-  return [
-    `share-images/${normalizedToken}/front.webp`,
-    `share-images/${normalizedToken}/front.jpg`,
-    `share-images/${normalizedToken}/front.jpeg`,
-  ].includes(normalizedPath);
 }
 
 function isLocalOrPrivateHostname(hostname: string) {
@@ -371,40 +349,12 @@ function isImportImageMode(value: unknown): value is ImportImageMode {
   return value === "withImage" || value === "withoutImage";
 }
 
-async function createShareImageSignedUrl(
-  shareImageStoragePath: string,
-  token: string,
-) {
-  const normalizedPath = shareImageStoragePath.trim().replace(/^\/+/, "");
-
-  if (!isShareImageStoragePathForToken(normalizedPath, token)) {
-    return "";
-  }
-
-  const supabase = createShareReadClient();
-
-  if (!supabase) {
-    console.warn("Life Cards share image signed URL requires service role.");
-    return "";
-  }
-
-  const { data, error } = await supabase.storage
-    .from(cardImagesBucket)
-    .createSignedUrl(normalizedPath, sharedImageSignedUrlExpiresInSeconds);
-
-  if (error) {
-    console.warn("Life Cards share image signed URL failed", error);
-    return "";
-  }
-
-  return data.signedUrl;
-}
-
 async function createDisplayShareCard(
   card: ShareCardPayload["card"],
   token: string,
 ) {
   const shareImageStoragePath = card.shareImageStoragePath?.trim() ?? "";
+  const normalizedToken = normalizeShareToken(token);
 
   if (!shareImageStoragePath) {
     const imagePath = card.imagePath?.trim() ?? "";
@@ -419,18 +369,16 @@ async function createDisplayShareCard(
     return card;
   }
 
-  const signedImagePath = await createShareImageSignedUrl(
-    shareImageStoragePath,
-    token,
-  );
-
-  if (!signedImagePath) {
+  if (
+    !normalizedToken ||
+    !isShareImageStoragePathForToken(shareImageStoragePath, normalizedToken)
+  ) {
     return card;
   }
 
   return {
     ...card,
-    imagePath: signedImagePath,
+    imagePath: `/api/share-images/${normalizedToken}`,
   };
 }
 
