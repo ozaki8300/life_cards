@@ -12,6 +12,7 @@ import type { Card } from "@/lib/types";
 type Props = {
   card: ShareCardPayload["card"];
   shareMode: ShareCardMode;
+  token: string;
 };
 
 function generateReceivedCardId() {
@@ -53,7 +54,7 @@ function saveUncategorizedDeckForReceivedCard() {
   });
 }
 
-export default function SharedCardReceiveActions({ card, shareMode }: Props) {
+export default function SharedCardReceiveActions({ card, shareMode, token }: Props) {
   const router = useRouter();
   const [statusMessage, setStatusMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -107,10 +108,12 @@ export default function SharedCardReceiveActions({ card, shareMode }: Props) {
       {shareMode === "withImage" ? (
         <div className="mt-4 grid gap-2">
           <p className="text-xs font-semibold leading-5 text-[#6f6253]">
-            画像付きで保存するために Googleログインしてください
+            画像付きで保存するために Googleログインしてください。
+            <br />
+            ログイン後、この画面に戻って保存できます。
           </p>
           <div className="flex justify-center">
-            <LoginButton />
+            <LoginButton nextPath={`/share/${token}`} />
           </div>
         </div>
       ) : null}

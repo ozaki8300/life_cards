@@ -30,9 +30,20 @@ async function recordLoginEvent(
   }
 }
 
+function getSafeNextPath(requestUrl: URL) {
+  const nextPath = requestUrl.searchParams.get("next") ?? "";
+
+  if (!nextPath.startsWith("/") || nextPath.startsWith("//")) {
+    return "/cards";
+  }
+
+  return nextPath;
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  const nextPath = getSafeNextPath(requestUrl);
 
   if (!code) {
     return NextResponse.redirect(new URL("/", requestUrl.origin));
@@ -48,7 +59,7 @@ export async function GET(request: Request) {
 
     await recordLoginEvent(supabase);
 
-    return NextResponse.redirect(new URL("/cards", requestUrl.origin));
+    return NextResponse.redirect(new URL(nextPath, requestUrl.origin));
   } catch {
     return NextResponse.redirect(new URL("/", requestUrl.origin));
   }

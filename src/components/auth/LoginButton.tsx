@@ -6,9 +6,14 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Props = {
   className?: string;
+  nextPath?: string;
 };
 
-export default function LoginButton({ className = "" }: Props) {
+function isSafeNextPath(value: string | undefined): value is string {
+  return Boolean(value && value.startsWith("/") && !value.startsWith("//"));
+}
+
+export default function LoginButton({ className = "", nextPath }: Props) {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,10 +23,16 @@ export default function LoginButton({ className = "" }: Props) {
 
     try {
       const supabase = createSupabaseBrowserClient();
+      const callbackUrl = new URL("/auth/callback", window.location.origin);
+
+      if (isSafeNextPath(nextPath)) {
+        callbackUrl.searchParams.set("next", nextPath);
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl.toString(),
         },
       });
 

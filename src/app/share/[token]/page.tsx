@@ -663,7 +663,11 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
             token={token}
           />
         ) : (
-          <SharedCardReceiveActions card={card} shareMode={shareMode} />
+          <SharedCardReceiveActions
+            card={card}
+            shareMode={shareMode}
+            token={token}
+          />
         )}
 
         <section className="mx-auto w-full max-w-xl text-center text-[#6f6253]">
