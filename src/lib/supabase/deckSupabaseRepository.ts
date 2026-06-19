@@ -70,6 +70,7 @@ async function fetchDecks(
   const { data, error } = await client.supabase
     .from("decks")
     .select("id,name,is_shared,created_at,sort_order")
+    .eq("user_id", client.userId)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 

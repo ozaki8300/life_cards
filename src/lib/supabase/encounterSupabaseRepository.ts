@@ -91,6 +91,7 @@ async function fetchMetadataMap(
   const { data, error } = await client.supabase
     .from("encounters")
     .select(encounterSelectColumns)
+    .eq("user_id", client.userId)
     .order("updated_at", { ascending: false });
 
   if (error) {

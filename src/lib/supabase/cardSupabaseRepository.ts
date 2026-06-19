@@ -260,6 +260,7 @@ async function fetchCards(
     .select(
       "id,deck_id,front_text,front_comment,back_text,image_path,image_fit_mode,default_image_key,is_favorite,link_url,created_at,updated_at",
     )
+    .eq("user_id", client.userId)
     .order("updated_at", { ascending: false })
     .order("created_at", { ascending: false });
 
