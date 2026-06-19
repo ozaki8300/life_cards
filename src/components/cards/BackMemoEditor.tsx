@@ -150,10 +150,10 @@ export default function BackMemoEditor({
 
   return (
     <section
-      className="min-w-0 rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/25 sm:p-4"
+      className="min-w-0 rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/18 sm:p-4"
       onFocusCapture={onFocus}
     >
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-2.5 flex flex-wrap items-start justify-between gap-2 sm:mb-3 sm:gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
             Back Memo
@@ -206,17 +206,17 @@ export default function BackMemoEditor({
       {backMode === "edit" ? (
         <textarea
           name="backText"
-          rows={16}
+          rows={22}
           value={backText}
           onChange={(event) => onBackTextChange(event.target.value)}
           onKeyDown={handleBackTextKeyDown}
           placeholder="裏面メモを書く（Markdown対応）"
-          className="card-detail-back-scroll box-border block min-h-[340px] w-full min-w-0 max-w-full cursor-text resize-y rounded-[16px] border border-[#dfd3c2]/70 bg-[#fffaf0]/62 px-4 py-4 text-sm leading-6 text-[#332d25] shadow-none outline-none placeholder:text-[#9d917f] focus:border-[#cdbda7] focus:bg-[#fffaf0]/82 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#d8c8aa]/60 focus:shadow-none sm:min-h-[380px] lg:min-h-[44vh] xl:min-h-[46vh]"
+          className="card-detail-back-scroll box-border block min-h-[460px] w-full min-w-0 max-w-full cursor-text resize-y rounded-[14px] border border-[#dfd3c2]/35 bg-[#fffaf0]/78 px-4 py-5 text-[15px] leading-7 text-[#332d25] shadow-none outline-none placeholder:text-[#9d917f] focus:border-[#cdbda7]/70 focus:bg-[#fffaf0]/94 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#d8c8aa]/45 focus:shadow-none sm:min-h-[540px] sm:px-5 sm:py-5 lg:min-h-[56vh] xl:min-h-[60vh]"
         />
       ) : (
         <>
           <input type="hidden" name="backText" value={backText} />
-          <div className="card-detail-back-scroll box-border min-h-[340px] w-full min-w-0 max-w-full overflow-y-auto rounded-[16px] border border-[#dfd3c2]/70 bg-[#fffaf0]/62 px-4 py-4 shadow-none sm:min-h-[380px] lg:min-h-[44vh] xl:min-h-[46vh]">
+          <div className="card-detail-back-scroll box-border min-h-[460px] w-full min-w-0 max-w-full overflow-y-auto rounded-[14px] border border-[#dfd3c2]/35 bg-[#fffaf0]/78 px-4 py-5 shadow-none sm:min-h-[540px] sm:px-5 sm:py-5 lg:min-h-[56vh] xl:min-h-[60vh]">
             <MarkdownMemo emptyText="裏面メモを書く（Markdown対応）">
               {backText}
             </MarkdownMemo>

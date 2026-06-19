@@ -53,6 +53,17 @@ export default function ReencounterSection({
     () => displayCandidates.map((candidate) => candidate.card),
     [displayCandidates],
   );
+  const reasonByCardId = useMemo(
+    () =>
+      Object.fromEntries(
+        displayCandidates.flatMap((candidate) => {
+          const reason = candidate.reason.trim();
+
+          return reason ? [[candidate.card.id, reason]] : [];
+        }),
+      ),
+    [displayCandidates],
+  );
 
   if (displayCards.length === 0) {
     return null;
@@ -80,18 +91,9 @@ export default function ReencounterSection({
         onUpdateCard={onUpdateCard}
         onToggleFavorite={onToggleFavorite}
         railLoop
+        reasonByCardId={reasonByCardId}
         showCarouselIndicator
       />
-      <div className="mt-2 flex flex-wrap gap-2">
-        {displayCandidates.map((candidate) => (
-          <p
-            key={candidate.card.id}
-            className="rounded-full border border-[#e7dac8] bg-[#fffaf0]/64 px-2.5 py-1 text-[11px] font-semibold leading-tight text-[#8c7a62]"
-          >
-            {candidate.reason}
-          </p>
-        ))}
-      </div>
     </section>
   );
 }
