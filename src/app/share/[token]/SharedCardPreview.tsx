@@ -4,12 +4,11 @@ import { useRef, useState, type PointerEvent } from "react";
 
 import CardFace from "@/components/cards/CardFace";
 import { defaultImageForCard } from "@/components/cards/cardUiUtils";
-import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
+import type { ShareCardPayload } from "@/lib/shareCardPayload";
 
 type Props = {
   card: ShareCardPayload["card"];
   date: string;
-  shareMode: ShareCardMode;
 };
 
 type SharedCardFacePreviewProps = {
@@ -66,13 +65,11 @@ function SharedCardFacePreview({
   );
 }
 
-export default function SharedCardPreview({ card, date, shareMode }: Props) {
+export default function SharedCardPreview({ card, date }: Props) {
   const [face, setFace] = useState<"front" | "back">("front");
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const backgroundImage =
-    shareMode === "withImage" && card.imagePath
-      ? card.imagePath
-      : defaultImageForCard(card);
+    card.imagePath?.trim() || defaultImageForCard(card);
   const helpText =
     face === "front" ? "↓ タップして裏面を見る" : "↑ タップして表面に戻る";
 

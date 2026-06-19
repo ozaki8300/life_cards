@@ -354,31 +354,31 @@ async function createDisplayShareCard(
   token: string,
 ) {
   const shareImageStoragePath = card.shareImageStoragePath?.trim() ?? "";
+  const fallbackImagePath = card.imagePath?.trim() ?? "";
   const normalizedToken = normalizeShareToken(token);
 
-  if (!shareImageStoragePath) {
-    const imagePath = card.imagePath?.trim() ?? "";
-
-    if (imagePath && !isAllowedV1FallbackImageUrl(imagePath)) {
-      return {
-        ...card,
-        imagePath: "",
-      };
-    }
-
-    return card;
+  if (
+    normalizedToken &&
+    shareImageStoragePath &&
+    isShareImageStoragePathForToken(shareImageStoragePath, normalizedToken)
+  ) {
+    return {
+      ...card,
+      imagePath: `/api/share-images/${normalizedToken}`,
+    };
   }
 
-  if (
-    !normalizedToken ||
-    !isShareImageStoragePathForToken(shareImageStoragePath, normalizedToken)
-  ) {
-    return card;
+  if (fallbackImagePath && isAllowedV1FallbackImageUrl(fallbackImagePath)) {
+    return {
+      ...card,
+      imagePath: fallbackImagePath,
+    };
   }
 
   return {
     ...card,
-    imagePath: `/api/share-images/${normalizedToken}`,
+    defaultImageKey: "night" as const,
+    imagePath: "",
   };
 }
 
@@ -739,7 +739,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
           ) : null}
         </div>
 
-        <SharedCardPreview card={displayCard} date={date} shareMode={shareMode} />
+        <SharedCardPreview card={displayCard} date={date} />
 
         {userId ? (
           <ImportPanel
