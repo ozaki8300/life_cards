@@ -472,6 +472,11 @@ async function importSharedCard(formData: FormData) {
           userId: user.id,
         })
       : null;
+
+  if (importImageModeValue === "withImage" && !importedImagePath) {
+    redirect(`/share/${token}?import=image-failed`);
+  }
+
   const { error: deckError } = await supabase.from("decks").upsert(
     {
       created_at: now,
@@ -570,6 +575,8 @@ function ImportPanel({
   const statusMessage =
     importStatus === "login-required"
       ? "画像付きで保存するにはログインが必要です"
+      : importStatus === "image-failed"
+        ? "画像を保存できませんでした。共有期限内にもう一度お試しください。"
       : importStatus === "failed"
         ? "カードを保存できませんでした"
         : importStatus === "unavailable"

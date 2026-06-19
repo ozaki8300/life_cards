@@ -260,3 +260,26 @@ server action 側では、UIに出していない操作も直接POSTされる前
 - `shareMode === "textOnly"` and import with image: reject.
 
 未ログイン保存では、UIからもコードからも画像保存を行わないようにします。
+
+## Share Image Import Guard
+
+短期修正として、ログイン済み受信者が `withImage` import を選んだ場合は、共有画像を受信者の `card-images` storage にコピーできた時だけカードを作成します。
+
+- `copySharedImageToRecipientStorage` が storage path を返した場合のみ `decks` upsert / `cards` insert に進む。
+- `copySharedImageToRecipientStorage` が `null` または空文字を返した場合は、カードを保存せず `/share/[token]?import=image-failed` に戻す。
+- `textOnly` / `withoutImage` import は従来通り画像コピーを要求しない。
+- 画像コピー後に `decks` upsert または `cards` insert が失敗した場合は、既存通りコピー済み画像を cleanup する。
+
+このガードにより、画像コピーに失敗した共有カードが「画像付き保存成功」のように見える状態を避けます。
+
+## Future Share Image Payload Design
+
+現状の `ShareCardPayload` v1 は `imageStoragePath` を持たず、`withImage` 共有時に `card.imagePath` を `imagePath` として保存します。通常カード一覧では storage path から signed URL を解決し、それを表示用 `imagePath` に載せる経路があります。この signed URL は短寿命なので、共有 payload に永続保存する値としては不安定です。
+
+中期設計では以下のいずれかを検討します。
+
+- `ShareCardPayload` v2 に `imageStoragePath` を追加し、共有ページ側で service role 経由の安全な読み取り/コピーを行う。
+- 共有作成時に share 専用 storage path へ画像をコピーし、payload にはその share image path を保存する。
+- 共有期限と画像取得期限が一致するよう、signed URL ではなく storage path を永続値、signed URL は表示時の一時値として扱う。
+
+この設計変更には payload migration、互換 parse、必要に応じた storage path 設計が必要です。DB schema や bucket 追加は Share v3 の短期修正範囲には含めません。
