@@ -272,14 +272,16 @@ server action 側では、UIに出していない操作も直接POSTされる前
 
 このガードにより、画像コピーに失敗した共有カードが「画像付き保存成功」のように見える状態を避けます。
 
-## Future Share Image Payload Design
+## Share Image Payload v2
 
-現状の `ShareCardPayload` v1 は `imageStoragePath` を持たず、`withImage` 共有時に `card.imagePath` を `imagePath` として保存します。通常カード一覧では storage path から signed URL を解決し、それを表示用 `imagePath` に載せる経路があります。この signed URL は短寿命なので、共有 payload に永続保存する値としては不安定です。
+`ShareCardPayload` v2 では、`withImage` 共有時に signed URL を永続 payload として保存しません。共有作成時にカード画像を `card-images/share-images/{token}/front.{ext}` へコピーし、payload には `card.shareImageStoragePath` を保存します。
 
-中期設計では以下のいずれかを検討します。
+- 新規共有 payload は `schemaVersion: 2` を使う。
+- `card.shareImageStoragePath` は share 専用 storage object path を表す。
+- `card.imagePath` は v2 では永続値として使わない。
+- `share-images/{token}/front.{ext}` へのコピーは browser client では行わず、server route から admin client で実行する。
+- `/share/[token]` 表示時は server 側で `shareImageStoragePath` から短期 signed URL を発行し、表示用 `imagePath` として使う。
+- Import 時は `shareImageStoragePath` を優先して読み込み、受信者の `users/{userId}/cards/{cardId}/front.{ext}` へコピーする。
+- 古い v1 payload は `card.imagePath` fallback として表示/Import 互換を維持する。
 
-- `ShareCardPayload` v2 に `imageStoragePath` を追加し、共有ページ側で service role 経由の安全な読み取り/コピーを行う。
-- 共有作成時に share 専用 storage path へ画像をコピーし、payload にはその share image path を保存する。
-- 共有期限と画像取得期限が一致するよう、signed URL ではなく storage path を永続値、signed URL は表示時の一時値として扱う。
-
-この設計変更には payload migration、互換 parse、必要に応じた storage path 設計が必要です。DB schema や bucket 追加は Share v3 の短期修正範囲には含めません。
+DB schema は変更しません。`share_cards.card_payload` の jsonb 内 `schemaVersion` で互換対応します。

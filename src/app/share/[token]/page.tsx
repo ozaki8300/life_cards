@@ -5,13 +5,12 @@ import { redirect } from "next/navigation";
 import sharp from "sharp";
 
 import { formatDate } from "@/components/cards/cardUiUtils";
-import type { ShareCardMode, ShareCardPayload } from "@/lib/shareCardPayload";
+import {
+  parseShareCardPayload,
+  type ShareCardMode,
+  type ShareCardPayload,
+} from "@/lib/shareCardPayload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type {
-  CardImageFitMode,
-  CardImageFrameMode,
-  DefaultCardImageKey,
-} from "@/lib/types";
 
 import SharedCardImportSubmitButton from "./SharedCardImportSubmitButton";
 import SharedCardReceiveActions from "./SharedCardReceiveActions";
@@ -21,6 +20,7 @@ const cardImagesBucket = "card-images";
 const sharedImageMaxLongEdge = 1600;
 const sharedImageJpegQuality = 72;
 const sharedImageWebpQuality = 72;
+const sharedImageSignedUrlExpiresInSeconds = 60 * 60;
 
 const cardImageExtensionsByContentType = {
   "image/jpeg": "jpg",
@@ -106,6 +106,10 @@ function isRecipientStoragePath(path: string, userId: string) {
   return path.trim().replace(/^\/+/, "").startsWith(`users/${userId}/`);
 }
 
+function isShareImageStoragePath(path: string) {
+  return path.trim().replace(/^\/+/, "").startsWith("share-images/");
+}
+
 async function recompressSharedImage(imageBody: ArrayBuffer) {
   const image = sharp(Buffer.from(imageBody), {
     limitInputPixels: 32_000_000,
@@ -147,26 +151,57 @@ async function recompressSharedImage(imageBody: ArrayBuffer) {
 async function copySharedImageToRecipientStorage({
   cardId,
   imagePath,
+  shareImageStoragePath,
   supabase,
   userId,
 }: {
   cardId: string;
-  imagePath: string;
+  imagePath?: string;
+  shareImageStoragePath?: string;
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
   userId: string;
 }) {
-  if (!imagePath) {
+  const normalizedShareImageStoragePath =
+    shareImageStoragePath?.trim().replace(/^\/+/, "") ?? "";
+  const fallbackImagePath = imagePath?.trim() ?? "";
+
+  if (!normalizedShareImageStoragePath && !fallbackImagePath) {
     return null;
   }
 
   try {
-    const response = await fetch(imagePath);
+    let imageBody: ArrayBuffer;
 
-    if (!response.ok) {
-      throw new Error(`Image fetch failed: ${response.status}`);
+    if (normalizedShareImageStoragePath) {
+      if (!isShareImageStoragePath(normalizedShareImageStoragePath)) {
+        throw new Error("Shared image storage path is outside share-images.");
+      }
+
+      const shareReadClient = createShareReadClient();
+
+      if (!shareReadClient) {
+        throw new Error("Shared image storage read requires service role.");
+      }
+
+      const { data, error } = await shareReadClient.storage
+        .from(cardImagesBucket)
+        .download(normalizedShareImageStoragePath);
+
+      if (error || !data) {
+        throw error ?? new Error("Shared image download returned no data.");
+      }
+
+      imageBody = await data.arrayBuffer();
+    } else {
+      const response = await fetch(fallbackImagePath);
+
+      if (!response.ok) {
+        throw new Error(`Image fetch failed: ${response.status}`);
+      }
+
+      imageBody = await response.arrayBuffer();
     }
 
-    const imageBody = await response.arrayBuffer();
     const compressedImage = await recompressSharedImage(imageBody);
     const storagePath = importedCardImagePath(
       userId,
@@ -223,87 +258,52 @@ async function cleanupImportedCardImage({
   }
 }
 
-function isString(value: unknown): value is string {
-  return typeof value === "string";
-}
-
-function isCardImageFitMode(value: unknown): value is CardImageFitMode {
-  return value === "cover" || value === "blurExtend";
-}
-
-function isCardImageFrameMode(value: unknown): value is CardImageFrameMode {
-  return value === "none" || value === "paper";
-}
-
-function isDefaultCardImageKey(value: unknown): value is DefaultCardImageKey {
-  return (
-    value === "paper" ||
-    value === "night" ||
-    value === "sea" ||
-    value === "mountain" ||
-    value === "library"
-  );
-}
-
-function isShareCardMode(value: unknown): value is ShareCardMode {
-  return value === "withImage" || value === "textOnly";
-}
-
 function isImportImageMode(value: unknown): value is ImportImageMode {
   return value === "withImage" || value === "withoutImage";
 }
 
-function parseShareCardPayload(value: unknown): ShareCardPayload | null {
-  if (!value || typeof value !== "object") {
-    return null;
+async function createShareImageSignedUrl(shareImageStoragePath: string) {
+  const normalizedPath = shareImageStoragePath.trim().replace(/^\/+/, "");
+
+  if (!normalizedPath || !isShareImageStoragePath(normalizedPath)) {
+    return "";
   }
 
-  const payload = value as Record<string, unknown>;
-  const card = payload.card;
-  const creator = payload.creator;
+  const supabase = createShareReadClient();
 
-  if (payload.schemaVersion !== 1 || !card || typeof card !== "object") {
-    return null;
+  if (!supabase) {
+    console.warn("Life Cards share image signed URL requires service role.");
+    return "";
   }
 
-  const cardRecord = card as Record<string, unknown>;
-  const creatorRecord =
-    creator && typeof creator === "object" ? (creator as Record<string, unknown>) : {};
-  const imageFitMode = isCardImageFitMode(cardRecord.imageFitMode)
-    ? cardRecord.imageFitMode
-    : "cover";
-  const imageFrameMode = isCardImageFrameMode(cardRecord.imageFrameMode)
-    ? cardRecord.imageFrameMode
-    : "none";
+  const { data, error } = await supabase.storage
+    .from(cardImagesBucket)
+    .createSignedUrl(normalizedPath, sharedImageSignedUrlExpiresInSeconds);
 
-  if (!isString(cardRecord.createdAt) || !isString(cardRecord.updatedAt)) {
-    return null;
+  if (error) {
+    console.warn("Life Cards share image signed URL failed", error);
+    return "";
+  }
+
+  return data.signedUrl;
+}
+
+async function createDisplayShareCard(card: ShareCardPayload["card"]) {
+  const shareImageStoragePath = card.shareImageStoragePath?.trim() ?? "";
+
+  if (!shareImageStoragePath) {
+    return card;
+  }
+
+  const signedImagePath = await createShareImageSignedUrl(shareImageStoragePath);
+
+  if (!signedImagePath) {
+    return card;
   }
 
   return {
-    schemaVersion: 1,
-    shareMode: isShareCardMode(payload.shareMode)
-      ? payload.shareMode
-      : "withImage",
-    card: {
-      backText: isString(cardRecord.backText) ? cardRecord.backText : "",
-      createdAt: cardRecord.createdAt,
-      defaultImageKey: isDefaultCardImageKey(cardRecord.defaultImageKey)
-        ? cardRecord.defaultImageKey
-        : "paper",
-      frontComment: isString(cardRecord.frontComment)
-        ? cardRecord.frontComment
-        : "",
-      frontText: isString(cardRecord.frontText) ? cardRecord.frontText : "",
-      imageFrameMode,
-      imageFitMode,
-      imagePath: isString(cardRecord.imagePath) ? cardRecord.imagePath : "",
-      linkUrl: isString(cardRecord.linkUrl) ? cardRecord.linkUrl : "",
-      updatedAt: cardRecord.updatedAt,
-    },
-    creator: {
-      label: isString(creatorRecord.label) ? creatorRecord.label : "",
-    },
+    ...card,
+    imagePath: signedImagePath,
   };
 }
 
@@ -468,6 +468,7 @@ async function importSharedCard(formData: FormData) {
       ? await copySharedImageToRecipientStorage({
           cardId: newCardId,
           imagePath: card.imagePath ?? "",
+          shareImageStoragePath: card.shareImageStoragePath ?? "",
           supabase,
           userId: user.id,
         })
@@ -639,6 +640,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
 
   const { card } = shareCard.payload;
   const shareMode = shareCard.payload.shareMode;
+  const displayCard = await createDisplayShareCard(card);
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
   await incrementShareViewCount(token);
@@ -661,7 +663,7 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
           ) : null}
         </div>
 
-        <SharedCardPreview card={card} date={date} shareMode={shareMode} />
+        <SharedCardPreview card={displayCard} date={date} shareMode={shareMode} />
 
         {userId ? (
           <ImportPanel
