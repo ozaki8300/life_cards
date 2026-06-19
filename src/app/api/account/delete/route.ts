@@ -5,6 +5,16 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+async function signOutDeletedSession(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+) {
+  try {
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.warn("Life Cards account delete server sign-out failed", error);
+  }
+}
+
 export async function POST() {
   try {
     const supabase = await createSupabaseServerClient();
@@ -25,6 +35,7 @@ export async function POST() {
     }
 
     await deleteAccountForUser(userId);
+    await signOutDeletedSession(supabase);
 
     return NextResponse.json({ ok: true });
   } catch {

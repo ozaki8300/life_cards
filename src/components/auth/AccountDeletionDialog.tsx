@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { deleteCurrentAccount } from "@/lib/accountDeletion";
@@ -13,24 +12,63 @@ type Props = {
   onDeleted: () => void;
 };
 
-function clearLifeCardsLocalStorage() {
+function removeMatchingStorageKeys(
+  storage: Storage,
+  shouldRemove: (key: string) => boolean,
+) {
+  Array.from({ length: storage.length }, (_value, index) => storage.key(index))
+    .filter((key): key is string => Boolean(key && shouldRemove(key)))
+    .forEach((key) => storage.removeItem(key));
+}
+
+function isLifeCardsStorageKey(key: string) {
+  return (
+    Object.values(STORAGE_KEYS).includes(
+      key as (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS],
+    ) || key.startsWith("life_cards.")
+  );
+}
+
+function isSupabaseAuthStorageKey(key: string) {
+  return (
+    (key.startsWith("sb-") && key.includes("auth-token")) ||
+    key === "supabase.auth.token"
+  );
+}
+
+function clearReadableSupabaseAuthCookies() {
+  document.cookie
+    .split(";")
+    .map((cookie) => cookie.split("=")[0]?.trim() ?? "")
+    .filter((name) => name.startsWith("sb-") && name.includes("auth-token"))
+    .forEach((name) => {
+      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
+    });
+}
+
+function clearDeletedAccountClientState() {
   if (typeof window === "undefined") {
     return;
   }
 
-  Object.values(STORAGE_KEYS).forEach((key) => {
-    window.localStorage.removeItem(key);
-  });
+  const shouldRemove = (key: string) =>
+    isLifeCardsStorageKey(key) || isSupabaseAuthStorageKey(key);
 
-  Array.from({ length: window.localStorage.length }, (_value, index) =>
-    window.localStorage.key(index),
-  )
-    .filter((key): key is string => Boolean(key?.startsWith("life_cards.")))
-    .forEach((key) => window.localStorage.removeItem(key));
+  removeMatchingStorageKeys(window.localStorage, shouldRemove);
+  removeMatchingStorageKeys(window.sessionStorage, shouldRemove);
+  clearReadableSupabaseAuthCookies();
+}
+
+async function signOutDeletedAccountSession() {
+  try {
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut({ scope: "local" });
+  } catch {
+    // The server has already deleted the account; local cleanup continues.
+  }
 }
 
 export default function AccountDeletionDialog({ onClose, onDeleted }: Props) {
-  const router = useRouter();
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -51,18 +89,10 @@ export default function AccountDeletionDialog({ onClose, onDeleted }: Props) {
 
     try {
       await deleteCurrentAccount();
-      clearLifeCardsLocalStorage();
-
-      try {
-        const supabase = createSupabaseBrowserClient();
-        await supabase.auth.signOut();
-      } catch {
-        // The server has already deleted the account; local cleanup continues.
-      }
-
+      await signOutDeletedAccountSession();
+      clearDeletedAccountClientState();
       onDeleted();
-      router.push("/cards");
-      router.refresh();
+      window.location.replace("/");
     } catch {
       setErrorMessage(
         "削除できませんでした。時間をおいてもう一度お試しください。",
