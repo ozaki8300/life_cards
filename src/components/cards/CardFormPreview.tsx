@@ -65,6 +65,7 @@ export default function CardFormPreview({
           imageFitMode={imageFitMode}
           linkUrl={linkUrl}
           preserve3d={false}
+          scrollableBackMemo
           size="tile"
         />
       </button>

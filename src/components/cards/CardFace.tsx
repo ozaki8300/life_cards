@@ -1,6 +1,6 @@
 "use client";
 
-import type { TouchEvent, WheelEvent } from "react";
+import type { MouseEvent, TouchEvent, WheelEvent } from "react";
 
 import MarkdownMemo from "@/components/MarkdownMemo";
 import type { CardImageFitMode, CardImageFrameMode } from "@/lib/types";
@@ -19,6 +19,7 @@ type Props = {
   imageFrameMode?: CardImageFrameMode;
   linkUrl?: string;
   preserve3d?: boolean;
+  scrollableBackMemo?: boolean;
   size: CardFaceSize;
 };
 
@@ -32,7 +33,7 @@ const faceSize = {
     comment: "line-clamp-2 text-[15px] leading-6 sm:text-sm",
     date: "text-[10px]",
     backContent: "px-5 pb-5 pt-4 sm:px-4 sm:pb-4",
-    backMemo: "max-h-[calc(100%-4.75rem)] overflow-hidden pr-2 text-[15px] leading-5 sm:text-sm sm:leading-6",
+    backMemo: "max-h-[calc(100%-4.75rem)] pr-2 text-[15px] leading-5 sm:text-sm sm:leading-6",
   },
   preview: {
     rounded: "rounded-[22px]",
@@ -43,7 +44,7 @@ const faceSize = {
     comment: "text-sm leading-6",
     date: "text-xs",
     backContent: "px-5 pb-5 pt-4",
-    backMemo: "card-back-scroll overflow-y-auto pr-2 text-sm leading-5 sm:leading-6",
+    backMemo: "card-back-scroll pr-2 text-sm leading-5 sm:leading-6",
   },
   detail: {
     rounded: "rounded-[24px]",
@@ -54,7 +55,7 @@ const faceSize = {
     comment: "text-sm leading-6 sm:text-base sm:leading-7",
     date: "text-[11px] sm:text-xs",
     backContent: "px-4 pb-4 pt-3 sm:px-8 sm:pb-8 sm:pt-7",
-    backMemo: "card-detail-back-scroll overflow-y-auto pb-10 pr-1.5 text-[15px] leading-[1.75] sm:pr-2 sm:text-[17px] sm:leading-8",
+    backMemo: "card-detail-back-scroll pb-10 pr-1.5 text-[15px] leading-[1.75] sm:pr-2 sm:text-[17px] sm:leading-8",
   },
 } as const;
 
@@ -173,6 +174,7 @@ export default function CardFace({
   imageFrameMode = "none",
   linkUrl = "",
   preserve3d = true,
+  scrollableBackMemo = false,
   size,
 }: Props) {
   const styles = faceSize[size];
@@ -242,6 +244,11 @@ export default function CardFace({
       : "[transform:translateZ(0)]"
     : "[transform:translateZ(0)]";
   const backMemoTopMarginClass = size === "detail" ? "mt-2" : "mt-3";
+  const shouldScrollBackMemo =
+    size === "detail" || size === "preview" || scrollableBackMemo;
+  const backMemoScrollClass = shouldScrollBackMemo
+    ? `${size === "detail" ? "" : "card-back-scroll"} overflow-y-auto overscroll-contain [touch-action:pan-y]`
+    : "overflow-hidden";
 
   function isScrollableBackMemo(element: HTMLElement) {
     return element.scrollHeight > element.clientHeight;
@@ -250,7 +257,17 @@ export default function CardFace({
   function handleBackMemoTouch(event: TouchEvent<HTMLDivElement>) {
     if (
       isBack &&
-      size === "detail" &&
+      shouldScrollBackMemo &&
+      isScrollableBackMemo(event.currentTarget)
+    ) {
+      event.stopPropagation();
+    }
+  }
+
+  function handleBackMemoClick(event: MouseEvent<HTMLDivElement>) {
+    if (
+      isBack &&
+      shouldScrollBackMemo &&
       isScrollableBackMemo(event.currentTarget)
     ) {
       event.stopPropagation();
@@ -260,7 +277,7 @@ export default function CardFace({
   function handleBackMemoWheel(event: WheelEvent<HTMLDivElement>) {
     if (
       isBack &&
-      size === "detail" &&
+      shouldScrollBackMemo &&
       isScrollableBackMemo(event.currentTarget)
     ) {
       event.stopPropagation();
@@ -380,11 +397,12 @@ export default function CardFace({
           </div>
 
           <div
+            onClick={handleBackMemoClick}
             onTouchEnd={handleBackMemoTouch}
             onTouchMove={handleBackMemoTouch}
             onTouchStart={handleBackMemoTouch}
             onWheel={handleBackMemoWheel}
-            className={`${backMemoTopMarginClass} min-h-0 flex-1 ${styles.backMemo}`}
+            className={`${backMemoTopMarginClass} min-h-0 flex-1 ${styles.backMemo} ${backMemoScrollClass}`}
           >
             <MarkdownMemo
               compact={size !== "detail"}
