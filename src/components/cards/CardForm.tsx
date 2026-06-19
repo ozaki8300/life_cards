@@ -208,7 +208,7 @@ export default function CardForm({
     : selectedDefaultImageLabel;
   const formLayoutClass = isPreviewCollapsed
     ? "grid min-w-0 gap-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:grid-cols-[108px_minmax(0,1fr)] lg:items-start"
-    : "grid min-w-0 gap-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:grid-cols-[minmax(260px,340px)_minmax(0,1fr)] lg:items-start";
+    : "grid min-w-0 gap-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] xl:gap-5 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:items-start";
   const editorColumnClass = "lg:col-start-2";
   const editorStackClass = `order-3 grid min-w-0 gap-3 lg:order-1 lg:row-start-1 ${editorColumnClass}`;
   const appearanceColumnClass = isPreviewCollapsed

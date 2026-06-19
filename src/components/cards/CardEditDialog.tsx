@@ -64,7 +64,7 @@ export default function CardEditDialog({
   }
 
   return (
-    <div className="mx-auto max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] w-full max-w-5xl overflow-y-auto rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_28px_80px_rgba(87,72,52,0.28)] [-webkit-overflow-scrolling:touch] sm:max-h-[calc(100dvh-32px)] sm:p-5">
+    <div className="mx-auto max-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-1.5rem)] w-full max-w-[min(1280px,calc(100vw-1.5rem))] overflow-y-auto rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_28px_80px_rgba(87,72,52,0.28)] [-webkit-overflow-scrolling:touch] sm:max-h-[calc(100dvh-32px)] sm:p-5 lg:max-w-[min(1280px,calc(100vw-3rem))]">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold text-[#332d25]">カードを編集</h2>
         <button
