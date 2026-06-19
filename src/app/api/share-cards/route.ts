@@ -8,7 +8,7 @@ import {
 } from "@/lib/shareCardPayload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ShareImageStorageAdminRepository } from "@/lib/supabase/shareImageStorageAdminRepository";
-import type { Card } from "@/lib/types";
+import type { Card, CardImageFitMode, DefaultCardImageKey } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -32,8 +32,24 @@ type ReusableShareCardRow = {
   token: string;
 };
 
+type ShareSourceCardRow = {
+  back_text: string | null;
+  created_at: string;
+  deck_id: string;
+  default_image_key: string | null;
+  front_comment: string | null;
+  front_text: string | null;
+  id: string;
+  image_fit_mode: string | null;
+  image_path: string | null;
+  link_url: string | null;
+  updated_at: string;
+};
+
 type CreateShareCardRequest = {
-  card?: Card;
+  card?: {
+    id?: unknown;
+  };
   creatorLabel?: string;
   options?: {
     origin?: string;
@@ -74,24 +90,73 @@ function isShareCardType(value: unknown): value is ShareCardType {
   return value === "card";
 }
 
-function isCard(value: unknown): value is Card {
+function isCardIdentifier(value: unknown): value is { id: string } {
   if (!value || typeof value !== "object") {
     return false;
   }
 
-  const card = value as Partial<Card>;
+  const card = value as { id?: unknown };
 
-  return (
-    typeof card.id === "string" &&
-    card.id.trim().length > 0 &&
-    typeof card.deckId === "string" &&
-    card.deckId.trim().length > 0 &&
-    typeof card.createdAt === "string" &&
-    typeof card.updatedAt === "string"
-  );
+  return typeof card.id === "string" && card.id.trim().length > 0;
 }
 
-async function assertSourceCardBelongsToUser({
+const defaultImageKeys = new Set<DefaultCardImageKey>([
+  "paper",
+  "night",
+  "sea",
+  "mountain",
+  "library",
+]);
+
+function rowDefaultImageKeyToCard(
+  value: string | null | undefined,
+): DefaultCardImageKey | undefined {
+  return defaultImageKeys.has(value as DefaultCardImageKey)
+    ? (value as DefaultCardImageKey)
+    : undefined;
+}
+
+function rowImageFitModeToCard(value: string | null): CardImageFitMode {
+  if (value === "blurExtend" || value === "blur_extend") {
+    return "blurExtend";
+  }
+
+  return "cover";
+}
+
+function isDataUrl(value: string) {
+  return value.startsWith("data:");
+}
+
+function isDisplayOnlyImagePath(value: string) {
+  return value.startsWith("http://") || value.startsWith("https://") || value.startsWith("/");
+}
+
+function rowToShareSourceCard(row: ShareSourceCardRow): Card {
+  const storedImagePath = row.image_path ?? "";
+  const imagePath =
+    isDisplayOnlyImagePath(storedImagePath) || isDataUrl(storedImagePath)
+      ? storedImagePath
+      : "";
+
+  return {
+    backText: row.back_text ?? "",
+    createdAt: row.created_at,
+    deckId: row.deck_id,
+    defaultImageKey: rowDefaultImageKeyToCard(row.default_image_key),
+    frontComment: row.front_comment ?? "",
+    frontText: row.front_text ?? "",
+    id: row.id,
+    imageFitMode: rowImageFitModeToCard(row.image_fit_mode),
+    imageFrameMode: "none",
+    imagePath,
+    imageStoragePath: imagePath ? "" : storedImagePath,
+    linkUrl: row.link_url ?? "",
+    updatedAt: row.updated_at,
+  };
+}
+
+async function getShareSourceCardForUser({
   cardId,
   supabase,
   userId,
@@ -102,10 +167,12 @@ async function assertSourceCardBelongsToUser({
 }) {
   const { data, error } = await supabase
     .from("cards")
-    .select("id")
+    .select(
+      "id,deck_id,front_text,front_comment,back_text,image_path,image_fit_mode,default_image_key,link_url,created_at,updated_at",
+    )
     .eq("user_id", userId)
     .eq("id", cardId)
-    .maybeSingle();
+    .maybeSingle<ShareSourceCardRow>();
 
   if (error) {
     throw error;
@@ -114,6 +181,8 @@ async function assertSourceCardBelongsToUser({
   if (!data) {
     throw new Error("共有元カードが見つかりません。");
   }
+
+  return rowToShareSourceCard(data);
 }
 
 async function recordShareCreated({
@@ -157,10 +226,10 @@ function errorResponse(message: string, status: number) {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateShareCardRequest;
-    const card = body.card;
+    const cardIdentifier = body.card;
     const creatorLabel = body.creatorLabel?.trim() ?? "";
 
-    if (!isCard(card)) {
+    if (!isCardIdentifier(cardIdentifier)) {
       return errorResponse("共有するカードが不正です。", 400);
     }
 
@@ -185,8 +254,8 @@ export async function POST(request: Request) {
       return errorResponse("共有リンクを作成するにはログインしてください。", 401);
     }
 
-    await assertSourceCardBelongsToUser({
-      cardId: card.id,
+    const card = await getShareSourceCardForUser({
+      cardId: cardIdentifier.id.trim(),
       supabase,
       userId,
     });
