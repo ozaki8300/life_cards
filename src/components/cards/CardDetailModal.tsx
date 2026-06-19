@@ -395,100 +395,97 @@ export default function CardDetailModal({
         </button>
         <div className="absolute inset-0 [-webkit-perspective:1400px] [perspective:1400px]">
           <div className={flipStageClass}>
-            <section
-              aria-label="表面の全画面表示"
-              aria-hidden={!isFrontView}
-              className={`${flipFaceClass} cursor-pointer ${
-                isFrontView ? "pointer-events-auto" : "pointer-events-none"
-              }`}
-              onClick={handleCardSurfaceClick}
-            >
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 scale-110 bg-cover bg-center opacity-58 blur-2xl"
-                style={{ backgroundImage: `url(${backgroundImage})` }}
-              />
-              <div
-                className={`absolute z-10 flex items-center justify-center ${frontMediaInsetClass}`}
+            {isFrontView ? (
+              <section
+                aria-label="表面の全画面表示"
+                className={`${flipFaceClass} cursor-pointer pointer-events-auto`}
+                onClick={handleCardSurfaceClick}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  alt=""
+                <div
                   aria-hidden="true"
-                  className="h-full max-h-screen w-full max-w-screen object-contain drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)]"
-                  src={backgroundImage}
+                  className="absolute inset-0 scale-110 bg-cover bg-center opacity-58 blur-2xl"
+                  style={{ backgroundImage: `url(${backgroundImage})` }}
                 />
-              </div>
-              <div
-                aria-hidden="true"
-                className={`pointer-events-none absolute inset-0 z-[1] ${
-                  frontSurfaceTextClass === "text-white"
-                    ? "bg-gradient-to-t from-black/62 via-black/10 to-black/22"
-                    : "bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
-                }`}
-              />
-              <div
-                className={`absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 max-w-[min(22rem,calc(100vw-5rem))] rounded-2xl border px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-md sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)] ${
-                  frontSurfaceTextClass === "text-white"
-                    ? "border-white/18 bg-black/24 text-white"
-                    : "border-[#d8c8aa]/62 bg-[#fffaf0]/62 text-[#332d25]"
-                }`}
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-[10px] font-bold uppercase tracking-[0.18em] opacity-82">
-                    {deckLabel}
-                  </span>
-                  <span className="shrink-0 text-[11px] font-semibold opacity-78">
-                    {date}
-                  </span>
-                </div>
-                {displayFrontText ? (
-                  <p className="mt-1 line-clamp-2 text-left text-sm font-semibold leading-snug opacity-92 sm:text-[15px]">
-                    {displayFrontText}
-                  </p>
-                ) : null}
-              </div>
-            </section>
-            <section
-              aria-label="裏面メモの全画面表示"
-              aria-hidden={isFrontView}
-              className={`${flipFaceClass} flex cursor-pointer flex-col bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] [transform:rotateY(180deg)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${
-                isFrontView ? "pointer-events-none" : "pointer-events-auto"
-              } ${backViewBottomPaddingClass}`}
-              onClick={handleCardSurfaceClick}
-            >
-              <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4">
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9c8a73] sm:text-[11px] sm:tracking-[0.22em]">
-                    Back Memo
-                  </p>
-                  <h2 className="mt-0.5 truncate text-lg font-bold leading-tight text-[#332d25] sm:mt-1 sm:text-3xl">
-                    {displayFrontText || "裏面メモ"}
-                  </h2>
-                </div>
-                <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold leading-tight text-[#8c7a62] sm:gap-3 sm:text-xs">
-                  <span>{deckLabel}</span>
-                  <span>{date}</span>
-                </div>
-              </header>
-              <div
-                data-card-scroll="true"
-                className="card-detail-back-scroll mx-auto mt-2 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[14px] border border-[#eadcc8] bg-white/54 px-3 py-3 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:rounded-[18px] sm:px-7 sm:py-6"
-                onPointerDown={(event) => event.stopPropagation()}
-                onPointerMove={(event) => event.stopPropagation()}
-                onPointerUp={(event) => event.stopPropagation()}
-                onTouchMove={(event) => event.stopPropagation()}
-                onWheel={(event) => event.stopPropagation()}
-              >
-                <MarkdownMemo
-                  emptyText="裏面メモがありません"
-                  readingDensity="detailBack"
+                <div
+                  className={`absolute z-10 flex items-center justify-center ${frontMediaInsetClass}`}
                 >
-                  {card.backText ?? ""}
-                </MarkdownMemo>
-                <div aria-hidden="true" className="h-3 sm:h-8" />
-              </div>
-            </section>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    alt=""
+                    aria-hidden="true"
+                    className="h-full max-h-screen w-full max-w-screen object-contain drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)]"
+                    src={backgroundImage}
+                  />
+                </div>
+                <div
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute inset-0 z-[1] ${
+                    frontSurfaceTextClass === "text-white"
+                      ? "bg-gradient-to-t from-black/62 via-black/10 to-black/22"
+                      : "bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
+                  }`}
+                />
+                <div
+                  className={`absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 max-w-[min(22rem,calc(100vw-5rem))] rounded-2xl border px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-md sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)] ${
+                    frontSurfaceTextClass === "text-white"
+                      ? "border-white/18 bg-black/24 text-white"
+                      : "border-[#d8c8aa]/62 bg-[#fffaf0]/62 text-[#332d25]"
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-[10px] font-bold uppercase tracking-[0.18em] opacity-82">
+                      {deckLabel}
+                    </span>
+                    <span className="shrink-0 text-[11px] font-semibold opacity-78">
+                      {date}
+                    </span>
+                  </div>
+                  {displayFrontText ? (
+                    <p className="mt-1 line-clamp-2 text-left text-sm font-semibold leading-snug opacity-92 sm:text-[15px]">
+                      {displayFrontText}
+                    </p>
+                  ) : null}
+                </div>
+              </section>
+            ) : (
+              <section
+                aria-label="裏面メモの全画面表示"
+                className={`${flipFaceClass} flex cursor-pointer flex-col bg-[#fffaf0] px-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] pointer-events-auto [transform:rotateY(180deg)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top)+1.5rem)] ${backViewBottomPaddingClass}`}
+                onClick={handleCardSurfaceClick}
+              >
+                <header className="mx-auto flex w-full max-w-5xl shrink-0 flex-col gap-1 border-b border-[#e5d6c2] pb-2 sm:flex-row sm:items-end sm:justify-between sm:gap-2 sm:pb-4">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9c8a73] sm:text-[11px] sm:tracking-[0.22em]">
+                      Back Memo
+                    </p>
+                    <h2 className="mt-0.5 truncate text-lg font-bold leading-tight text-[#332d25] sm:mt-1 sm:text-3xl">
+                      {displayFrontText || "裏面メモ"}
+                    </h2>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold leading-tight text-[#8c7a62] sm:gap-3 sm:text-xs">
+                    <span>{deckLabel}</span>
+                    <span>{date}</span>
+                  </div>
+                </header>
+                <div
+                  data-card-scroll="true"
+                  className="card-detail-back-scroll mx-auto mt-2 min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain rounded-[14px] border border-[#eadcc8] bg-white/54 px-3 py-3 shadow-inner shadow-[#efe3d0]/55 sm:mt-5 sm:rounded-[18px] sm:px-7 sm:py-6"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onPointerMove={(event) => event.stopPropagation()}
+                  onPointerUp={(event) => event.stopPropagation()}
+                  onTouchMove={(event) => event.stopPropagation()}
+                  onWheel={(event) => event.stopPropagation()}
+                >
+                  <MarkdownMemo
+                    emptyText="裏面メモがありません"
+                    readingDensity="detailBack"
+                  >
+                    {card.backText ?? ""}
+                  </MarkdownMemo>
+                  <div aria-hidden="true" className="h-3 sm:h-8" />
+                </div>
+              </section>
+            )}
           </div>
         </div>
 
