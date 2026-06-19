@@ -101,17 +101,13 @@ export default function CardDetailModal({
   const date = formatDate(card.createdAt);
   const linkHref = normalizeLinkUrl(card.linkUrl ?? "");
   const displayFrontText = card.frontText?.trim() ?? "";
-  const displayFrontComment = card.frontComment?.trim() ?? "";
   const isFrontView = viewMode === "front";
   const isBlurExtend = card.imageFitMode === "blurExtend";
   const frontSurfaceTextClass =
     backgroundImage.includes("default-paper.webp") || isBlurExtend
       ? "text-[#2f2a23]"
       : "text-white";
-  const frontMediaInsetClass =
-    "inset-x-3 top-[calc(env(safe-area-inset-top)+3.75rem)] bottom-[calc(env(safe-area-inset-bottom)+6.25rem)] sm:inset-x-12 sm:top-[calc(env(safe-area-inset-top)+4.25rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+7rem)]";
-  const frontCaptionBottomClass =
-    "bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] sm:bottom-[calc(env(safe-area-inset-bottom)+6.5rem)]";
+  const frontMediaInsetClass = "inset-0";
   const backViewBottomPaddingClass =
     "pb-[calc(env(safe-area-inset-bottom)+5.75rem)] sm:pb-[calc(env(safe-area-inset-bottom)+6.75rem)]";
   const canNavigateCards = hasMultipleCards && cardCount > 1;
@@ -413,22 +409,25 @@ export default function CardDetailModal({
                 style={{ backgroundImage: `url(${backgroundImage})` }}
               />
               <div
-                aria-hidden="true"
-                className={`absolute bg-center bg-no-repeat drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)] ${frontMediaInsetClass}`}
-                style={{
-                  backgroundImage: `url(${backgroundImage})`,
-                  backgroundSize: "contain",
-                }}
-              />
+                className={`absolute z-10 flex items-center justify-center ${frontMediaInsetClass}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full max-h-screen w-full max-w-screen object-contain drop-shadow-[0_18px_56px_rgba(0,0,0,0.3)]"
+                  src={backgroundImage}
+                />
+              </div>
               <div
                 aria-hidden="true"
-                className={`absolute inset-0 ${
+                className={`pointer-events-none absolute inset-0 z-[1] ${
                   frontSurfaceTextClass === "text-white"
-                    ? "pointer-events-none bg-gradient-to-t from-black/62 via-black/10 to-black/22"
-                    : "pointer-events-none bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
+                    ? "bg-gradient-to-t from-black/62 via-black/10 to-black/22"
+                    : "bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
                 }`}
               />
-              <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-10 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]">
+              <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]">
                 <span
                   className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md ${
                     frontSurfaceTextClass === "text-white"
@@ -447,24 +446,6 @@ export default function CardDetailModal({
                 >
                   {date}
                 </span>
-              </div>
-              <div
-                className={`absolute inset-x-0 ${frontCaptionBottomClass} z-10 mx-auto flex w-full max-w-4xl flex-col gap-2 px-5 text-left sm:px-10 ${frontSurfaceTextClass}`}
-              >
-                {displayFrontText ? (
-                  <h2 className="max-w-3xl text-[clamp(1.35rem,3vw,3.25rem)] font-bold leading-[1.08] drop-shadow-[0_5px_22px_rgba(0,0,0,0.3)]">
-                    {displayFrontText}
-                  </h2>
-                ) : (
-                  <p className="text-xl font-semibold opacity-75">
-                    表面タイトルなし
-                  </p>
-                )}
-                {displayFrontComment ? (
-                  <p className="max-w-2xl text-sm font-medium leading-relaxed opacity-88 drop-shadow-[0_3px_14px_rgba(0,0,0,0.24)] sm:text-base">
-                    {displayFrontComment}
-                  </p>
-                ) : null}
               </div>
             </section>
             <section
