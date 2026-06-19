@@ -1,6 +1,9 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 
 export type UsageEventName =
   | "app_opened"
@@ -65,19 +68,10 @@ function usageEventInsertHint(error: unknown) {
 
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const session = await getSupabaseSessionSafely(supabase);
+  const userId = session?.user?.id ?? "";
 
-  if (error) {
-    console.warn("Life Cards usage event user lookup failed", {
-      error: supabaseErrorLog(error),
-    });
-    throw error;
-  }
-
-  return user?.id ? { supabase, userId: user.id } : null;
+  return userId ? { supabase, userId } : null;
 }
 
 export const UsageEventSupabaseRepository = {
@@ -85,25 +79,11 @@ export const UsageEventSupabaseRepository = {
     eventName: UsageEventName,
     metadata: UsageEventMetadata = {},
   ) {
-    console.warn("Life Cards usage event repository start", {
-      eventName,
-      metadataKeys: Object.keys(metadata),
-    });
-
     const client = await getClient();
 
     if (!client) {
-      console.warn("Life Cards usage event repository skipped", {
-        eventName,
-        reason: "missing-user",
-      });
       return false;
     }
-
-    console.warn("Life Cards usage event repository user", {
-      eventName,
-      userId: client.userId,
-    });
 
     const row: UsageEventInsertRow = {
       event_name: eventName,
@@ -124,11 +104,6 @@ export const UsageEventSupabaseRepository = {
       });
       throw error;
     }
-
-    console.warn("Life Cards usage event insert success", {
-      eventName,
-      userId: client.userId,
-    });
 
     return true;
   },

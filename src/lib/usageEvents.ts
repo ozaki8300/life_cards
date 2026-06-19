@@ -66,41 +66,18 @@ function shouldSkipDuplicateUsageEvent(
   return false;
 }
 
-function warnUsageEventError(message: string, error: unknown) {
-  console.warn(message, error);
-}
-
 export async function recordUsageEvent(
   eventName: UsageEventName,
   metadata: UsageEventMetadata = {},
 ) {
-  console.warn("Life Cards usage event start", {
-    eventName,
-    metadataKeys: Object.keys(metadata),
-  });
-
   if (shouldSkipDuplicateUsageEvent(eventName, metadata)) {
-    console.warn("Life Cards usage event dedup skipped", {
-      eventName,
-      metadataKeys: Object.keys(metadata),
-    });
     return;
   }
 
   try {
-    const recorded = await UsageEventSupabaseRepository.recordEvent(
-      eventName,
-      metadata,
-    );
-
-    if (!recorded) {
-      warnUsageEventError("Life Cards usage event skipped", {
-        eventName,
-        reason: "missing-session",
-      });
-    }
+    await UsageEventSupabaseRepository.recordEvent(eventName, metadata);
   } catch (error) {
-    warnUsageEventError("Life Cards usage event record failed", {
+    console.warn("Life Cards usage event record failed", {
       error,
       eventName,
     });
@@ -134,7 +111,7 @@ export async function recordDailyAppOpened() {
       window.localStorage.setItem(key, today);
     }
   } catch (error) {
-    warnUsageEventError("Life Cards app-open usage event failed", error);
+    console.warn("Life Cards app-open usage event failed", error);
     // App-open tracking is best-effort only.
   }
 }

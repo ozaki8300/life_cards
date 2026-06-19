@@ -1,7 +1,10 @@
 "use client";
 
 import type { EncounterMetadata } from "@/domain/reencounter/types";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  getSupabaseSessionSafely,
+} from "@/lib/supabase/client";
 
 type EncounterMetadataMap = Record<string, EncounterMetadata>;
 
@@ -70,19 +73,10 @@ function rowsToMetadataMap(rows: SupabaseEncounterRow[]): EncounterMetadataMap {
 
 async function getClient() {
   const supabase = createSupabaseBrowserClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const session = await getSupabaseSessionSafely(supabase);
+  const userId = session?.user?.id ?? "";
 
-  if (error) {
-    console.warn("Life Cards Supabase encounter user lookup failed", {
-      error: supabaseErrorLog(error),
-    });
-    throw error;
-  }
-
-  return user?.id ? { supabase, userId: user.id } : null;
+  return userId ? { supabase, userId } : null;
 }
 
 async function fetchMetadataMap(
