@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 
 import CardFace from "@/components/cards/CardFace";
 import { defaultImageForCard } from "@/components/cards/cardUiUtils";
@@ -16,7 +16,7 @@ type SharedCardFacePreviewProps = {
   backgroundImage: string;
   card: ShareCardPayload["card"];
   date: string;
-  face: "front" | "back";
+  isBack: boolean;
   shadowClass: string;
 };
 
@@ -27,35 +27,61 @@ function SharedCardFacePreview({
   backgroundImage,
   card,
   date,
-  face,
+  isBack,
   shadowClass,
 }: SharedCardFacePreviewProps) {
+  const flipStageClass = `relative h-full w-full [-webkit-transform-style:preserve-3d] [transform-style:preserve-3d] transition-transform duration-[520ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform motion-reduce:transition-none ${
+    isBack ? "[transform:rotateY(180deg)]" : "[transform:rotateY(0deg)]"
+  }`;
+  const faceClass =
+    "absolute inset-0 [-webkit-backface-visibility:hidden] [backface-visibility:hidden]";
+
   return (
     <div
-      className={`relative mx-auto aspect-[3/4] w-[min(320px,100%)] overflow-hidden rounded-[24px] sm:w-[360px] ${shadowClass}`}
+      className={`relative mx-auto aspect-[3/4] w-[min(320px,100%)] rounded-[24px] [perspective:1400px] sm:w-[360px] ${shadowClass}`}
     >
       <div
-        className="absolute left-1/2 top-1/2 origin-center overflow-hidden rounded-[24px] [transform:translate(-50%,-50%)_scale(0.69565)] sm:[transform:translate(-50%,-50%)_scale(0.78261)]"
+        className="absolute left-1/2 top-1/2 origin-center rounded-[24px] [transform:translate(-50%,-50%)_scale(0.69565)] sm:[transform:translate(-50%,-50%)_scale(0.78261)]"
         style={{
           height: sharedPreviewBaseHeight,
           width: sharedPreviewBaseWidth,
         }}
       >
-        <div className="relative h-full w-full">
-          <CardFace
-            backgroundImage={backgroundImage}
-            backText={card.backText}
-            date={date}
-            deckLabel="Shared"
-            face={face}
-            frontComment={card.frontComment}
-            frontText={card.frontText}
-            imageFitMode={card.imageFitMode}
-            imageFrameMode={card.imageFrameMode}
-            linkUrl={card.linkUrl}
-            preserve3d={false}
-            size="detail"
-          />
+        <div className={flipStageClass}>
+          <div className={faceClass}>
+            <CardFace
+              backgroundImage={backgroundImage}
+              backText={card.backText}
+              date={date}
+              deckLabel="Shared"
+              face="front"
+              frontComment={card.frontComment}
+              frontText={card.frontText}
+              imageFitMode={card.imageFitMode}
+              imageFrameMode={card.imageFrameMode}
+              linkUrl={card.linkUrl}
+              preserve3d={false}
+              size="detail"
+            />
+          </div>
+          <div
+            className={`${faceClass} text-left [transform:rotateY(180deg)] [&_h2]:mt-8 [&_h2]:pt-1 [&_li]:text-left [&_ol]:text-left [&_p]:text-left [&_ul]:text-left`}
+          >
+            <CardFace
+              backgroundImage={backgroundImage}
+              backText={card.backText}
+              date={date}
+              deckLabel="Shared"
+              face="back"
+              frontComment={card.frontComment}
+              frontText={card.frontText}
+              imageFitMode={card.imageFitMode}
+              imageFrameMode={card.imageFrameMode}
+              linkUrl={card.linkUrl}
+              preserve3d={false}
+              size="detail"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -64,6 +90,7 @@ function SharedCardFacePreview({
 
 export default function SharedCardPreview({ card, date, shareMode }: Props) {
   const [face, setFace] = useState<"front" | "back">("front");
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const backgroundImage =
     shareMode === "withImage" && card.imagePath
       ? card.imagePath
@@ -74,13 +101,39 @@ export default function SharedCardPreview({ card, date, shareMode }: Props) {
     setFace((currentFace) => (currentFace === "front" ? "back" : "front"));
   }
 
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    pointerStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    const pointerStart = pointerStartRef.current;
+    pointerStartRef.current = null;
+
+    if (!pointerStart) {
+      return;
+    }
+
+    const movedX = Math.abs(event.clientX - pointerStart.x);
+    const movedY = Math.abs(event.clientY - pointerStart.y);
+
+    if (movedX > 8 || movedY > 8) {
+      return;
+    }
+
+    flipCard();
+  }
+
   return (
     <div className="text-center">
       <div
         role="button"
         tabIndex={0}
         aria-label={helpText}
-        onClick={flipCard}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
@@ -93,7 +146,7 @@ export default function SharedCardPreview({ card, date, shareMode }: Props) {
           backgroundImage={backgroundImage}
           card={card}
           date={date}
-          face={face}
+          isBack={face === "back"}
           shadowClass="shadow-[0_28px_80px_rgba(87,72,52,0.24)]"
         />
       </div>
