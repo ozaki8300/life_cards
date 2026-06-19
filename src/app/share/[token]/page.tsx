@@ -617,16 +617,6 @@ function createCardTitle(frontText: string | undefined) {
   return trimmedFrontText;
 }
 
-function createCreatorLabel(creatorLabel: string) {
-  const trimmedCreatorLabel = creatorLabel.trim();
-
-  if (!trimmedCreatorLabel) {
-    return "";
-  }
-
-  return `${trimmedCreatorLabel}から届いたLife Card`;
-}
-
 export default async function ShareCardPage({ params, searchParams }: Props) {
   const { token } = await params;
   const { import: importStatus } = await searchParams;
@@ -644,7 +634,6 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
   const shareMode = shareCard.payload.shareMode;
   const date = formatDate(card.createdAt);
   const expiresAt = formatExpiresAt(shareCard.expiresAt);
-  const creatorLabel = createCreatorLabel(shareCard.creatorLabel);
   await incrementShareViewCount(token);
   const userId = await getSignedInUserId();
 
@@ -658,11 +647,6 @@ export default async function ShareCardPage({ params, searchParams }: Props) {
           <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
             {createCardTitle(card.frontText)}
           </h1>
-          {creatorLabel ? (
-            <p className="mt-3 text-sm font-medium text-[#8d7f6e]">
-              {creatorLabel}
-            </p>
-          ) : null}
           {expiresAt ? (
             <p className="mt-3 text-sm font-medium text-[#8d7f6e]">
               有効期限: {expiresAt}

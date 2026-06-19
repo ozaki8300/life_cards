@@ -95,7 +95,8 @@ export default function SharedCardPreview({ card, date, shareMode }: Props) {
     shareMode === "withImage" && card.imagePath
       ? card.imagePath
       : defaultImageForCard(card);
-  const helpText = face === "front" ? "タップで裏面を見る" : "タップで表面に戻る";
+  const helpText =
+    face === "front" ? "↓ タップして裏面を見る" : "↑ タップして表面に戻る";
 
   function flipCard() {
     setFace((currentFace) => (currentFace === "front" ? "back" : "front"));
@@ -150,7 +151,7 @@ export default function SharedCardPreview({ card, date, shareMode }: Props) {
           shadowClass="shadow-[0_28px_80px_rgba(87,72,52,0.24)]"
         />
       </div>
-      <p className="mt-3 text-xs font-semibold text-[#8d7f6e]">
+      <p className="mx-auto mt-3 inline-flex rounded-full border border-[#d8c8aa]/70 bg-[#fffaf0]/72 px-3 py-1.5 text-xs font-semibold text-[#7d705f] shadow-sm">
         {helpText}
       </p>
     </div>
