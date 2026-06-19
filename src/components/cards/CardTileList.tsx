@@ -55,6 +55,7 @@ export default function CardTileList({
         const isFavorite = activeFavoriteIds.has(card.id);
         const railCaption = railCaptionByCardId?.[card.id]?.trim() ?? "";
         const reasonCaption = reasonByCardId?.[card.id]?.trim() ?? "";
+        const railItemCaption = railCaption || reasonCaption;
         const favoriteButtonToneClass = isFavorite
           ? "border-[#d8c8aa]/42 bg-[#fff2c8]/66 text-[#8a6f24] hover:bg-[#fff0b5]/80 hover:text-[#765d19]"
           : "border-[#d8c8aa]/32 bg-[#f5eee1]/60 text-[#8f806d] hover:border-[#d8c8aa]/48 hover:bg-[#fffaf0]/76 hover:text-[#756750]";
@@ -69,64 +70,62 @@ export default function CardTileList({
             }`}
             style={{ animationDelay: `${Math.min(index * 45, 360)}ms` }}
           >
-            <CardTile
-              card={card}
-              deckLabel={deckLabelFor(card)}
-              isBack={isBack}
-              layout={layout}
-              onFlip={() => onFlip(card.id)}
-            />
+            <div className="relative">
+              <CardTile
+                card={card}
+                deckLabel={deckLabelFor(card)}
+                isBack={isBack}
+                layout={layout}
+                onFlip={() => onFlip(card.id)}
+              />
 
-            {layout === "rail" && reasonCaption ? (
-              <p className="mx-auto mt-2 max-w-full truncate px-1 text-center text-[11px] font-semibold leading-tight text-[#8c7a62]">
-                <span className="inline-block max-w-full truncate rounded-full border border-[#e7dac8]/80 bg-[#fffaf0]/66 px-2.5 py-1 shadow-[0_4px_12px_rgba(87,72,52,0.045)]">
-                  {reasonCaption}
-                </span>
+              <div className="pointer-events-none absolute inset-0 z-[9999]">
+                <button
+                  type="button"
+                  aria-label="Open card detail"
+                  data-card-action="true"
+                  onMouseDown={stopOverlayButtonEvent}
+                  onPointerDown={stopOverlayButtonEvent}
+                  onTouchStart={stopOverlayButtonEvent}
+                  onClick={(event) => {
+                    stopOverlayButtonEvent(event);
+                    onOpen(index, isBack ? "back" : "front");
+                  }}
+                  className={`${openDetailButtonClass} pointer-events-auto touch-manipulation`}
+                >
+                  ...
+                </button>
+
+                <button
+                  type="button"
+                  aria-label={
+                    isFavorite ? "Remove from favorites" : "Add to favorites"
+                  }
+                  aria-pressed={isFavorite}
+                  data-card-action="true"
+                  onMouseDown={stopOverlayButtonEvent}
+                  onPointerDown={stopOverlayButtonEvent}
+                  onTouchStart={stopOverlayButtonEvent}
+                  onClick={(event) => {
+                    stopOverlayButtonEvent(event);
+                    onToggleFavorite(card.id);
+                  }}
+                  className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto touch-manipulation`}
+                >
+                  {isFavorite ? "★" : "☆"}
+                </button>
+              </div>
+            </div>
+
+            {layout === "rail" ? (
+              <p className="mt-2 flex min-h-7 items-start justify-center px-1 text-center text-[11px] font-semibold leading-tight text-[#8c7a62]">
+                {railItemCaption ? (
+                  <span className="inline-block max-w-full truncate rounded-full border border-[#e7dac8]/80 bg-[#fffaf0]/66 px-2.5 py-1 shadow-[0_4px_12px_rgba(87,72,52,0.045)]">
+                    {railItemCaption}
+                  </span>
+                ) : null}
               </p>
             ) : null}
-
-            <div className="pointer-events-none absolute inset-0 z-[9999]">
-              {layout === "rail" && railCaption ? (
-                <p className="absolute bottom-3 left-3 max-w-[calc(100%-4.25rem)] truncate rounded-full border border-[#e7dac8]/80 bg-[#fffaf0]/72 px-2.5 py-1 text-[11px] font-semibold leading-tight text-[#8c7a62] shadow-[0_6px_18px_rgba(87,72,52,0.08)] backdrop-blur-[2px]">
-                  {railCaption}
-                </p>
-              ) : null}
-
-              <button
-                type="button"
-                aria-label="Open card detail"
-                data-card-action="true"
-                onMouseDown={stopOverlayButtonEvent}
-                onPointerDown={stopOverlayButtonEvent}
-                onTouchStart={stopOverlayButtonEvent}
-                onClick={(event) => {
-                  stopOverlayButtonEvent(event);
-                  onOpen(index, isBack ? "back" : "front");
-                }}
-                className={`${openDetailButtonClass} pointer-events-auto touch-manipulation`}
-              >
-                ...
-              </button>
-
-              <button
-                type="button"
-                aria-label={
-                  isFavorite ? "Remove from favorites" : "Add to favorites"
-                }
-                aria-pressed={isFavorite}
-                data-card-action="true"
-                onMouseDown={stopOverlayButtonEvent}
-                onPointerDown={stopOverlayButtonEvent}
-                onTouchStart={stopOverlayButtonEvent}
-                onClick={(event) => {
-                  stopOverlayButtonEvent(event);
-                  onToggleFavorite(card.id);
-                }}
-                className={`${favoriteButtonBaseClass} ${favoriteButtonToneClass} pointer-events-auto touch-manipulation`}
-              >
-                {isFavorite ? "★" : "☆"}
-              </button>
-            </div>
           </div>
         );
       })}

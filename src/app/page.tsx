@@ -15,10 +15,10 @@ export default function Home() {
               Life Cards
             </h1>
             <p className="mt-6 max-w-xl text-xl font-semibold leading-relaxed text-[#3c352c] sm:text-2xl">
-              保存した記憶と、もう一度出会う。
+              経験と学びに、もう一度出会う。
             </p>
             <p className="mt-5 max-w-2xl text-base leading-8 text-[#6f6253] sm:text-lg">
-              カードに残した言葉、画像、メモを、時間をおいて見返すための小さな記憶アプリです。
+              日々の経験や学びをカードに残し、時間をおいて再会することで、その意味を育てていくアプリです。
             </p>
             <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <Link
