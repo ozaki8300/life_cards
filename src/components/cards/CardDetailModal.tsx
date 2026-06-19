@@ -427,25 +427,26 @@ export default function CardDetailModal({
                     : "bg-gradient-to-t from-[#fffaf0]/72 via-[#fffaf0]/10 to-[#fffaf0]/16"
                 }`}
               />
-              <div className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 flex items-center gap-3 sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)]">
-                <span
-                  className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] backdrop-blur-md ${
-                    frontSurfaceTextClass === "text-white"
-                      ? "border-white/28 bg-black/22 text-white"
-                      : "border-[#d8c8aa]/70 bg-[#fffaf0]/62 text-[#6f6253]"
-                  }`}
-                >
-                  {deckLabel}
-                </span>
-                <span
-                  className={`text-xs font-semibold ${
-                    frontSurfaceTextClass === "text-white"
-                      ? "text-white/78"
-                      : "text-[#6f6253]/78"
-                  }`}
-                >
-                  {date}
-                </span>
+              <div
+                className={`absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-20 max-w-[min(22rem,calc(100vw-5rem))] rounded-2xl border px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-md sm:left-8 sm:top-[calc(env(safe-area-inset-top)+1.5rem)] ${
+                  frontSurfaceTextClass === "text-white"
+                    ? "border-white/18 bg-black/24 text-white"
+                    : "border-[#d8c8aa]/62 bg-[#fffaf0]/62 text-[#332d25]"
+                }`}
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-[10px] font-bold uppercase tracking-[0.18em] opacity-82">
+                    {deckLabel}
+                  </span>
+                  <span className="shrink-0 text-[11px] font-semibold opacity-78">
+                    {date}
+                  </span>
+                </div>
+                {displayFrontText ? (
+                  <p className="mt-1 line-clamp-2 text-left text-sm font-semibold leading-snug opacity-92 sm:text-[15px]">
+                    {displayFrontText}
+                  </p>
+                ) : null}
               </div>
             </section>
             <section
