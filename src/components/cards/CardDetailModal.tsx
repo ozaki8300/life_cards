@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MouseEvent, TouchEvent, WheelEvent } from "react";
 
 import MarkdownMemo from "@/components/MarkdownMemo";
-import { createCopyForAiMarkdown } from "@/lib/copyForAi";
-import { useCopyForAiFeatureFlag } from "@/lib/featureFlags";
 import { CardImageStorageRepository } from "@/lib/supabase/cardImageStorageRepository";
 import type { Card } from "@/lib/types";
-import { recordUsageEvent } from "@/lib/usageEvents";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
@@ -76,17 +73,11 @@ export default function CardDetailModal({
   const [viewMode, setViewMode] =
     useState<CardDetailViewMode>(initialViewMode);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isCopyForAiVisible = useCopyForAiFeatureFlag();
-  const [copyForAiStatus, setCopyForAiStatus] = useState<
-    "copied" | "failed" | "idle" | "working"
-  >("idle");
   const [resolvedStorageImage, setResolvedStorageImage] = useState<{
     signedUrl: string;
     status: "error" | "resolved";
     storagePath: string;
   } | null>(null);
-  const copyForAiStatusResetTimerRef =
-    useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageStoragePath = card.imageStoragePath?.trim() ?? "";
   const storageResolutionMatches =
     resolvedStorageImage?.storagePath === imageStoragePath;
@@ -147,14 +138,6 @@ export default function CardDetailModal({
       document.body.style.width = previousBodyWidth;
       document.documentElement.style.overflow = previousHtmlOverflow;
       window.scrollTo(0, scrollY);
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (copyForAiStatusResetTimerRef.current) {
-        clearTimeout(copyForAiStatusResetTimerRef.current);
-      }
     };
   }, []);
 
@@ -291,40 +274,6 @@ export default function CardDetailModal({
     event.stopPropagation();
   }
 
-  function showCopyForAiStatus(status: "copied" | "failed") {
-    if (copyForAiStatusResetTimerRef.current) {
-      clearTimeout(copyForAiStatusResetTimerRef.current);
-    }
-
-    setCopyForAiStatus(status);
-    copyForAiStatusResetTimerRef.current = setTimeout(() => {
-      setCopyForAiStatus("idle");
-      copyForAiStatusResetTimerRef.current = null;
-    }, 3500);
-  }
-
-  async function copyMarkdownToClipboard(markdown: string) {
-    await navigator.clipboard.writeText(markdown);
-  }
-
-  async function handleCopyForAi() {
-    const markdown = createCopyForAiMarkdown(card, { deckLabel });
-
-    setCopyForAiStatus("working");
-
-    try {
-      await copyMarkdownToClipboard(markdown);
-      showCopyForAiStatus("copied");
-      void recordUsageEvent("copy_for_ai_used", {
-        cardId: card.id,
-        deckId: card.deckId,
-      });
-    } catch (clipboardError) {
-      console.warn("Life Cards Copy for AI failed", { clipboardError });
-      showCopyForAiStatus("failed");
-    }
-  }
-
   function handleMenuShare() {
     closeMenu();
     onShare();
@@ -350,12 +299,6 @@ export default function CardDetailModal({
     onClose();
   }
 
-  const copyForAiToastMessage =
-    copyForAiStatus === "copied"
-      ? "プロンプトをコピーしました"
-      : copyForAiStatus === "failed"
-        ? "コピーできませんでした"
-        : null;
   return (
     <>
       <div
@@ -501,23 +444,6 @@ export default function CardDetailModal({
                 onTouchStart={(event) => event.stopPropagation()}
               >
                 <div className="flex flex-col gap-1">
-                  {isCopyForAiVisible ? (
-                    <button
-                      type="button"
-                      className={menuItemClass}
-                      disabled={copyForAiStatus === "working"}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        closeMenu();
-                        void handleCopyForAi();
-                      }}
-                    >
-                      <span>AIコピー</span>
-                      <span className="text-xs text-[#9c8a73]">
-                        {copyForAiStatus === "working" ? "..." : "AI"}
-                      </span>
-                    </button>
-                  ) : null}
                   <button
                     type="button"
                     className={menuItemClass}
@@ -691,14 +617,6 @@ export default function CardDetailModal({
               </span>
             </button>
           </div>
-          {copyForAiToastMessage ? (
-            <p
-              aria-live="polite"
-              className="pointer-events-none rounded-full border border-[#d8c8aa] bg-[#fffaf0]/95 px-3 py-1.5 text-center text-xs font-semibold leading-tight text-[#4f4437] shadow-[0_10px_26px_rgba(87,72,52,0.18)] backdrop-blur-md"
-            >
-              {copyForAiToastMessage}
-            </p>
-          ) : null}
         </div>
       </div>
     </>

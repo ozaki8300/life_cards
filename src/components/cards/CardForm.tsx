@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ChangeEvent, ClipboardEvent, FormEvent } from "react";
 
+import {
+  createCardToImagePrompt,
+  createImageToCardPrompt,
+} from "@/lib/aiAssistPrompts";
+import { createCopyForAiMarkdown } from "@/lib/copyForAi";
 import { DeckRepository } from "@/lib/deckRepository";
 import { compressImage } from "@/lib/imageCompression";
 import {
@@ -10,6 +15,7 @@ import {
   getSupabaseSessionSafely,
 } from "@/lib/supabase/client";
 import type {
+  Card,
   CardImageFitMode,
   CardImageFrameMode,
   Deck,
@@ -140,6 +146,11 @@ type Props = {
   saveLabel?: string;
 };
 
+type AiAssistModalState = {
+  message: string;
+  title: string;
+};
+
 export default function CardForm({
   deckOptions,
   initialValues,
@@ -192,6 +203,8 @@ export default function CardForm({
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
+  const [aiAssistModal, setAiAssistModal] =
+    useState<AiAssistModalState | null>(null);
   const isSavingRef = useRef(false);
   const hasResolvedPreviewPreferenceRef = useRef(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -472,6 +485,61 @@ export default function CardForm({
     setBookIsbn(sanitizedIsbn);
     setLinkUrl(`https://www.amazon.co.jp/dp/${isbnOrAsin}`);
     setBookLinkMessage("AmazonリンクをLink欄に入れました。");
+  }
+
+  async function copyAiAssistPrompt(
+    prompt: string,
+    successMessage: string,
+  ) {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setAiAssistModal({
+        message: successMessage,
+        title: "コピーしました",
+      });
+    } catch (error) {
+      console.warn("Life Cards AI Assist copy failed", error);
+      setAiAssistModal({
+        message: "クリップボードへコピーできませんでした。",
+        title: "コピーできませんでした",
+      });
+    }
+  }
+
+  function handleCopyImageToCardPrompt() {
+    void copyAiAssistPrompt(
+      createImageToCardPrompt(),
+      "ChatGPTへ画像を添付して貼り付けてください",
+    );
+  }
+
+  function handleCopyCardToImagePrompt() {
+    void copyAiAssistPrompt(
+      createCardToImagePrompt({
+        backMemo: backText,
+        comment: frontComment,
+        front: frontText,
+      }),
+      "ChatGPTへ貼り付けて画像生成してください",
+    );
+  }
+
+  function handleCopyLifeCardPrompt() {
+    const markdownSource: Card = {
+      id: "ai_assist_draft",
+      backText,
+      createdAt: cardDate,
+      deckId: selectedDeckId,
+      frontComment,
+      frontText,
+      linkUrl,
+      updatedAt: todayInputValue(),
+    };
+
+    void copyAiAssistPrompt(
+      createCopyForAiMarkdown(markdownSource, { deckLabel: selectedDeckName }),
+      "Life Cardコピーをコピーしました。",
+    );
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -884,6 +952,35 @@ export default function CardForm({
               onFocus={() => requestPreviewFace("back")}
             />
 
+            <section className="grid min-w-0 gap-3 rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/18 sm:p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
+                AI Assist
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={handleCopyImageToCardPrompt}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/82 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                >
+                  画像からカード化
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyCardToImagePrompt}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/82 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                >
+                  カードから画像化
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyLifeCardPrompt}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/82 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                >
+                  Life Cardコピー
+                </button>
+              </div>
+            </section>
+
             <label className="block min-w-0">
               <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
                 Link
@@ -946,6 +1043,41 @@ export default function CardForm({
           onClose={() => setIsDeckModalOpen(false)}
           onSubmit={handleCreateDeck}
         />
+      ) : null}
+
+      {aiAssistModal ? (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-[80] grid place-items-center bg-[#17110d]/46 px-4 backdrop-blur-sm"
+          onClick={() => setAiAssistModal(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ai-assist-dialog-title"
+            className="w-full max-w-sm rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0] p-5 text-[#332d25] shadow-[0_28px_80px_rgba(87,72,52,0.28)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3
+              id="ai-assist-dialog-title"
+              className="text-base font-bold tracking-tight"
+            >
+              {aiAssistModal.title}
+            </h3>
+            <p className="mt-3 text-sm font-semibold leading-6 text-[#6f6253]">
+              {aiAssistModal.message}
+            </p>
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAiAssistModal(null)}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#2f2a23] px-5 py-3 text-sm font-semibold text-[#fffaf0] transition hover:bg-[#4a4034] focus:outline-none focus:ring-2 focus:ring-[#2f2a23] focus:ring-offset-2 focus:ring-offset-[#fffaf0]"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </>
   );
