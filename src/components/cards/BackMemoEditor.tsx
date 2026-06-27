@@ -150,27 +150,27 @@ export default function BackMemoEditor({
 
   return (
     <section
-      className="min-w-0 rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/18 sm:p-4"
+      className="min-w-0 rounded-[16px] border border-[#e8ddcb] bg-[#fbf4e8] p-2.5 shadow-inner shadow-[#d9cdbb]/10 sm:p-3"
       onFocusCapture={onFocus}
     >
-      <div className="mb-2.5 flex flex-wrap items-start justify-between gap-2 sm:mb-3 sm:gap-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
+      <div className="mb-2 flex items-center justify-between gap-2 sm:mb-2.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="shrink-0 text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
             Back Memo
           </p>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="hidden min-w-0 items-center gap-1 sm:flex">
             <button
               type="button"
               onClick={handleCopyBackMemo}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/82 px-3 py-2 text-xs font-semibold text-[#6f6253] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+              className="inline-flex min-h-8 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/72 px-2.5 py-1.5 text-xs font-semibold text-[#6f6253] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
             >
-              📋 コピー
+              コピー
             </button>
             <button
               type="button"
               disabled={!backText}
               onClick={handleClearBackMemo}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-[#ead7c8] bg-[#fffaf0]/62 px-3 py-2 text-xs font-semibold text-[#8a6254] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex min-h-8 items-center justify-center rounded-full border border-[#ead7c8] bg-[#fffaf0]/52 px-2.5 py-1.5 text-xs font-semibold text-[#8a6254] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:opacity-45"
             >
               クリア
             </button>
@@ -185,13 +185,13 @@ export default function BackMemoEditor({
           </div>
         </div>
 
-        <div className="rounded-full border border-[#e0d3c0] bg-[#fffaf0]/95 p-1 shadow-sm backdrop-blur">
+        <div className="flex shrink-0 items-center gap-1 rounded-full border border-[#e0d3c0] bg-[#fffaf0]/86 p-1 shadow-sm backdrop-blur">
           {(["edit", "preview"] as const).map((mode) => (
             <button
               key={mode}
               type="button"
               onClick={() => onBackModeChange(mode)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] ${
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] sm:px-3 ${
                 backMode === mode
                   ? "bg-[#2f2a23] text-[#fffaf0]"
                   : "text-[#7d705f] hover:bg-white"
@@ -202,6 +202,28 @@ export default function BackMemoEditor({
           ))}
         </div>
       </div>
+      <div className="mb-2 flex items-center gap-2 sm:hidden">
+        <button
+          type="button"
+          onClick={handleCopyBackMemo}
+          className="inline-flex min-h-8 items-center justify-center rounded-full border border-[#e0d3c0] bg-[#fffaf0]/72 px-2.5 py-1.5 text-xs font-semibold text-[#6f6253] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+        >
+          コピー
+        </button>
+        <button
+          type="button"
+          disabled={!backText}
+          onClick={handleClearBackMemo}
+          className="inline-flex min-h-8 items-center justify-center rounded-full border border-[#ead7c8] bg-[#fffaf0]/52 px-2.5 py-1.5 text-xs font-semibold text-[#8a6254] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa] disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          クリア
+        </button>
+        {copyStatus ? (
+          <span aria-live="polite" className="text-xs font-semibold text-[#7d705f]">
+            {copyStatus}
+          </span>
+        ) : null}
+      </div>
 
       {backMode === "edit" ? (
         <textarea
@@ -211,12 +233,12 @@ export default function BackMemoEditor({
           onChange={(event) => onBackTextChange(event.target.value)}
           onKeyDown={handleBackTextKeyDown}
           placeholder="裏面メモを書く（Markdown対応）"
-          className="card-detail-back-scroll box-border block min-h-[460px] w-full min-w-0 max-w-full cursor-text resize-y rounded-[14px] border border-[#dfd3c2]/35 bg-[#fffaf0]/78 px-4 py-5 text-[15px] leading-7 text-[#332d25] shadow-none outline-none placeholder:text-[#9d917f] focus:border-[#cdbda7]/70 focus:bg-[#fffaf0]/94 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#d8c8aa]/45 focus:shadow-none sm:min-h-[540px] sm:px-5 sm:py-5 lg:min-h-[56vh] xl:min-h-[60vh]"
+          className="card-detail-back-scroll box-border block min-h-[540px] w-full min-w-0 max-w-full cursor-text resize-y rounded-[12px] border border-[#eadcc8]/75 bg-[#fffdf8] px-4 py-4 text-[15px] leading-[1.7] text-[#332d25] shadow-none outline-none placeholder:text-[#9d917f] focus:border-[#cdbda7]/80 focus:bg-[#fffdf8] focus:outline-none focus:ring-1 focus:ring-inset focus:ring-[#d8c8aa]/45 focus:shadow-none sm:min-h-[640px] sm:px-7 sm:py-6 sm:text-base sm:leading-7 lg:min-h-[64vh] xl:min-h-[70vh]"
         />
       ) : (
         <>
           <input type="hidden" name="backText" value={backText} />
-          <div className="card-detail-back-scroll box-border min-h-[460px] w-full min-w-0 max-w-full overflow-y-auto rounded-[14px] border border-[#dfd3c2]/35 bg-[#fffaf0]/78 px-4 py-5 shadow-none sm:min-h-[540px] sm:px-5 sm:py-5 lg:min-h-[56vh] xl:min-h-[60vh]">
+          <div className="card-detail-back-scroll box-border min-h-[540px] w-full min-w-0 max-w-full overflow-y-auto rounded-[12px] border border-[#eadcc8]/75 bg-[#fffdf8] px-4 py-4 shadow-none sm:min-h-[640px] sm:px-7 sm:py-6 lg:min-h-[64vh] xl:min-h-[70vh]">
             <MarkdownMemo emptyText="裏面メモを書く（Markdown対応）">
               {backText}
             </MarkdownMemo>

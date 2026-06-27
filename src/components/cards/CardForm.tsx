@@ -220,13 +220,13 @@ export default function CardForm({
     ? imageLabel || "選択中の画像"
     : selectedDefaultImageLabel;
   const formLayoutClass = isPreviewCollapsed
-    ? "grid min-w-0 gap-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:grid-cols-[108px_minmax(0,1fr)] lg:items-start"
-    : "grid min-w-0 gap-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] xl:gap-5 xl:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] lg:items-start";
-  const editorColumnClass = "lg:col-start-2";
-  const editorStackClass = `order-3 grid min-w-0 gap-3 lg:order-1 lg:row-start-1 ${editorColumnClass}`;
+    ? "grid min-w-0 max-w-full gap-3 overflow-x-hidden pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:mx-auto lg:w-full lg:max-w-[1240px] xl:grid-cols-[96px_minmax(0,1120px)] xl:items-start xl:justify-center"
+    : "grid min-w-0 max-w-full gap-3 overflow-x-hidden pb-[calc(env(safe-area-inset-bottom)+1.5rem)] lg:mx-auto lg:w-full lg:max-w-[1440px] xl:grid-cols-[minmax(232px,288px)_minmax(0,1fr)] xl:items-start xl:justify-center";
+  const editorColumnClass = "xl:col-start-2";
+  const editorStackClass = `order-3 grid min-w-0 max-w-full gap-3 xl:order-1 xl:row-start-1 xl:w-full ${editorColumnClass}`;
   const appearanceColumnClass = isPreviewCollapsed
-    ? "order-1 grid gap-3 rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0] p-3 shadow-[0_14px_38px_rgba(122,105,82,0.13)] sm:p-4 lg:sticky lg:top-4 lg:col-start-1 lg:row-span-1 lg:min-h-[168px] lg:content-start lg:justify-items-center lg:px-2"
-    : "order-1 grid gap-3 rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0] p-3 shadow-[0_14px_38px_rgba(122,105,82,0.13)] sm:p-4 lg:sticky lg:top-4 lg:col-start-1 lg:row-span-1";
+    ? "order-1 grid min-w-0 gap-3 rounded-[16px] border border-[#e8ddcb] bg-[#fffaf0] p-3 shadow-[0_10px_28px_rgba(122,105,82,0.1)] sm:p-4 xl:sticky xl:top-4 xl:col-start-1 xl:row-span-1 xl:min-h-[152px] xl:content-start xl:justify-items-center xl:px-2"
+    : "order-1 grid min-w-0 gap-3 rounded-[16px] border border-[#e8ddcb] bg-[#fffaf0] p-3 shadow-[0_10px_28px_rgba(122,105,82,0.1)] sm:p-4 xl:sticky xl:top-4 xl:col-start-1 xl:row-span-1";
   const previewPanelClass = isPreviewCollapsed
     ? "grid gap-3 lg:justify-items-center"
     : "grid gap-3";
@@ -867,83 +867,7 @@ export default function CardForm({
             </label>
           </section>
 
-          <section className="grid min-w-0 gap-3 rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0] p-4 shadow-[0_14px_38px_rgba(122,105,82,0.13)] sm:p-5">
-            <section className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
-                <select
-                  name="deckId"
-                  aria-label="Deck"
-                  value={selectedDeckId}
-                  onChange={(event) => setSelectedDeckId(event.target.value)}
-                  className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
-                >
-                  {availableDecks.map((deck) => (
-                    <option key={deck.id} value={deck.id}>
-                      {deck.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setIsDeckModalOpen(true)}
-                  className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#e8ddcb]"
-                >
-                  ＋
-                </button>
-              </div>
-
-              <input
-                type="date"
-                name="createdAt"
-                aria-label="Date"
-                value={cardDate}
-                onChange={(event) => setCardDate(event.target.value)}
-                className="box-border block w-full min-w-0 max-w-full appearance-none rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
-              />
-            </section>
-
-            <div className="grid gap-2 rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3] px-3 py-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs font-semibold leading-5 text-[#7d705f]">
-                  推薦本・読書メモをLife Card化
-                </span>
-                <button
-                  type="button"
-                  onClick={insertBookCardTemplate}
-                  className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
-                >
-                  本カード
-                </button>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <input
-                  type="text"
-                  inputMode="text"
-                  value={bookIsbn}
-                  onChange={(event) => {
-                    setBookIsbn(event.target.value);
-                    setBookLinkMessage("");
-                  }}
-                  placeholder="ISBN / 978-4023308398"
-                  aria-label="ISBN"
-                  className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-3 py-2 text-sm font-semibold text-[#332d25] outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
-                />
-                <button
-                  type="button"
-                  onClick={createAmazonLinkFromIsbn}
-                  className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
-                >
-                  Amazonリンクを作成
-                </button>
-              </div>
-              {bookLinkMessage ? (
-                <p className="text-xs font-semibold leading-5 text-[#7d705f]">
-                  {bookLinkMessage}
-                </p>
-              ) : null}
-            </div>
-
+          <section className="grid min-w-0 gap-3 rounded-[18px] border border-[#e8ddcb] bg-[#fffaf0] p-3 shadow-[0_14px_38px_rgba(122,105,82,0.13)] sm:p-4">
             <BackMemoEditor
               backMode={backMode}
               backText={backText}
@@ -952,11 +876,15 @@ export default function CardForm({
               onFocus={() => requestPreviewFace("back")}
             />
 
-            <section className="grid min-w-0 gap-3 rounded-[18px] border border-[#e8ddcb] bg-[#f8f0e3] p-3 shadow-inner shadow-[#d9cdbb]/18 sm:p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                AI Assist
-              </p>
-              <div className="grid gap-2 sm:grid-cols-3">
+            <details className="group min-w-0 rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3]/72 px-3 py-2.5 shadow-inner shadow-[#d9cdbb]/10 sm:px-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380] marker:hidden [&::-webkit-details-marker]:hidden">
+                <span>AI Assist</span>
+                <span className="rounded-full border border-[#e0d3c0] bg-[#fffaf0]/82 px-3 py-1.5 text-[11px] normal-case tracking-normal text-[#6f6253] transition group-open:bg-[#2f2a23] group-open:text-[#fffaf0]">
+                  <span className="group-open:hidden">開く</span>
+                  <span className="hidden group-open:inline">閉じる</span>
+                </span>
+              </summary>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
                 <button
                   type="button"
                   onClick={handleCopyImageToCardPrompt}
@@ -979,21 +907,111 @@ export default function CardForm({
                   Life Cardコピー
                 </button>
               </div>
-            </section>
+            </details>
 
-            <label className="block min-w-0">
-              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
-                Link
-              </span>
-              <input
-                type="url"
-                name="linkUrl"
-                value={linkUrl}
-                onChange={(event) => setLinkUrl(event.target.value)}
-                placeholder="https://example.com"
-                className="mt-2 box-border block w-full min-w-0 max-w-full rounded-[16px] border border-[#eadfce] bg-white/72 px-4 py-3 text-base leading-6 text-[#332d25] shadow-inner shadow-[#d9cdbb]/30 outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
-              />
-            </label>
+            <details className="group min-w-0 rounded-[14px] border border-[#e8ddcb] bg-[#f8f0e3]/72 px-3 py-2.5 shadow-inner shadow-[#d9cdbb]/10 sm:px-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380] marker:hidden [&::-webkit-details-marker]:hidden">
+                <span>詳細設定</span>
+                <span className="rounded-full border border-[#e0d3c0] bg-[#fffaf0]/82 px-3 py-1.5 text-[11px] normal-case tracking-normal text-[#6f6253] transition group-open:bg-[#2f2a23] group-open:text-[#fffaf0]">
+                  <span className="group-open:hidden">開く</span>
+                  <span className="hidden group-open:inline">閉じる</span>
+                </span>
+              </summary>
+
+              <div className="mt-3 grid min-w-0 gap-3">
+                <section className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
+                    <select
+                      name="deckId"
+                      aria-label="Deck"
+                      value={selectedDeckId}
+                      onChange={(event) =>
+                        setSelectedDeckId(event.target.value)
+                      }
+                      className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e8ddcb] bg-white/72 px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+                    >
+                      {availableDecks.map((deck) => (
+                        <option key={deck.id} value={deck.id}>
+                          {deck.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setIsDeckModalOpen(true)}
+                      className="rounded-full border border-[#e0d3c0] bg-white/72 px-4 py-3 text-sm font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+                    >
+                      ＋
+                    </button>
+                  </div>
+
+                  <input
+                    type="date"
+                    name="createdAt"
+                    aria-label="Date"
+                    value={cardDate}
+                    onChange={(event) => setCardDate(event.target.value)}
+                    className="box-border block w-full min-w-0 max-w-full appearance-none rounded-[14px] border border-[#e8ddcb] bg-white/72 px-4 py-3 text-base font-semibold text-[#332d25] outline-none focus:ring-2 focus:ring-[#e8ddcb]"
+                  />
+                </section>
+
+                <label className="block min-w-0">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#a19380]">
+                    Link
+                  </span>
+                  <input
+                    type="url"
+                    name="linkUrl"
+                    value={linkUrl}
+                    onChange={(event) => setLinkUrl(event.target.value)}
+                    placeholder="https://example.com"
+                    className="mt-2 box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-3 py-2.5 text-base leading-6 text-[#332d25] outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+                  />
+                </label>
+
+                <div className="grid gap-2 rounded-[14px] border border-[#e8ddcb] bg-[#fffaf0]/72 px-3 py-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-semibold leading-5 text-[#7d705f]">
+                      推薦本・読書メモをLife Card化
+                    </span>
+                    <button
+                      type="button"
+                      onClick={insertBookCardTemplate}
+                      className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                    >
+                      本カード
+                    </button>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                    <input
+                      type="text"
+                      inputMode="text"
+                      value={bookIsbn}
+                      onChange={(event) => {
+                        setBookIsbn(event.target.value);
+                        setBookLinkMessage("");
+                      }}
+                      placeholder="ISBN / 978-4023308398"
+                      aria-label="ISBN"
+                      className="box-border block w-full min-w-0 max-w-full rounded-[14px] border border-[#e0d3c0] bg-white/72 px-3 py-2 text-sm font-semibold text-[#332d25] outline-none placeholder:text-[#9d917f] focus:border-[#cdbda6] focus:ring-2 focus:ring-[#e8ddcb]"
+                    />
+                    <button
+                      type="button"
+                      onClick={createAmazonLinkFromIsbn}
+                      className="rounded-full border border-[#e0d3c0] bg-white/72 px-3 py-2 text-xs font-semibold text-[#5f5346] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#d8c8aa]"
+                    >
+                      Amazonリンクを作成
+                    </button>
+                  </div>
+                  {bookLinkMessage ? (
+                    <p className="text-xs font-semibold leading-5 text-[#7d705f]">
+                      {bookLinkMessage}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </details>
 
             <div className="mt-2 grid gap-3 border-t border-[#eadfce] pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               {isSaving ? (

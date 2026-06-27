@@ -46,7 +46,7 @@ export default function CardFormPreview({
       : "shadow-[0_20px_54px_rgba(87,72,52,0.24)]";
 
   return (
-    <section className="mx-auto w-full max-w-[300px] sm:max-w-[340px] lg:sticky lg:top-4 lg:max-w-[360px]">
+    <section className="mx-auto w-full max-w-[300px] sm:max-w-[320px] lg:sticky lg:top-4 lg:max-w-[288px] xl:max-w-[304px]">
       <button
         type="button"
         onClick={() => onPreviewFaceChange(isBack ? "front" : "back")}

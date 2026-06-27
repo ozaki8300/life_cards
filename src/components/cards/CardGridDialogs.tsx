@@ -95,7 +95,11 @@ export default function CardGridDialogs({
         onClick={onBackdropClick}
       />
 
-      <div className="relative z-10 mx-auto flex min-h-full max-w-6xl items-center">
+      <div
+        className={`relative z-10 mx-auto flex min-h-full w-full items-center ${
+          isEditing ? "max-w-[1600px]" : "max-w-6xl"
+        }`}
+      >
         <div className="relative w-full">
           {isEditing ? (
             <CardEditDialog
