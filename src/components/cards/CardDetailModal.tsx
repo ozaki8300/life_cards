@@ -9,6 +9,7 @@ import type { Card } from "@/lib/types";
 import { useEscapeKey } from "@/lib/useEscapeKey";
 
 import { defaultImageForCard, formatDate } from "./cardUiUtils";
+import { RecallModeOverlay } from "./recall";
 import type { CardDetailViewMode } from "./useCardDetailViewCycle";
 
 const shutterButtonClass =
@@ -65,6 +66,7 @@ export default function CardDetailModal({
   const [viewMode, setViewMode] =
     useState<CardDetailViewMode>(initialViewMode);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isRecallModeOpen, setIsRecallModeOpen] = useState(false);
   const [resolvedStorageImage, setResolvedStorageImage] = useState<{
     signedUrl: string;
     status: "error" | "resolved";
@@ -277,6 +279,15 @@ export default function CardDetailModal({
 
   return (
     <>
+      {isRecallModeOpen ? (
+        <RecallModeOverlay
+          backgroundImage={backgroundImage}
+          card={card}
+          date={date}
+          deckLabel={deckLabel}
+          onClose={() => setIsRecallModeOpen(false)}
+        />
+      ) : null}
       <div
         aria-hidden="true"
         className="fixed inset-0 z-0 cursor-default"
@@ -299,6 +310,20 @@ export default function CardDetailModal({
         onWheel={stopModalScrollEvent}
       >
         <div className="pointer-events-auto fixed right-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-50 flex items-center gap-2 sm:right-6 sm:top-[calc(env(safe-area-inset-top)+1rem)]">
+          <button
+            type="button"
+            aria-label="Recall Mode を開く"
+            className={topActionButtonClass}
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsRecallModeOpen(true);
+            }}
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
+            onTouchStart={(event) => event.stopPropagation()}
+          >
+            思い出す
+          </button>
           <button
             type="button"
             aria-label="カードを編集"
