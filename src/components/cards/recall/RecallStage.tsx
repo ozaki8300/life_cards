@@ -27,7 +27,7 @@ export default function RecallStage({
   const hasBackMemo = Boolean(backText);
 
   return (
-    <section className="relative mx-auto flex min-h-full w-full max-w-6xl flex-col justify-center gap-5 overflow-x-hidden px-4 py-[calc(env(safe-area-inset-top)+4.5rem)] text-[#f9efe0] sm:px-8 lg:grid lg:grid-cols-[minmax(18rem,0.86fr)_minmax(20rem,1fr)] lg:items-center lg:gap-10">
+    <section className="relative mx-auto flex min-h-full w-full max-w-6xl flex-col justify-center gap-7 overflow-x-hidden px-4 py-[calc(env(safe-area-inset-top)+5rem)] text-[#f9efe0] sm:px-8 sm:py-[calc(env(safe-area-inset-top)+5.75rem)] lg:grid lg:grid-cols-[minmax(18rem,0.86fr)_minmax(20rem,1fr)] lg:items-center lg:gap-12">
       <style>
         {`
           @keyframes recallMemoIn {
@@ -42,7 +42,7 @@ export default function RecallStage({
           }
         `}
       </style>
-      <div className="relative mx-auto aspect-[3/4] w-full max-w-[min(78vw,22rem)] overflow-hidden rounded-[24px] border border-[#f6dfbb]/26 bg-[#211711] shadow-[0_32px_90px_rgba(0,0,0,0.46)] sm:max-w-sm lg:max-w-md">
+      <div className="relative mx-auto aspect-[3/4] w-full max-w-[min(76vw,21rem)] overflow-hidden rounded-[24px] border border-[#f6dfbb]/26 bg-[#211711] shadow-[0_34px_96px_rgba(0,0,0,0.48)] sm:max-w-sm lg:max-w-md">
         <div
           aria-hidden="true"
           className="absolute inset-0 scale-110 bg-cover bg-center opacity-42 blur-2xl"
@@ -96,10 +96,10 @@ export default function RecallStage({
           </p>
         ) : null}
 
-        <div className="mt-8">
+        <div className="mt-9">
           <button
             type="button"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#f3d9ad]/34 bg-[#fff6e8]/10 px-5 text-sm font-semibold text-[#f8e7cf] shadow-[0_14px_36px_rgba(0,0,0,0.18)] backdrop-blur transition hover:bg-[#fff6e8]/16 focus:outline-none focus:ring-2 focus:ring-[#f3d9ad]/70"
+            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#f3d9ad]/30 bg-[#fff6e8]/9 px-5 text-sm font-semibold text-[#f8e7cf] shadow-[0_14px_36px_rgba(0,0,0,0.16)] backdrop-blur transition hover:bg-[#fff6e8]/15 focus:outline-none focus:ring-2 focus:ring-[#f3d9ad]/70"
             onClick={onBackMemoOpen}
           >
             {isBackMemoOpen ? "カードに戻る" : "あの日の続きを読む"}
@@ -108,15 +108,15 @@ export default function RecallStage({
 
         {isBackMemoOpen ? (
           <div
-            className="relative mt-5 overflow-hidden rounded-[18px] border border-[#f3d9ad]/18 bg-[#5a3925]/42 shadow-[0_22px_54px_rgba(0,0,0,0.28)] backdrop-blur-md"
+            className="relative mt-6 overflow-hidden rounded-[18px] border border-[#f3d9ad]/16 bg-[#4b3124]/38 shadow-[0_24px_62px_rgba(0,0,0,0.3)] backdrop-blur-md"
             style={{ animation: "recallMemoIn 420ms cubic-bezier(0.22, 1, 0.36, 1)" }}
           >
             <div
               aria-hidden="true"
               className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,232,194,0.12),rgba(85,51,30,0.18)),linear-gradient(90deg,rgba(255,255,255,0.04),transparent_34%,rgba(0,0,0,0.08))]"
             />
-            <div className="card-detail-back-scroll relative max-h-[min(28vh,15rem)] overflow-y-auto overscroll-contain px-4 py-4 pr-5 [mask-image:linear-gradient(to_bottom,black_0,black_calc(100%-44px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0,black_calc(100%-44px),transparent_100%)] sm:max-h-[min(32vh,17rem)] sm:px-6 sm:py-5 sm:pr-7">
-              <div className="[&_blockquote]:!border-[#e8c592]/38 [&_blockquote]:!bg-[#2a1a11]/28 [&_blockquote]:!text-[#f2d8b7] [&_code]:!border-[#e8c592]/24 [&_code]:!bg-[#2a1a11]/42 [&_code]:!text-[#ffe8c7] [&_h1]:!text-[#fff2dd] [&_h2]:!border-[#e8c592]/22 [&_h2]:!text-[#fff2dd] [&_h3]:!text-[#fff2dd] [&_li]:!text-[#f4dfc4] [&_mark]:!bg-[#f3d9ad]/26 [&_mark]:!text-[#fff5e6] [&_ol]:!text-[#f4dfc4] [&_p]:!text-[#f4dfc4] [&_pre]:!border-[#e8c592]/22 [&_pre]:!bg-[#21140d]/74 [&_strong]:!text-[#fff5e6] [&_table]:!text-[#f4dfc4] [&_td]:!border-[#e8c592]/18 [&_th]:!border-[#e8c592]/22 [&_thead]:!bg-[#2a1a11]/44 [&_thead]:!text-[#fff2dd] [&_ul]:!text-[#f4dfc4]">
+            <div className="card-detail-back-scroll relative h-[38vh] max-h-[29rem] min-h-[16rem] overflow-y-auto overscroll-contain px-4 py-5 pr-5 [mask-image:linear-gradient(to_bottom,black_0,black_calc(100%-56px),transparent_100%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0,black_calc(100%-56px),transparent_100%)] sm:h-[40vh] sm:min-h-[18rem] sm:px-6 sm:py-6 sm:pr-7 lg:h-[42vh]">
+              <div className="[&_blockquote]:!border-[#e8c592]/34 [&_blockquote]:!bg-[#2a1a11]/24 [&_blockquote]:!text-[#f2d8b7] [&_code]:!border-[#e8c592]/24 [&_code]:!bg-[#2a1a11]/42 [&_code]:!text-[#ffe8c7] [&_h1]:!mb-3 [&_h1]:!mt-5 [&_h1]:!text-[1.18rem] [&_h1]:!font-medium [&_h1]:!leading-snug [&_h1]:!text-[#fff2dd]/90 [&_h2]:!mb-2.5 [&_h2]:!mt-5 [&_h2]:!border-[#e8c592]/14 [&_h2]:!pb-1 [&_h2]:!text-[1.05rem] [&_h2]:!font-medium [&_h2]:!leading-snug [&_h2]:!text-[#fff2dd]/88 [&_h3]:!mb-2 [&_h3]:!mt-4 [&_h3]:!text-[0.98rem] [&_h3]:!font-medium [&_h3]:!leading-snug [&_h3]:!text-[#fff2dd]/84 [&_li]:!text-[#f4dfc4] [&_mark]:!bg-[#f3d9ad]/24 [&_mark]:!text-[#fff5e6] [&_ol]:!text-[#f4dfc4] [&_p]:!text-[#f4dfc4] [&_pre]:!border-[#e8c592]/22 [&_pre]:!bg-[#21140d]/74 [&_strong]:!text-[#fff5e6] [&_table]:!text-[#f4dfc4] [&_td]:!border-[#e8c592]/18 [&_th]:!border-[#e8c592]/22 [&_thead]:!bg-[#2a1a11]/44 [&_thead]:!text-[#fff2dd] [&_ul]:!text-[#f4dfc4]">
                 <MarkdownMemo
                   emptyText="裏面メモがありません"
                   readingDensity="detailBack"
@@ -128,12 +128,12 @@ export default function RecallStage({
             </div>
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#3a2418]/96 via-[#3a2418]/58 to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#332018]/98 via-[#332018]/62 to-transparent"
             />
           </div>
         ) : hasBackMemo ? (
           <p className="mt-3 text-sm font-medium text-[#d9c09b]/74">
-            裏面メモがあります。
+            続きがあります。
           </p>
         ) : null}
       </div>
