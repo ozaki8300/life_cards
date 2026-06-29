@@ -51,12 +51,6 @@ const RAIL_INNER_CLASS =
   "flex min-w-full snap-x snap-mandatory flex-nowrap gap-4 sm:gap-5";
 const GRID_PAGE_SIZE = 24;
 
-function debugFullscreenImageLoop(payload: Record<string, unknown>) {
-  if (process.env.NODE_ENV !== "production") {
-    console.debug("[Life Cards fullscreen image loop]", payload);
-  }
-}
-
 export default function TradingCardGrid({
   cards,
   decks = [],
@@ -534,16 +528,6 @@ export default function TradingCardGrid({
       currentIndex === null ? -1 : fullscreenImageIndexes.indexOf(currentIndex);
 
     if (currentIndex === null || fullscreenImageIndexes.length < 2) {
-      debugFullscreenImageLoop({
-        currentCardId,
-        currentFullscreenIndex,
-        currentImagePosition,
-        displayCardsLength: displayCards.length,
-        imageIndexes: fullscreenImageIndexes,
-        nextIndex: null,
-        selectedIndex,
-      });
-
       return null;
     }
 
@@ -552,16 +536,6 @@ export default function TradingCardGrid({
         ((currentImagePosition >= 0 ? currentImagePosition : 0) + 1) %
           fullscreenImageIndexes.length
       ];
-
-    debugFullscreenImageLoop({
-      currentCardId,
-      currentFullscreenIndex,
-      currentImagePosition,
-      displayCardsLength: displayCards.length,
-      imageIndexes: fullscreenImageIndexes,
-      nextIndex,
-      selectedIndex,
-    });
 
     const card = displayCards[nextIndex];
 

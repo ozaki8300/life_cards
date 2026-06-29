@@ -55,7 +55,7 @@ export default function CardShareDialog({
     {
       label: "画像なしで共有",
       mode: "textOnly",
-      note: "本文だけを閲覧用に共有し、共有ページではdefault imageを表示します。",
+      note: "本文だけを閲覧用に共有し、共有ページでは標準画像を表示します。",
     },
   ];
   const copyButtonLabel = copyStatus === "コピーしました" ? "コピーしました" : "リンクをコピー";

@@ -6,7 +6,7 @@ These Terms of Service govern your use of Life Cards. By using Life Cards, you a
 
 ## Service Overview
 
-Life Cards lets users create, save, organize, view, and share personal cards. Features may include Google sign-in, Supabase sync, image storage, decks, reencounter metadata, and Share Card links.
+Life Cards lets users create, save, organize, view, and share personal cards. The service supports Google sign-in, Supabase sync, image storage, decks, reencounter metadata, and Share Card links.
 
 ## Accounts
 

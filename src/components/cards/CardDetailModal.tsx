@@ -23,12 +23,6 @@ const menuItemClass =
 const destructiveMenuItemClass =
   "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-bold text-[#9b4b35] transition hover:bg-[#fff1eb] focus:outline-none focus:ring-2 focus:ring-[#e6c9be]";
 
-function debugImageState(message: string, payload: Record<string, unknown>) {
-  if (process.env.NODE_ENV !== "production") {
-    console.debug(`[Life Cards image detail] ${message}`, payload);
-  }
-}
-
 export default function CardDetailModal({
   card,
   cardCount,
@@ -81,8 +75,6 @@ export default function CardDetailModal({
       ? resolvedStorageImage.signedUrl
       : "");
   const backgroundImage = displayImagePath || defaultImageForCard(card);
-  const imageResolveFailed =
-    storageResolutionMatches && resolvedStorageImage.status === "error";
   const date = formatDate(card.createdAt);
   const displayFrontText = card.frontText?.trim() ?? "";
   const isFrontView = viewMode === "front";
@@ -135,53 +127,16 @@ export default function CardDetailModal({
   }, []);
 
   useEffect(() => {
-    debugImageState("render values", {
-      cardId: card.id,
-      cardImagePath: card.imagePath,
-      cardImageStoragePath: card.imageStoragePath,
-      displayImagePath,
-      imageResolveFailed,
-      imageStoragePath,
-      resolvedStorageImage,
-    });
-  }, [
-    card.id,
-    card.imagePath,
-    card.imageStoragePath,
-    displayImagePath,
-    imageResolveFailed,
-    imageStoragePath,
-    resolvedStorageImage,
-  ]);
-
-  useEffect(() => {
     let isActive = true;
 
     if (card.imagePath?.trim() || !imageStoragePath) {
-      debugImageState("skip signed URL prefetch", {
-        cardId: card.id,
-        cardImagePath: card.imagePath,
-        imageStoragePath,
-      });
-
       return () => {
         isActive = false;
       };
     }
 
-    debugImageState("signed URL prefetch start", {
-      cardId: card.id,
-      path: imageStoragePath,
-    });
-
     CardImageStorageRepository.getCachedSignedImageUrl(imageStoragePath)
       .then((signedUrl) => {
-        debugImageState("signed URL prefetch result", {
-          cardId: card.id,
-          hasSignedUrl: Boolean(signedUrl),
-          path: imageStoragePath,
-        });
-
         if (isActive) {
           setResolvedStorageImage({
             signedUrl: signedUrl ?? "",
@@ -192,11 +147,6 @@ export default function CardDetailModal({
       })
       .catch((error) => {
         console.warn("Life Cards detail image signed URL failed", error);
-        debugImageState("signed URL prefetch failed", {
-          cardId: card.id,
-          error,
-          path: imageStoragePath,
-        });
 
         if (isActive) {
           setResolvedStorageImage({

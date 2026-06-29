@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import MobilePreviewMode from "@/components/debug/MobilePreviewMode";
 import "./globals.css";
 
 const appBackgroundColor = "#f7f3ea";
@@ -60,7 +59,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <MobilePreviewMode />
       </body>
     </html>
   );
