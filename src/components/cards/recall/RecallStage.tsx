@@ -73,19 +73,8 @@ export default function RecallStage({
       </div>
 
       <div className="mx-auto flex w-full max-w-2xl flex-col">
-        <div className="space-y-2 border-l border-[#f3d9ad]/32 pl-4 sm:pl-5">
-          {stageText.map((line) => (
-            <p
-              key={line}
-              className="text-base font-medium leading-8 text-[#f8e7cf] sm:text-lg sm:leading-9"
-            >
-              {line}
-            </p>
-          ))}
-        </div>
-
         {frontText ? (
-          <h1 className="mt-7 text-3xl font-semibold leading-tight text-white sm:text-5xl">
+          <h1 className="text-3xl font-semibold leading-tight text-white sm:text-5xl">
             {frontText}
           </h1>
         ) : null}
@@ -96,17 +85,33 @@ export default function RecallStage({
           </p>
         ) : null}
 
-        <div className="mt-9">
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#f3d9ad]/30 bg-[#fff6e8]/9 px-5 text-sm font-semibold text-[#f8e7cf] shadow-[0_14px_36px_rgba(0,0,0,0.16)] backdrop-blur transition hover:bg-[#fff6e8]/15 focus:outline-none focus:ring-2 focus:ring-[#f3d9ad]/70"
-            onClick={onBackMemoOpen}
-          >
-            {isBackMemoOpen ? "カードに戻る" : "あの日の続きを読む"}
-          </button>
+        <div className="mt-7 space-y-2 border-l border-[#f3d9ad]/26 pl-4 sm:mt-8 sm:pl-5">
+          {stageText.map((line) => (
+            <p
+              key={line}
+              className="text-[15px] font-medium leading-8 text-[#f8e7cf]/86 sm:text-base sm:leading-8"
+            >
+              {line}
+            </p>
+          ))}
         </div>
 
-        {isBackMemoOpen ? (
+        {!isBackMemoOpen && hasBackMemo ? (
+          <div className="mt-9">
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#f3d9ad]/32 bg-[#fff6e8]/10 px-5 text-sm font-semibold text-[#f8e7cf] shadow-[0_14px_36px_rgba(0,0,0,0.16)] backdrop-blur transition hover:bg-[#fff6e8]/16 focus:outline-none focus:ring-2 focus:ring-[#f3d9ad]/70"
+              onClick={onBackMemoOpen}
+            >
+              あの日の続きを読む
+            </button>
+            <p className="mt-3 text-sm font-medium text-[#d9c09b]/68">
+              続きがあります。
+            </p>
+          </div>
+        ) : null}
+
+        {isBackMemoOpen && hasBackMemo ? (
           <div
             className="relative mt-6 overflow-hidden rounded-[18px] border border-[#f3d9ad]/16 bg-[#4b3124]/38 shadow-[0_24px_62px_rgba(0,0,0,0.3)] backdrop-blur-md"
             style={{ animation: "recallMemoIn 420ms cubic-bezier(0.22, 1, 0.36, 1)" }}
@@ -131,10 +136,18 @@ export default function RecallStage({
               className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#332018]/98 via-[#332018]/62 to-transparent"
             />
           </div>
-        ) : hasBackMemo ? (
-          <p className="mt-3 text-sm font-medium text-[#d9c09b]/74">
-            続きがあります。
-          </p>
+        ) : null}
+
+        {isBackMemoOpen && hasBackMemo ? (
+          <div className="mt-5">
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#f3d9ad]/24 bg-[#fff6e8]/7 px-5 text-sm font-semibold text-[#f8e7cf]/88 shadow-[0_12px_28px_rgba(0,0,0,0.12)] backdrop-blur transition hover:bg-[#fff6e8]/13 hover:text-[#fff6e8] focus:outline-none focus:ring-2 focus:ring-[#f3d9ad]/70"
+              onClick={onBackMemoOpen}
+            >
+              カードに戻る
+            </button>
+          </div>
         ) : null}
       </div>
     </section>
